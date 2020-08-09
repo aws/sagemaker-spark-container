@@ -1,0 +1,56 @@
+# Byte-compiled / optimized / DLL files
+*__pycache__/
+.pytest_cache/
+*.py[cod]
+*$py.class
+.coverage
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-wheel-metadata/
+.venv/
+
+# Compiling / running local tests
+test/resources/code/scala/hello-scala-spark/lib_managed/
+test/resources/code/scala/hello-scala-spark/project/
+test/resources/code/scala/hello-scala-spark/target/
+test/resources/code/java/hello-java-spark/target/
+test/resources/data/output/*
+
+.vim
+.tox/
+.coverage
+.coverage.integ
+.cache
+nosetests.xml
+coverage.xml
+container/*.whl
+# IDE
+.idea/*
+*.iml
+
+# Don't commit emr spark packages
+*.tar
+*.tar.gz
+
+.vscode/
+*.mypy_cache
+
+# FIXME: remove this once we're consuming EMR packages through build
+emr-spark-packages
+

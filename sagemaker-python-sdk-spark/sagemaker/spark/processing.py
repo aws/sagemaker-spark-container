@@ -135,10 +135,6 @@ class _SparkProcessorBase(ScriptProcessor):
         session = sagemaker_session or Session()
         region = session.boto_region_name
 
-        framework_versions = _SparkProcessorBase._framework_versions.keys()
-        if not framework_version and not image_uri:
-            raise ValueError("Either framework_version or image_uri must be specified")
-
         if not image_uri:
             account_id = _SparkProcessorBase._framework_versions[framework_version]
             image_uri = _SparkProcessorBase._image_uri_format.format(

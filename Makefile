@@ -107,7 +107,7 @@ clean:
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
-	cd test/resources/code/scala/hello-scala-spark; sbt clean; rm -r project/ target/ lib_managed/
+	cd test/resources/code/scala/hello-scala-spark; sbt clean; rm -r project/ target/
 
 # Removes compiled Java Maven artifacts
 clean-test-java:
