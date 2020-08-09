@@ -1,0 +1,17 @@
+version: 0.2
+
+env:
+  variables:
+    SBT_VERSION: "1.3.2"
+
+phases:
+  install:
+    commands:
+      - pip install pytest
+      - wget -nv https://dl.bintray.com/sbt/rpm/sbt-$SBT_VERSION.rpm
+      - yum install -y sbt-$SBT_VERSION.rpm
+
+  build:
+    commands:
+      - make build
+      - make test-local

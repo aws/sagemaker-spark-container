@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - start-dockerd
+  build:
+    commands:
+      - python /deploy_logic/rollback_image.py --new_images new_images.yml

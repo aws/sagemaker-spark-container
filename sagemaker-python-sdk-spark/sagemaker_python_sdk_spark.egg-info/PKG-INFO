@@ -1,0 +1,16 @@
+Metadata-Version: 1.2
+Name: sagemaker-python-sdk-spark
+Version: 0.1
+Summary: Extensions to SageMaker Python SDK for Spark
+Home-page: UNKNOWN
+Author: Amazon Web Services
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=3

@@ -1,0 +1,34 @@
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "Whitelist Internal Customers",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": [
+          "arn:aws:iam::926857016169:root",
+          "arn:aws:iam::678264136642:root",
+          "arn:aws:iam::253956746164:root",
+          "arn:aws:iam::752721546683:root",
+          "arn:aws:iam::576088095488:root",
+          "arn:aws:iam::627655479810:root",
+          "arn:aws:iam::663287714237:root",
+          "arn:aws:iam::290034621584:root",
+          "arn:aws:iam::226407022431:root",
+          "arn:aws:iam::572963442460:root",
+          "arn:aws:iam::252151344010:root",
+          "arn:aws:iam::461895693826:root",
+          "arn:aws:iam::831550737091:root"
+        ],
+        "Service": "bats.amazon.com"
+      },
+      "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:ListImages"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+FROM amazonlinux:2
+
+RUN yum clean all
+RUN yum update -y
+RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3 python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget
+
+# install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
+RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y epel-release-latest-7.noarch.rpm
+RUN yum install -y nginx
+
+RUN rm -rf /var/cache/yum
+RUN pip3 install py4j psutil==5.6.5 numpy==1.17.4
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+# http://blog.stuart.axelbrooke.com/python-3-on-spark-return-of-the-pythonhashseed
+ENV PYTHONHASHSEED 0
+ENV PYTHONIOENCODING UTF-8
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+
+# Install EMR Spark/Hadoop
+ENV HADOOP_HOME /usr/lib/hadoop
+ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
+ENV SPARK_HOME /usr/lib/spark
+
+# Docker ADD automatically untars archives into a directory:
+# https://docs.docker.com/engine/reference/builder/#add
+# "If <src> is a local tar archive in a recognized compression format (identity, gzip, bzip2 or xz) then it is unpacked
+# as a directory."
+# Note that the ~2GB ADD layer remains in the Docker image, even after files are removed in the RUN layer
+ADD emr-spark-packages.tar /tmp/emr-spark-packages.tar
+RUN find /tmp/emr-spark-packages.tar/emr-spark-packages | xargs yum install -y && \
+    rm -rf /tmp/emr-spark-packages*
+
+# Point Spark at proper python binary
+ENV PYSPARK_PYTHON=/usr/bin/python3
+
+# Setup Spark/Yarn/HDFS user as root
+ENV PATH="/usr/bin:/opt/program:${PATH}"
+ENV YARN_RESOURCEMANAGER_USER="root"
+ENV YARN_NODEMANAGER_USER="root"
+ENV HDFS_NAMENODE_USER="root"
+ENV HDFS_DATANODE_USER="root"
+ENV HDFS_SECONDARYNAMENODE_USER="root"
+
+# Set up bootstrapping program and Spark configuration
+COPY *.whl /opt/program/
+RUN /usr/bin/python3 -m pip install /opt/program/*.whl
+COPY hadoop-config /opt/hadoop-config
+COPY nginx-config /opt/nginx-config
+
+# With this config, spark history server will not run as daemon, otherwise there
+# will be no server running and container will terminate immediately
+ENV SPARK_NO_DAEMONIZE TRUE
+
+WORKDIR $SPARK_HOME
+
+ENTRYPOINT ["smspark-submit"]

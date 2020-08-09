@@ -1,0 +1,15 @@
+{
+    "ProcessingJobArn": "processing_job_arn",
+    "ProcessingJobName": "processing_job_name",
+    "AppSpecification": {
+        "ImageUri": "image_uri"
+    },
+    "ProcessingResources": {
+        "ClusterConfig": {
+            "InstanceCount": 2,
+            "InstanceType": "ml.m5.xlarge",
+            "VolumeSizeInGB": 30
+        }
+    },
+    "RoleArn": "iam_role"
+}

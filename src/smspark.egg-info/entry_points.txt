@@ -1,0 +1,4 @@
+[console_scripts]
+smspark-history-server = smspark.history_server_cli:run_history_server
+smspark-submit = smspark.cli:submit_main
+

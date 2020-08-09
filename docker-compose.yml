@@ -1,0 +1,35 @@
+version: "3.7"
+
+networks:
+  spark:
+    name: spark-network
+
+services:
+  algo-1:
+    image: sagemaker-spark:latest
+    # Spark does a reverse DNS lookup (IP address to hostname)
+    # By default in docker-compose the hostname is identical to the container name
+    container_name: algo-1
+    hostname: algo-1
+    networks:
+      - spark
+    volumes:
+        - ./test/resources/config/multi_node/algo-1/:/opt/ml/config:ro
+        - ./test/resources/code:/opt/ml/processing/input/code:ro
+        - ./test/resources/data/files:/opt/ml/processing/input/data:ro
+        - ./test/resources/data/conf:/opt/ml/processing/input/conf:ro
+        - ${JARS_MOUNT:-/dev/null:/opt/ml/processing/input/jars}
+    command: $CMD
+  algo-2:
+    image: sagemaker-spark:latest
+    container_name: algo-2
+    hostname: algo-2
+    networks:
+      - spark
+    volumes:
+        - ./test/resources/config/multi_node/algo-2/:/opt/ml/config:ro
+        - ./test/resources/code:/opt/ml/processing/input/code:ro
+        - ./test/resources/data/files:/opt/ml/processing/input/data:ro
+        - ./test/resources/data/conf:/opt/ml/processing/input/conf:ro
+        - ${JARS_MOUNT:-/dev/null:/opt/ml/processing/input/jars}
+    command: $CMD
