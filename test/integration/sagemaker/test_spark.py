@@ -1,13 +1,18 @@
+import random
 import time
 from datetime import datetime
-import random
 
 import boto3
 import pytest
-import os
 from sagemaker.s3 import S3Downloader, S3Uploader
 from sagemaker.spark.processing import PySparkProcessor, SparkJarProcessor
-from sagemaker.session import Session
+
+
+@pytest.fixture(autouse=True)
+def jitter():
+    "Add random sleeps before tests to avoid breaching CreateProcessingJob API limits"
+    time.sleep(random.random()*10)
+
 
 @pytest.fixture
 def configuration() -> list:
@@ -74,17 +79,8 @@ def configuration() -> list:
     return configuration
 
 
-def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration):
+def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
     """Test that basic multinode case works on 32KB of data"""
-
-    # Adding random sleeps before tests to avoid breaching CreateProcessingJob API limits
-    time.sleep(random.random()*10)
-
-    region = os.environ.get("REGION", "us-west-2")
-    boto_session = boto3.Session(region_name=region)
-    sagemaker = boto_session.client("sagemaker", region_name=region)
-    sagemaker_session = Session(boto_session=boto_session, sagemaker_client=sagemaker)
-
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         framework_version=tag,
@@ -123,7 +119,7 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration):
     updated_times_count = 0
     time_out = time.time() + 900
 
-    while not processing_job_not_fail_or_complete(sagemaker, processing_job.job_name):
+    while not processing_job_not_fail_or_complete(sagemaker_client, processing_job.job_name):
         response = s3_client.list_objects(Bucket=bucket, Prefix=spark_event_logs_key_prefix)
         if "Contents" in response:
             # somehow when call list_objects the first file size is always 0, this for loop
@@ -155,17 +151,8 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration):
     assert len(output_contents) != 0
 
 
-def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration):
+def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
     """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
-
-    # Adding random sleeps before tests to avoid breaching CreateProcessingJob API limits
-    time.sleep(random.random()*10)
-
-    region = os.environ.get("REGION", "us-west-2")
-    boto_session = boto3.Session(region_name=region)
-    sagemaker = boto_session.client("sagemaker", region_name=region)
-    sagemaker_session = Session(boto_session=boto_session, sagemaker_client=sagemaker)
-
     spark = SparkJarProcessor(
         base_job_name="sm-spark-scala",
         framework_version=tag,
@@ -196,7 +183,7 @@ def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration):
     )
     processing_job = spark.latest_job
 
-    waiter = sagemaker.get_waiter("processing_job_completed_or_stopped")
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
     waiter.wait(
         ProcessingJobName=processing_job.job_name,
         # poll every 15 seconds. timeout after 15 minutes.
@@ -207,17 +194,8 @@ def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration):
     assert len(output_contents) != 0
 
 
-def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration):
+def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
     """Test SparkJarProcessor using Java application jar"""
-
-    # Adding random sleeps before tests to avoid breaching CreateProcessingJob API limits
-    time.sleep(random.random()*10)
-
-    region = os.environ.get("REGION", "us-west-2")
-    boto_session = boto3.Session(region_name=region)
-    sagemaker = boto_session.client("sagemaker", region_name=region)
-    sagemaker_session = Session(boto_session=boto_session, sagemaker_client=sagemaker)
-
     spark = SparkJarProcessor(
         base_job_name="sm-spark-java",
         framework_version=tag,
@@ -245,7 +223,7 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration):
     )
     processing_job = spark.latest_job
 
-    waiter = sagemaker.get_waiter("processing_job_completed_or_stopped")
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
     waiter.wait(
         ProcessingJobName=processing_job.job_name,
         # poll every 15 seconds. timeout after 15 minutes.
@@ -256,8 +234,8 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration):
     assert len(output_contents) != 0
 
 
-def processing_job_not_fail_or_complete(sm_client, job_name):
-    response = sm_client.describe_processing_job(ProcessingJobName=job_name)
+def processing_job_not_fail_or_complete(sagemaker_client, job_name):
+    response = sagemaker_client.describe_processing_job(ProcessingJobName=job_name)
 
     if not response or "ProcessingJobStatus" not in response:
         raise ValueError("Response is none or does not have ProcessingJobStatus")

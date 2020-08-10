@@ -74,7 +74,7 @@ test-unit: build-container-library install-container-library
 	pytest -s -vv test/unit
 
 # Only runs local tests.
-test-local: build-tests
+test-local: install-sdk build-tests
 	pytest -s -vv test/integration/local --repo=$(DEST_REPO) --tag=$(VERSION) --role=$(ROLE) --durations=0
 
 # Only runs sagemaker tests
@@ -107,7 +107,7 @@ clean:
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
-	cd test/resources/code/scala/hello-scala-spark; sbt clean; rm -r project/ target/
+	cd test/resources/code/scala/hello-scala-spark; sbt clean; rm -r project/ target/ lib_managed/
 
 # Removes compiled Java Maven artifacts
 clean-test-java:

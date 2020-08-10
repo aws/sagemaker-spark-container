@@ -1,6 +1,7 @@
 import boto3
 import botocore
 import pytest
+from sagemaker.session import Session
 
 
 def pytest_addoption(parser) -> str:
@@ -66,6 +67,12 @@ def boto_session(region) -> boto3.session.Session:
 
 
 @pytest.fixture(scope="session")
-def sagemaker_client(boto_session) -> botocore.client.BaseClient:
+def sagemaker_client(boto_session, region) -> botocore.client.BaseClient:
     """Return a SageMaker client for use in integration tests."""
-    return boto_session.client("sagemaker")
+    return boto_session.client("sagemaker", region_name=region)
+
+
+@pytest.fixture(scope="session")
+def sagemaker_session(boto_session, sagemaker_client) -> Session:
+    """Return a SageMaker session for use in integration tests."""
+    return Session(boto_session=boto_session, sagemaker_client=sagemaker_client)
