@@ -70,7 +70,6 @@ class _SparkProcessorBase(ScriptProcessor):
     )
 
     # history server vars
-    _ENV_SPARK_EVENT_LOGS_S3_URI_KEY = "SPARK_EVENT_LOGS_S3_URI"
     _HISTORY_SERVER_TIMEOUT = 20
     _HISTORY_SERVER_URL_SUFFIX = "/proxy/15050"
     _SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH = "/opt/ml/processing/spark-events/"
@@ -210,7 +209,7 @@ class _SparkProcessorBase(ScriptProcessor):
             # SPARK_LOCAL_EVENT_LOG_DIR will be passed to container to write spark event log to local file
             # SPARK_EVENT_LOGS_S3_URI can be used to start history server
             self.env["SPARK_LOCAL_EVENT_LOG_DIR"] = _SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH
-            self.env["SPARK_EVENT_LOGS_S3_URI"] = spark_event_logs_s3_uri
+            self.env[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = spark_event_logs_s3_uri
 
             output = ProcessingOutput(
                 source=_SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH,
@@ -238,13 +237,12 @@ class _SparkProcessorBase(ScriptProcessor):
         """
         :param spark_event_logs_s3_uri (str): optional parameter to set s3 uri and run history server
         """
-        self.terminate_history_server()
         self._pull_docker_container()
         history_server_env_variables = self._prepare_history_server_env_variables(spark_event_logs_s3_uri)
         self.history_server = _HistoryServer(history_server_env_variables, self.image_uri)
-        self.history_server.run()
+        process = self.history_server.run()
         # print history url when it's ready
-        self._check_history_server()
+        self._check_history_server(process)
 
     def terminate_history_server(self):
         if self.history_server:
@@ -402,11 +400,11 @@ class _SparkProcessorBase(ScriptProcessor):
         history_server_env_variables = {}
 
         if spark_event_logs_s3_uri:
-            history_server_env_variables[self._ENV_SPARK_EVENT_LOGS_S3_URI_KEY] = spark_event_logs_s3_uri
+            history_server_env_variables[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = spark_event_logs_s3_uri
         # this variable will be previously set by run() method
-        elif self._ENV_SPARK_EVENT_LOGS_S3_URI_KEY in self.env:
-            history_server_env_variables[self._ENV_SPARK_EVENT_LOGS_S3_URI_KEY] = self.env[
-                self._ENV_SPARK_EVENT_LOGS_S3_URI_KEY
+        elif _HistoryServer.ARG_EVENT_LOGS_S3_URI in self.env:
+            history_server_env_variables[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = self.env[
+                _HistoryServer.ARG_EVENT_LOGS_S3_URI
             ]
         else:
             raise ValueError(
@@ -415,16 +413,11 @@ class _SparkProcessorBase(ScriptProcessor):
             )
 
         if self._is_notebook_instance():
-            history_server_env_variables["SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN"] = self._get_instance_domain()
+            history_server_env_variables[_HistoryServer.ARG_REMOTE_DOMAIN_NAME] = self._get_instance_domain()
         # if not notebook instance, customer need to set their own credentials
         else:
-            # TODO (guoqiao@): also check if cred exists in aws configure
-            if "AWS_ACCESS_KEY_ID" not in os.environ or "AWS_SECRET_ACCESS_KEY" not in os.environ:
-                raise ValueError("AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY should be set as env variables")
+            history_server_env_variables.update(self._config_aws_credentials())
 
-            history_server_env_variables["AWS_ACCESS_KEY_ID"] = os.environ["AWS_ACCESS_KEY_ID"]
-            history_server_env_variables["AWS_SECRET_ACCESS_KEY"] = os.environ["AWS_SECRET_ACCESS_KEY"]
-            history_server_env_variables["AWS_SESSION_TOKEN"] = os.environ["AWS_SESSION_TOKEN"]
         return history_server_env_variables
 
     def _is_notebook_instance(self):
@@ -439,7 +432,7 @@ class _SparkProcessorBase(ScriptProcessor):
 
             return "https://{}.notebook.{}.sagemaker.aws".format(notebook_name, region)
 
-    def _check_history_server(self):
+    def _check_history_server(self, process):
         # ping port 15050 to check history server is up
         timeout = time.time() + self._HISTORY_SERVER_TIMEOUT
 
@@ -452,6 +445,7 @@ class _SparkProcessorBase(ScriptProcessor):
                 break
             if time.time() > timeout:
                 print("History server failed to start")
+                print(process.stderr.read().decode("UTF-8"))
                 break
 
             time.sleep(1)
@@ -472,6 +466,21 @@ class _SparkProcessorBase(ScriptProcessor):
                 )
             )
 
+    def _config_aws_credentials(self):
+        try:
+            creds = self.sagemaker_session.boto_session.get_credentials()
+            access_key = creds.access_key
+            secret_key = creds.secret_key
+            token = creds.token
+
+            return {
+                "AWS_ACCESS_KEY_ID": str(access_key),
+                "AWS_SECRET_ACCESS_KEY": str(secret_key),
+                "AWS_SESSION_TOKEN": str(token),
+            }
+        except Exception as e:
+            print("Could not get AWS credentials: %s", e)
+            return {}
 
 class PySparkProcessor(_SparkProcessorBase):
     """Handles Amazon SageMaker processing tasks for jobs using PySpark."""
@@ -813,15 +822,25 @@ class SparkJarProcessor(_SparkProcessorBase):
 class _HistoryServer:
     _CONTAINER_NAME = "history_server"
     _ENTRY_POINT = "smspark-history-server"
+    ARG_EVENT_LOGS_S3_URI = "event_logs_s3_uri"
+    ARG_REMOTE_DOMAIN_NAME = "remote_domain_name"
 
-    def __init__(self, env_variables, image_uri):
-        self.env_variables = env_variables
+    _HISTORY_SERVER_ARGS_FORMAT_MAP = {
+        ARG_EVENT_LOGS_S3_URI : "--event-logs-s3-uri {} ",
+        ARG_REMOTE_DOMAIN_NAME: "--remote-domain-name {} ",
+    }
+
+    def __init__(self, cli_args, image_uri):
+        self.cli_args = cli_args
         self.image_uri = image_uri
         self.run_history_server_command = self._get_run_history_server_cmd()
 
     def run(self):
+        self.down()
         print("Starting history server...")
-        subprocess.Popen(self.run_history_server_command, shell=True)
+        print(self.run_history_server_command)
+        process = subprocess.Popen(self.run_history_server_command, shell=True)
+        return process
 
     def down(self):
         subprocess.call("docker stop " + _HistoryServer._CONTAINER_NAME, shell=True)
@@ -833,10 +852,14 @@ class _HistoryServer:
     # rather than PySparkProcessor
     def _get_run_history_server_cmd(self):
         env_options = ""
-        for key, value in self.env_variables.items():
-            env_options += "--env {}={} ".format(key, value)
-
-        cmd = "docker run {} --name {} --network host --entrypoint {} {}".format(
-            env_options, _HistoryServer._CONTAINER_NAME, _HistoryServer._ENTRY_POINT, self.image_uri
+        ser_cli_args = ""
+        for key, value in self.cli_args.items():
+            if key in self._HISTORY_SERVER_ARGS_FORMAT_MAP:
+                ser_cli_args += self._HISTORY_SERVER_ARGS_FORMAT_MAP[key].format(value)
+            else:
+                env_options += "--env {}={} ".format(key, value)
+        print(ser_cli_args)
+        cmd = "docker run {} --name {} --network host --entrypoint {} {} {}".format(
+            env_options, _HistoryServer._CONTAINER_NAME, _HistoryServer._ENTRY_POINT, self.image_uri, ser_cli_args
         )
         return cmd

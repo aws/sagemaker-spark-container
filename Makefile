@@ -21,6 +21,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     VERSION          := ${SPARK_VERSION}-${PROCESSOR}-${FRAMEWORK_VERSION}-v${SM_VERSION}
     export DEST_REPO=sagemaker-spark-${USE_CASE}
     export REGION=us-west-2
+    export AWS_DOMAIN=amazonaws.com
     ROLE             := AmazonSageMaker-ExecutionRole-20200203T115288
     IMAGE_URI        := 038453126632.dkr.ecr.us-west-2.amazonaws.com/${DEST_REPO}:${VERSION}
 else
@@ -83,7 +84,8 @@ test-sagemaker: install-sdk build-tests
 	pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
-	--region ${REGION}
+	--region ${REGION} \
+	--domain ${AWS_DOMAIN}
 
 # Runs local tests and sagemaker tests.
 test-all: test-local test-sagemaker

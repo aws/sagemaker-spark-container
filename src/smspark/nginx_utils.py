@@ -24,9 +24,9 @@ NGINX_CONTAINER_CONFIG_PATH = "/opt/nginx-config/nginx.conf"
 NGINX_CONFIG_PATH = "/etc/nginx/nginx.conf"
 
 
-def start_nginx():
+def start_nginx(remote_domain_name):
     copy_nginx_default_conf()
-    write_nginx_default_conf()
+    write_nginx_default_conf(remote_domain_name)
 
     logging.info("Starting nginx.")
     subprocess.run("/usr/sbin/nginx -c /etc/nginx/nginx.conf", shell=True)
@@ -35,13 +35,10 @@ def start_nginx():
 # when running spark history behind notebook proxy, the domain will change because of
 # the redirect behavior of spark itself, which ignores the proxy. Nginx can't easily
 # support env variable. Here we inject env variable to the default.conf file.
-def write_nginx_default_conf():
-    if "SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN" in os.environ:
-        domain = os.environ["SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN"]
-
+def write_nginx_default_conf(remote_domain_name):
+    if remote_domain_name is not None:
         with open(NGINX_DEFAULT_CONFIG_PATH, "a") as ngxin_conf:
-            ngxin_conf.write(NGINX_ENV_VARIABLE_CONFIG_FORMAT.format(domain))
-
+            ngxin_conf.write(NGINX_ENV_VARIABLE_CONFIG_FORMAT.format(remote_domain_name))
     else:
         with open(NGINX_DEFAULT_CONFIG_PATH, "a") as ngxin_conf:
             ngxin_conf.write(NGINX_ENV_VARIABLE_CONFIG_FORMAT.format(DOMAIN_LOCALHOST))

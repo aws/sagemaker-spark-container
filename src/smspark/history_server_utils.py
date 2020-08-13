@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import subprocess
+import sys
 
 from smspark import bootstrap
 
@@ -19,28 +20,31 @@ logging.basicConfig(
 log = logging.getLogger("sagemaker-spark")
 
 
-def start_history_server():
+def start_history_server(event_logs_s3_uri):
     log.info("copying aws jars")
     bootstrap.copy_aws_jars()
     log.info("copying cluster config")
     bootstrap.copy_cluster_config()
     log.info("copying history server config")
-    config_history_server()
+    config_history_server(event_logs_s3_uri)
     log.info("bootstrap master node")
     bootstrap.start_primary()
-    subprocess.run("sbin/start-history-server.sh", check=True, shell=True)
+
+    try:
+        subprocess.run("sbin/start-history-server.sh", check=True, shell=True)
+    except Exception as e:
+        log.error("Error starting history server", e)
+        sys.exit(255)
 
 
-def config_history_server():
-    _config_history_log_dir()
+def config_history_server(event_logs_s3_uri):
+    _config_history_log_dir(event_logs_s3_uri)
     _config_proxy_base()
 
 
-def _config_history_log_dir():
-    if "SPARK_EVENT_LOGS_S3_URI" in os.environ:
+def _config_history_log_dir(event_logs_s3_uri):
+    if event_logs_s3_uri is not None:
         log.info("s3 path presents, starting history server")
-        # prepare s3 path
-        s3_path = os.environ["SPARK_EVENT_LOGS_S3_URI"]
 
         # s3 path has to be the format s3://{bucket}/{folder}, Hadoop’s “S3A” client
         # offers high-performance IO against Amazon S3 object store and compatible
@@ -48,7 +52,7 @@ def _config_history_log_dir():
         # customers only need to know their s3 path and container converts it to
         # s3a://{bucket}/{folder}
         # TODO (guoqiao): EMRFS should support talking to s3 directly according to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-file-systems.html
-        s3_path = re.sub("s3://", "s3a://", s3_path, 1)
+        s3_path = re.sub("s3://", "s3a://", event_logs_s3_uri, 1)
 
         with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
             print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path))

@@ -14,31 +14,22 @@ from smspark.history_server_utils import SPARK_DEFAULTS_CONFIG_PATH
 from smspark.history_server_utils import CONFIG_HISTORY_LOG_DIR_FORMAT
 from smspark.history_server_utils import CONFIG_NOTEBOOK_PROXY_BASE
 
-
-@pytest.fixture(scope="function")
-def notebook_instance_env_var() -> None:
-    os.environ["SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN"] = "value"
-    os.environ["SPARK_EVENT_LOGS_S3_URI"] = "s3://bucket/key"
-    yield
-    del os.environ['SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN']
-    del os.environ["SPARK_EVENT_LOGS_S3_URI"]
-
+EVENT_LOGS_S3_URI = "s3://bucket/spark-events"
 
 @patch("smspark.history_server_utils.open", new_callable=mock_open)
-def test_config_history_server_with_env_variable(mock_open_file,
-                                                 notebook_instance_env_var):
-    config_history_server()
+def test_config_history_server_with_env_variable(mock_open_file):
+    config_history_server(EVENT_LOGS_S3_URI)
 
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
     mock_open_file().write.assert_has_calls([
-        call(CONFIG_HISTORY_LOG_DIR_FORMAT.format("s3a://bucket/key") + "\n"),
+        call(CONFIG_HISTORY_LOG_DIR_FORMAT.format("s3a://bucket/spark-events") + "\n"),
         call(CONFIG_NOTEBOOK_PROXY_BASE + "\n")
     ])
 
 
 def test_config_history_server_without_env_variable():
     with pytest.raises(SystemExit) as e:
-        config_history_server()
+        config_history_server(None)
 
     assert e.type == SystemExit
 
@@ -54,7 +45,7 @@ def test_start_history_server(mock_subprocess_run,
                               mock_copy_aws_jars,
                               mock_config_history_server):
 
-    start_history_server()
+    start_history_server(EVENT_LOGS_S3_URI)
 
     mock_start_primary.assert_called_once()
     mock_copy_cluster_config.assert_called_once()
