@@ -25,7 +25,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     ROLE             := AmazonSageMaker-ExecutionRole-20200203T115288
     IMAGE_URI        := 038453126632.dkr.ecr.us-west-2.amazonaws.com/${DEST_REPO}:${VERSION}
 else
-    ROLE       := arn:aws:iam::$(INTEG_TEST_ACCOUNT):role/$(INTEG_TEST_ROLE)
+    ROLE       := arn:${AWS_PARTITION}:iam::$(INTEG_TEST_ACCOUNT):role/$(INTEG_TEST_ROLE)
     IMAGE_URI  :=  $(SPARK_ACCOUNT_ID).dkr.ecr.$(REGION).$(AWS_DOMAIN)/$(DEST_REPO):$(VERSION)
 endif
 
