@@ -45,13 +45,13 @@ def test_history_server(tag, role, image_uri):
 
     response = urllib.request.urlopen("http://0.0.0.0/proxy/15050")
     assert response.status == 200
-    #
-    # # spark has redirect behavior, this request verify that page navigation works with redirect
-    # response = urllib.request.urlopen("http://0.0.0.0/proxy/15050/history/application_1594922484246_0001/1/jobs/")
-    # assert response.status == 200
-    #
-    # html_content = response.read().decode("UTF-8")
-    # assert "Completed Jobs (4)" in html_content
-    # assert "collect at /opt/ml/processing/input/code/test_long_duration.py:32" in html_content
+
+    # spark has redirect behavior, this request verify that page navigation works with redirect
+    response = urllib.request.urlopen("http://0.0.0.0/proxy/15050/history/application_1594922484246_0001/1/jobs/")
+    assert response.status == 200
+
+    html_content = response.read().decode("UTF-8")
+    assert "Completed Jobs (4)" in html_content
+    assert "collect at /opt/ml/processing/input/code/test_long_duration.py:32" in html_content
 
     spark.terminate_history_server()
