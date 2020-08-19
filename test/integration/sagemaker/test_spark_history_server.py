@@ -5,7 +5,6 @@ from sagemaker.s3 import S3Uploader
 from sagemaker.spark.processing import PySparkProcessor
 
 
-@pytest.mark.skip(reason="History server test failing in CodeBuild")
 def test_history_server(tag, role, image_uri):
     spark = PySparkProcessor(
         base_job_name="sm-spark",

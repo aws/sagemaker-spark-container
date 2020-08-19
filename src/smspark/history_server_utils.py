@@ -4,7 +4,7 @@ import re
 import subprocess
 import sys
 
-from smspark import bootstrap
+from smspark.bootstrapper import Bootstrapper
 
 SPARK_DEFAULTS_CONFIG_PATH = "conf/spark-defaults.conf"
 
@@ -15,20 +15,21 @@ CONFIG_NOTEBOOK_PROXY_BASE = "spark.ui.proxyBase=/proxy/15050"
 # TODO (amoeller@): Every file has the same log config, need common place for
 # consistent logging
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s", datefmt="%m-%d %H:%M"
+    level=logging.INFO, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s", datefmt="%m-%d %H:%M",
 )
 log = logging.getLogger("sagemaker-spark")
 
 
 def start_history_server(event_logs_s3_uri):
+    bootstrapper = Bootstrapper()
     log.info("copying aws jars")
-    bootstrap.copy_aws_jars()
+    bootstrapper.copy_aws_jars()
     log.info("copying cluster config")
-    bootstrap.copy_cluster_config()
+    bootstrapper.copy_cluster_config()
     log.info("copying history server config")
     config_history_server(event_logs_s3_uri)
     log.info("bootstrap master node")
-    bootstrap.start_primary()
+    bootstrapper.start_spark_standalone_primary()
 
     try:
         subprocess.run("sbin/start-history-server.sh", check=True, shell=True)
