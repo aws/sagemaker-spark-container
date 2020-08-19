@@ -25,24 +25,6 @@ def test_history_server(tag, role, image_uri):
 
     spark.start_history_server(spark_event_logs_s3_uri=spark_event_logs_s3_uri)
 
-    try:
-        response = urllib.request.urlopen("http://localhost:15050")
-        print("Succeed with http://localhost:15050")
-    except:
-        print("Failed with http://localhost:15050")
-
-    try:
-        response = urllib.request.urlopen("http://localhost/proxy/15050")
-        print("Succeed with http://localhost/proxy/15050")
-    except:
-        print("Failed with http://localhost/proxy/15050")
-
-    try:
-        response = urllib.request.urlopen("http://0.0.0.0/proxy/15050")
-        print("Succeed with http://0.0.0.0/proxy/15050")
-    except:
-        print("Failed with http://0.0.0.0/proxy/15050")
-
     response = urllib.request.urlopen("http://0.0.0.0/proxy/15050")
     assert response.status == 200
 
