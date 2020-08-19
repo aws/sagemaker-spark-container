@@ -1,9 +1,11 @@
 import pytest
+import time
 import urllib.request
 
 from sagemaker.s3 import S3Uploader
 from sagemaker.spark.processing import PySparkProcessor
 
+MAX_RETRIES = 3
 
 def test_history_server(tag, role, image_uri):
     spark = PySparkProcessor(
@@ -25,11 +27,13 @@ def test_history_server(tag, role, image_uri):
 
     spark.start_history_server(spark_event_logs_s3_uri=spark_event_logs_s3_uri)
 
-    response = urllib.request.urlopen("http://0.0.0.0/proxy/15050")
+    response = _request_with_retry("http://0.0.0.0/proxy/15050")
+    assert response is not None
     assert response.status == 200
 
     # spark has redirect behavior, this request verify that page navigation works with redirect
-    response = urllib.request.urlopen("http://0.0.0.0/proxy/15050/history/application_1594922484246_0001/1/jobs/")
+    response = _request_with_retry("http://0.0.0.0/proxy/15050/history/application_1594922484246_0001/1/jobs/")
+    assert response is not None
     assert response.status == 200
 
     html_content = response.read().decode("UTF-8")
@@ -37,3 +41,18 @@ def test_history_server(tag, role, image_uri):
     assert "collect at /opt/ml/processing/input/code/test_long_duration.py:32" in html_content
 
     spark.terminate_history_server()
+
+
+def _request_with_retry(url):
+    retry = 0
+    while retry <= MAX_RETRIES:
+        try:
+            response = urllib.request.urlopen(url)
+            print("Succeeded with: " + url)
+            return response
+        except:
+            print("Failed with: " + url)
+
+        retry += 1
+
+    return None
