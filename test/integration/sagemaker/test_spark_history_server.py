@@ -4,7 +4,7 @@ import urllib.request
 from sagemaker.s3 import S3Uploader
 from sagemaker.spark.processing import PySparkProcessor
 
-MAX_RETRIES = 30
+MAX_RETRIES = 10
 
 def test_history_server(tag, role, image_uri):
     spark = PySparkProcessor(

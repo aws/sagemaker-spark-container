@@ -81,164 +81,163 @@ def configuration() -> list:
 
 def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
     """Test that basic multinode case works on 32KB of data"""
-    assert True
-#     spark = PySparkProcessor(
-#         base_job_name="sm-spark-py",
-#         framework_version=tag,
-#         image_uri=image_uri,
-#         role=role,
-#         instance_count=2,
-#         instance_type="ml.c5.xlarge",
-#         max_runtime_in_seconds=1200,
-#         sagemaker_session=sagemaker_session,
-#     )
-#     bucket = spark.sagemaker_session.default_bucket()
-#     timestamp = datetime.now().isoformat()
-#     output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, timestamp)
-#     spark_event_logs_key_prefix = "spark/spark-events/{}".format(timestamp)
-#     spark_event_logs_s3_uri = "s3://{}/{}".format(bucket, spark_event_logs_key_prefix)
-#
-#     with open("test/resources/data/files/data.jsonl") as data:
-#         body = data.read()
-#         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-#         S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
-#
-#     spark.run(
-#         submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
-#         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
-#         arguments=["--input", input_data_uri, "--output", output_data_uri],
-#         configuration=configuration,
-#         spark_event_logs_s3_uri=spark_event_logs_s3_uri,
-#         wait=False,
-#     )
-#     processing_job = spark.latest_job
-#
-#     s3_client = boto3.client("s3", region_name=region)
-#
-#     file_size = 0
-#     latest_file_size = None
-#     updated_times_count = 0
-#     time_out = time.time() + 900
-#
-#     while not processing_job_not_fail_or_complete(sagemaker_client, processing_job.job_name):
-#         response = s3_client.list_objects(Bucket=bucket, Prefix=spark_event_logs_key_prefix)
-#         if "Contents" in response:
-#             # somehow when call list_objects the first file size is always 0, this for loop
-#             # is to skip that.
-#             for event_log_file in response["Contents"]:
-#                 if event_log_file["Size"] != 0:
-#                     print("\n##### Latest file size is " + str(event_log_file["Size"]))
-#                     latest_file_size = event_log_file["Size"]
-#
-#         # update the file size if it increased
-#         if latest_file_size and latest_file_size > file_size:
-#             print("\n##### S3 file updated.")
-#             updated_times_count += 1
-#             file_size = latest_file_size
-#
-#         if time.time() > time_out:
-#             raise RuntimeError("Timeout")
-#
-#         time.sleep(20)
-#
-#     # verify that spark event logs are periodically written to s3
-#     print("\n##### file_size {} updated_times_count {}".format(file_size, updated_times_count))
-#     assert file_size != 0
-#
-#     # Commenting this assert because it's flaky.
-#     # assert updated_times_count > 1
-#
-#     output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
-#     assert len(output_contents) != 0
-#
-#
-# def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
-#     """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
-#     spark = SparkJarProcessor(
-#         base_job_name="sm-spark-scala",
-#         framework_version=tag,
-#         image_uri=image_uri,
-#         role=role,
-#         instance_count=2,
-#         instance_type="ml.c5.xlarge",
-#         max_runtime_in_seconds=1200,
-#         sagemaker_session=sagemaker_session,
-#     )
-#
-#     bucket = spark.sagemaker_session.default_bucket()
-#     with open("test/resources/data/files/data.jsonl") as data:
-#         body = data.read()
-#         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-#         S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
-#     output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
-#
-#     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
-#     spark.run(
-#         submit_app_jar="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
-#         submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
-#         submit_jars=[
-#             "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
-#         ],
-#         arguments=["--input", input_data_uri, "--output", output_data_uri],
-#         configuration=configuration,
-#     )
-#     processing_job = spark.latest_job
-#
-#     waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
-#     waiter.wait(
-#         ProcessingJobName=processing_job.job_name,
-#         # poll every 15 seconds. timeout after 15 minutes.
-#         WaiterConfig={"Delay": 15, "MaxAttempts": 60},
-#     )
-#
-#     output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
-#     assert len(output_contents) != 0
-#
-#
-# def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
-#     """Test SparkJarProcessor using Java application jar"""
-#     spark = SparkJarProcessor(
-#         base_job_name="sm-spark-java",
-#         framework_version=tag,
-#         image_uri=image_uri,
-#         role=role,
-#         instance_count=2,
-#         instance_type="ml.c5.xlarge",
-#         max_runtime_in_seconds=1200,
-#         sagemaker_session=sagemaker_session,
-#     )
-#
-#     bucket = spark.sagemaker_session.default_bucket()
-#     with open("test/resources/data/files/data.jsonl") as data:
-#         body = data.read()
-#         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-#         S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
-#     output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
-#
-#     java_project_dir = "test/resources/code/java/hello-java-spark"
-#     spark.run(
-#         submit_app_jar="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
-#         submit_class="com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp",
-#         arguments=["--input", input_data_uri, "--output", output_data_uri],
-#         configuration=configuration,
-#     )
-#     processing_job = spark.latest_job
-#
-#     waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
-#     waiter.wait(
-#         ProcessingJobName=processing_job.job_name,
-#         # poll every 15 seconds. timeout after 15 minutes.
-#         WaiterConfig={"Delay": 15, "MaxAttempts": 60},
-#     )
-#
-#     output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
-#     assert len(output_contents) != 0
-#
-#
-# def processing_job_not_fail_or_complete(sagemaker_client, job_name):
-#     response = sagemaker_client.describe_processing_job(ProcessingJobName=job_name)
-#
-#     if not response or "ProcessingJobStatus" not in response:
-#         raise ValueError("Response is none or does not have ProcessingJobStatus")
-#     status = response["ProcessingJobStatus"]
-#     return status == "Failed" or status == "Completed" or status == "Stopped"
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-py",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+    bucket = spark.sagemaker_session.default_bucket()
+    timestamp = datetime.now().isoformat()
+    output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, timestamp)
+    spark_event_logs_key_prefix = "spark/spark-events/{}".format(timestamp)
+    spark_event_logs_s3_uri = "s3://{}/{}".format(bucket, spark_event_logs_key_prefix)
+
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
+        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+
+    spark.run(
+        submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration=configuration,
+        spark_event_logs_s3_uri=spark_event_logs_s3_uri,
+        wait=False,
+    )
+    processing_job = spark.latest_job
+
+    s3_client = boto3.client("s3", region_name=region)
+
+    file_size = 0
+    latest_file_size = None
+    updated_times_count = 0
+    time_out = time.time() + 900
+
+    while not processing_job_not_fail_or_complete(sagemaker_client, processing_job.job_name):
+        response = s3_client.list_objects(Bucket=bucket, Prefix=spark_event_logs_key_prefix)
+        if "Contents" in response:
+            # somehow when call list_objects the first file size is always 0, this for loop
+            # is to skip that.
+            for event_log_file in response["Contents"]:
+                if event_log_file["Size"] != 0:
+                    print("\n##### Latest file size is " + str(event_log_file["Size"]))
+                    latest_file_size = event_log_file["Size"]
+
+        # update the file size if it increased
+        if latest_file_size and latest_file_size > file_size:
+            print("\n##### S3 file updated.")
+            updated_times_count += 1
+            file_size = latest_file_size
+
+        if time.time() > time_out:
+            raise RuntimeError("Timeout")
+
+        time.sleep(20)
+
+    # verify that spark event logs are periodically written to s3
+    print("\n##### file_size {} updated_times_count {}".format(file_size, updated_times_count))
+    assert file_size != 0
+
+    # Commenting this assert because it's flaky.
+    # assert updated_times_count > 1
+
+    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
+    assert len(output_contents) != 0
+
+
+def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
+    """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
+    spark = SparkJarProcessor(
+        base_job_name="sm-spark-scala",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+
+    bucket = spark.sagemaker_session.default_bucket()
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
+        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+    output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
+
+    scala_project_dir = "test/resources/code/scala/hello-scala-spark"
+    spark.run(
+        submit_app_jar="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
+        submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
+        submit_jars=[
+            "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
+        ],
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration=configuration,
+    )
+    processing_job = spark.latest_job
+
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
+    assert len(output_contents) != 0
+
+
+def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
+    """Test SparkJarProcessor using Java application jar"""
+    spark = SparkJarProcessor(
+        base_job_name="sm-spark-java",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+
+    bucket = spark.sagemaker_session.default_bucket()
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
+        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+    output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
+
+    java_project_dir = "test/resources/code/java/hello-java-spark"
+    spark.run(
+        submit_app_jar="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
+        submit_class="com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp",
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration=configuration,
+    )
+    processing_job = spark.latest_job
+
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
+    assert len(output_contents) != 0
+
+
+def processing_job_not_fail_or_complete(sagemaker_client, job_name):
+    response = sagemaker_client.describe_processing_job(ProcessingJobName=job_name)
+
+    if not response or "ProcessingJobStatus" not in response:
+        raise ValueError("Response is none or does not have ProcessingJobStatus")
+    status = response["ProcessingJobStatus"]
+    return status == "Failed" or status == "Completed" or status == "Stopped"
