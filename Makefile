@@ -80,7 +80,7 @@ test-local: install-sdk build-tests
 
 # Only runs sagemaker tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
-test-sagemaker: install-sdk build-tests
+test-sagemaker: install-sdk
 	pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
@@ -88,7 +88,7 @@ test-sagemaker: install-sdk build-tests
 	--domain ${AWS_DOMAIN}
 
 # Runs local tests and sagemaker tests.
-test-all: test-local test-sagemaker
+test-all: test-sagemaker
 
 # Builds and installs sagemaker-python-sdk-spark library, since it's used in sagemaker tests.
 install-sdk:
