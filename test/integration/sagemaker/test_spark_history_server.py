@@ -43,15 +43,15 @@ def test_history_server(tag, role, image_uri):
 
 
 def _request_with_retry(url):
-    retry = 0
-    while retry <= MAX_RETRIES:
-        try:
-            response = urllib.request.urlopen(url)
-            print("Succeeded with: " + url)
-            return response
-        except:
-            print("Failed with: " + url)
-        time.sleep(1)
-        retry += 1
+    # retry = 0
+    # while retry <= MAX_RETRIES:
+    #     try:
+    #         response = urllib.request.urlopen(url)
+    #         print("Succeeded with: " + url)
+    #         return response
+    #     except:
+    #         print("Failed with: " + url)
+    #     time.sleep(1)
+    #     retry += 1
 
-    return None
+    return urllib.request.urlopen(url)
