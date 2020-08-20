@@ -1,5 +1,3 @@
-import pytest
-import time
 import urllib.request
 
 from sagemaker.s3 import S3Uploader
