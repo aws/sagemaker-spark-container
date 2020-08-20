@@ -1,9 +1,10 @@
+import time
 import urllib.request
 
 from sagemaker.s3 import S3Uploader
 from sagemaker.spark.processing import PySparkProcessor
 
-MAX_RETRIES = 3
+MAX_RETRIES = 5
 
 def test_history_server(tag, role, image_uri):
     spark = PySparkProcessor(
@@ -50,7 +51,7 @@ def _request_with_retry(url):
             return response
         except:
             print("Failed with: " + url)
-
+        time.sleep(1)
         retry += 1
 
     return None
