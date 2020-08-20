@@ -31,12 +31,37 @@ from sagemaker.processing import (ProcessingInput, ProcessingOutput,
                                   ScriptProcessor)
 from sagemaker.s3 import S3Uploader
 from sagemaker.session import Session
+from sagemaker.local.image import _ecr_login_if_needed
+from sagemaker.local.image import _pull_image
 
 
 class _SparkProcessorBase(ScriptProcessor):
     """Handles Amazon SageMaker processing tasks for jobs using Spark. Base class for either PySpark or SparkJars."""
 
-    _framework_versions = {"0.1": "254171628281", "0.1.0": "254171628281"}
+    _region_account_map = {
+        "me-south-1": "750251592176",
+        "ap-south-1": "105495057255",
+        "eu-west-3": "136845547031",
+        "us-east-2": "314815235551",
+        "eu-west-1": "571004829621",
+        "eu-central-1": "906073651304",
+        "sa-east-1": "737130764395",
+        "ap-east-1": "732049463269",
+        "us-east-1": "173754725891",
+        "ap-northeast-2": "860869212795",
+        "eu-west-2": "836651553127",
+        "ap-northeast-1": "411782140378",
+        "us-west-2": "153931337802",
+        "us-west-1": "667973535471",
+        "ap-southeast-1": "759080221371",
+        "ap-southeast-2": "440695851116",
+        "ca-central-1": "446299261295",
+        "cn-north-1": "671472414489",
+        "cn-northwest-1": "844356804704",
+        "eu-south-1": "753923664805",
+        "af-south-1": "309385258863",
+        "us-gov-west-1": "271483468897",
+    }
 
     _default_command = "smspark-submit"
     _image_uri_format = "{}.dkr.ecr.{}.amazonaws.com/{}:{}"
@@ -135,7 +160,7 @@ class _SparkProcessorBase(ScriptProcessor):
         region = session.boto_region_name
 
         if not image_uri:
-            account_id = _SparkProcessorBase._framework_versions[framework_version]
+            account_id = _SparkProcessorBase._region_account_map[region]
             image_uri = _SparkProcessorBase._image_uri_format.format(
                 account_id, region, "sagemaker-spark", framework_version
             )
@@ -237,7 +262,9 @@ class _SparkProcessorBase(ScriptProcessor):
         """
         :param spark_event_logs_s3_uri (str): optional parameter to set s3 uri and run history server
         """
-        self._pull_docker_container()
+        if _ecr_login_if_needed(self.sagemaker_session.boto_session, self.image_uri):
+            print("Pulling spark history server image...")
+            _pull_image(self.image_uri)
         history_server_env_variables = self._prepare_history_server_env_variables(spark_event_logs_s3_uri)
         self.history_server = _HistoryServer(history_server_env_variables, self.image_uri)
         process = self.history_server.run()
@@ -382,18 +409,6 @@ class _SparkProcessorBase(ScriptProcessor):
             spark_opt = ",".join(spark_opt_s3_uris)
 
         return input_channel, spark_opt
-
-    def _pull_docker_container(self):
-        """Construct the docker login command with the correct credentials from ECR"""
-        image_uri_split = self.image_uri.split(".")
-        region = image_uri_split[3]
-        account_id = image_uri_split[0]
-        login_cmd = "$(aws ecr get-login --region {} --registry-ids {} --no-include-email)".format(region, account_id)
-        subprocess.call(login_cmd, shell=True)
-
-        print("Pulling spark history server image...")
-        pull_cmd = "docker pull {}".format(self.image_uri)
-        subprocess.call(pull_cmd, shell=True)
 
     def _prepare_history_server_env_variables(self, spark_event_logs_s3_uri):
         # prepare env varibles
