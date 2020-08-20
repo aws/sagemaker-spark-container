@@ -1,10 +1,11 @@
 import logging
-import os
+
 import click
 from smspark import history_server_utils, nginx_utils
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
+
 
 @click.command(context_settings=dict(allow_interspersed_args=False))
 @click.option("--event-logs-s3-uri", required=True, help="S3 uri stores spark events that history server can read from")
