@@ -10,8 +10,10 @@ import subprocess
 from typing import Any, Dict, List, Union
 
 import psutil
+import requests
 from smspark.config import Configuration
 from smspark.defaults import default_resource_config
+from smspark.waiter import Waiter
 
 
 class Bootstrapper:
@@ -28,6 +30,7 @@ class Bootstrapper:
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("smspark-submit")
         self.resource_config = resource_config
+        self.waiter = Waiter()
 
     def bootstrap_smspark_submit(self):
         self.copy_aws_jars()
@@ -35,6 +38,7 @@ class Bootstrapper:
         self.write_runtime_cluster_config()
         self.write_user_configuration()
         self.start_hadoop_daemons()
+        self.wait_for_hadoop()
 
     def bootstrap_history_server(self):
         self.copy_aws_jars()
@@ -110,6 +114,7 @@ class Bootstrapper:
             file_data = yarn_file.read()
         file_data = file_data.replace("rm_hostname", primary_ip)
         file_data = file_data.replace("nm_hostname", current_host)
+        file_data = file_data.replace("nm_webapp_address", "{}:{}".format(current_host, 8042))
         with open(yarn_site_file_path, "w") as yarn_file:
             yarn_file.write(file_data)
 
@@ -173,6 +178,17 @@ class Bootstrapper:
             subprocess.call(cmd_prep_datanode_dir, shell=True)
             subprocess.Popen(cmd_datanode_start, shell=True)
             subprocess.Popen(cmd_nodemanager_start, shell=True)
+
+    def wait_for_hadoop(self) -> None:
+        def cluster_is_up() -> bool:
+            cluster_info_url = "http://{}:8042/node".format(self.resource_config["current_host"])
+            try:
+                resp = requests.get(cluster_info_url)
+                return resp.ok
+            except Exception:
+                return False
+
+        self.waiter.wait_for(predicate_fn=cluster_is_up, timeout=60.0, period=1.0)
 
     def start_spark_standalone_primary(self) -> None:
         """Start only spark standalone's primary node for history server, since distributing workload to workers is not needed for history server.

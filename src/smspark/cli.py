@@ -29,11 +29,19 @@ log = logging.getLogger(__name__)
     help="Either a directory or a comma-separated list of files to be placed in the working directory of each executor."
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
+@click.option(
+    "--spark-event-logs-s3-uri",
+    help="Optional, spark events file will be published to this s3 destination",
+)
+@click.option(
+    "--local-spark-event-logs-dir",
+    help="Optional, spark events will be stored in this local path",
+)
 @click.option("-v", "--verbose", is_flag=True, help="Print additional debug output.")
 @click.argument("app")
 @click.argument("app_arguments", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def submit(ctx, class_, jars, py_files, files, verbose, app, app_arguments) -> None:
+def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_spark_event_logs_dir, verbose, app, app_arguments) -> None:
     """Submit a job to smspark-submit.
 
     smspark-submit generally passes options through to spark-submit, but with the exception of certain options,
@@ -57,6 +65,8 @@ def submit(ctx, class_, jars, py_files, files, verbose, app, app_arguments) -> N
     # Ignore application arguments, which will be passed through verbatim to spark-submit.
     spark_options.pop("app", None)
     spark_options.pop("app_arguments", None)
+    spark_options.pop("spark_event_logs_s3_uri", None)
+    spark_options.pop("local_spark_event_logs_dir", None)
     app_and_app_arguments = [app] + list(app_arguments)
 
     # args needs to be a dict. remaining_args should be a list of [app app_arguments]
@@ -77,7 +87,10 @@ def submit(ctx, class_, jars, py_files, files, verbose, app, app_arguments) -> N
     processing_job_manager = ProcessingJobManager()
 
     log.info(f"running spark submit command: {spark_submit_cmd}")
-    processing_job_manager.run(spark_submit_cmd)
+    processing_job_manager.run(
+        spark_submit_cmd,
+        spark_event_logs_s3_uri,
+        local_spark_event_logs_dir)
 
 
 def submit_main() -> None:

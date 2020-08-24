@@ -21,11 +21,10 @@ ifeq ($(IS_RELEASE_BUILD),)
     VERSION          := ${SPARK_VERSION}-${PROCESSOR}-${FRAMEWORK_VERSION}-v${SM_VERSION}
     export DEST_REPO=sagemaker-spark-${USE_CASE}
     export REGION=us-west-2
-    export AWS_DOMAIN=amazonaws.com
     ROLE             := AmazonSageMaker-ExecutionRole-20200203T115288
     IMAGE_URI        := 038453126632.dkr.ecr.us-west-2.amazonaws.com/${DEST_REPO}:${VERSION}
 else
-    ROLE       := arn:${AWS_PARTITION}:iam::$(INTEG_TEST_ACCOUNT):role/$(INTEG_TEST_ROLE)
+    ROLE       := arn:aws:iam::$(INTEG_TEST_ACCOUNT):role/$(INTEG_TEST_ROLE)
     IMAGE_URI  :=  $(SPARK_ACCOUNT_ID).dkr.ecr.$(REGION).$(AWS_DOMAIN)/$(DEST_REPO):$(VERSION)
 endif
 
@@ -81,11 +80,11 @@ test-local: install-sdk build-tests
 # Only runs sagemaker tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
 test-sagemaker: install-sdk build-tests
-	pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	# https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
-	--region ${REGION} \
-	--domain ${AWS_DOMAIN}
+	--region ${REGION}
 
 # Runs local tests and sagemaker tests.
 test-all: test-local test-sagemaker

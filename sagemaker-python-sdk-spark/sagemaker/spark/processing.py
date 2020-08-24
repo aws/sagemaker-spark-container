@@ -156,6 +156,7 @@ class _SparkProcessorBase(ScriptProcessor):
                 inter-container traffic, security group IDs, and subnets.
         """
         self.history_server = None
+        self._spark_event_logs_s3_uri = None
         session = sagemaker_session or Session()
         region = session.boto_region_name
 
@@ -227,14 +228,11 @@ class _SparkProcessorBase(ScriptProcessor):
                 be published to.
         """
         self._current_job_name = self._generate_current_job_name(job_name=job_name)
-
         if spark_event_logs_s3_uri:
             self._validate_s3_uri(spark_event_logs_s3_uri)
 
-            # SPARK_LOCAL_EVENT_LOG_DIR will be passed to container to write spark event log to local file
-            # SPARK_EVENT_LOGS_S3_URI can be used to start history server
-            self.env["SPARK_LOCAL_EVENT_LOG_DIR"] = _SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH
-            self.env[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = spark_event_logs_s3_uri
+            self._spark_event_logs_s3_uri = spark_event_logs_s3_uri
+            self.command.extend(["--local-spark-event-logs-dir", _SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH])
 
             output = ProcessingOutput(
                 source=_SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH,
@@ -376,7 +374,7 @@ class _SparkProcessorBase(ScriptProcessor):
                     if not os.path.isfile(dep_path):
                         raise ValueError(
                             "submit_deps path {} is not a valid local file. "
-                            "{}".format(_SparkProcessorBase._SUBMIT_DEPS_ERROR_MESSAGE)
+                            "{}".format(dep_path, _SparkProcessorBase._SUBMIT_DEPS_ERROR_MESSAGE)
                         )
                     print("Copying dependency from local path {} to tmpdir {}".format(dep_path, tmpdir))
                     shutil.copy(dep_path, tmpdir)
@@ -417,10 +415,8 @@ class _SparkProcessorBase(ScriptProcessor):
         if spark_event_logs_s3_uri:
             history_server_env_variables[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = spark_event_logs_s3_uri
         # this variable will be previously set by run() method
-        elif _HistoryServer.ARG_EVENT_LOGS_S3_URI in self.env:
-            history_server_env_variables[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = self.env[
-                _HistoryServer.ARG_EVENT_LOGS_S3_URI
-            ]
+        elif self._spark_event_logs_s3_uri is not None:
+            history_server_env_variables[_HistoryServer.ARG_EVENT_LOGS_S3_URI] = self._spark_event_logs_s3_uri
         else:
             raise ValueError(
                 "SPARK_EVENT_LOGS_S3_URI not present. You can specify spark_event_logs_s3_uri either in"
@@ -853,7 +849,6 @@ class _HistoryServer:
     def run(self):
         self.down()
         print("Starting history server...")
-        print(self.run_history_server_command)
         process = subprocess.Popen(self.run_history_server_command, shell=True)
         return process
 
@@ -873,7 +868,6 @@ class _HistoryServer:
                 ser_cli_args += self._HISTORY_SERVER_ARGS_FORMAT_MAP[key].format(value)
             else:
                 env_options += "--env {}={} ".format(key, value)
-        print(ser_cli_args)
         cmd = "docker run {} --name {} --network host --entrypoint {} {} {}".format(
             env_options, _HistoryServer._CONTAINER_NAME, _HistoryServer._ENTRY_POINT, self.image_uri, ser_cli_args
         )

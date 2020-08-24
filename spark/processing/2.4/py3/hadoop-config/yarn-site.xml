@@ -42,6 +42,10 @@
          <description>The hostname of the NM.</description>
      </property>
      <property>
+         <name>yarn.nodemanager.webapp.address</name>
+         <value>nm_webapp_address</value>
+     </property>
+     <property>
          <name>yarn.nodemanager.vmem-pmem-ratio</name>
          <value>5</value>
          <description>Ratio between virtual memory to physical memory.</description>
