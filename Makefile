@@ -85,7 +85,7 @@ test-sagemaker: install-sdk build-tests
 	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--role $(ROLE) \
 	--region ${REGION} \
- 	--domain ${AWS_DOMAIN}
+	--domain ${AWS_DOMAIN}
 
 # Runs local tests and sagemaker tests.
 test-all: test-local test-sagemaker
