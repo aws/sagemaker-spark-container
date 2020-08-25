@@ -40,7 +40,14 @@ setup(
     ],
     setup_requires=["setuptools", "wheel"],
     # Be frugal when adding dependencies. Prefer Python's standard library.
-    install_requires=["tenacity==5.1.4", "psutil==5.7.0", "click==7.1.2", 'watchdog==0.10.3'],
+    install_requires=[
+        "tenacity==5.1.4",  # retrying utils
+        "psutil==5.7.0",  # inspecting number of cores
+        "click==7.1.2",  # parsing command-line options
+        "watchdog==0.10.3",  # watching for filesystem events
+        "waitress==1.4.4",  # WSGI python server implementation
+        "requests==2.24.0",
+    ],
     extras_require={
         "test": [
             "black",
