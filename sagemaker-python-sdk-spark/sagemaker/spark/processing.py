@@ -95,7 +95,7 @@ class _SparkProcessorBase(ScriptProcessor):
     )
 
     # history server vars
-    _HISTORY_SERVER_TIMEOUT = 20
+    _HISTORY_SERVER_TIMEOUT = 40
     _HISTORY_SERVER_URL_SUFFIX = "/proxy/15050"
     _SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH = "/opt/ml/processing/spark-events/"
 
