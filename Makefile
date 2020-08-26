@@ -81,7 +81,8 @@ test-local: install-sdk build-tests
 # Only runs sagemaker tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
 test-sagemaker: install-sdk build-tests
-	pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	# https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker --repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
 	--region ${REGION} \

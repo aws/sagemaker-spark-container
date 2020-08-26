@@ -14,7 +14,10 @@ def test_pyspark_processor_instantiation():
     )
 
 
-happy_config_dict = {"Classification": "core-site", "Properties": {"hadoop.security.groups.cache.secs": "250"}}
+happy_config_dict = {
+    "Classification": "core-site",
+    "Properties": {"hadoop.security.groups.cache.secs": "250"},
+}
 happy_config_list = [
     {"Classification": "core-site", "Properties": {"hadoop.security.groups.cache.secs": "250"}},
     {"Classification": "spark-defaults", "Properties": {"spark.driver.memory": "2"}},
@@ -26,7 +29,9 @@ nested_config = [
         "Configurations": [
             {
                 "Classification": "export",
-                "Properties": {"YARN_RESOURCEMANAGER_OPTS": "-Xdebug -Xrunjdwp:transport=dt_socket"},
+                "Properties": {
+                    "YARN_RESOURCEMANAGER_OPTS": "-Xdebug -Xrunjdwp:transport=dt_socket"
+                },
                 "Configurations": [],
             }
         ],

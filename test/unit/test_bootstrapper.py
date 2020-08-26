@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from smspark.bootstrapper import Bootstrapper
@@ -103,6 +103,7 @@ def test_bootstrap_smspark_submit(default_bootstrapper) -> None:
     default_bootstrapper.write_runtime_cluster_config = MagicMock()
     default_bootstrapper.write_user_configuration = MagicMock()
     default_bootstrapper.start_hadoop_daemons = MagicMock()
+    default_bootstrapper.wait_for_hadoop = MagicMock()
 
     default_bootstrapper.bootstrap_smspark_submit()
 
@@ -111,6 +112,7 @@ def test_bootstrap_smspark_submit(default_bootstrapper) -> None:
     default_bootstrapper.write_runtime_cluster_config.assert_called_once()
     default_bootstrapper.write_user_configuration.assert_called_once()
     default_bootstrapper.start_hadoop_daemons.assert_called_once()
+    default_bootstrapper.wait_for_hadoop.assert_called_once()
 
 
 def test_bootstrap_history_server(default_bootstrapper) -> None:
@@ -123,6 +125,14 @@ def test_bootstrap_history_server(default_bootstrapper) -> None:
     default_bootstrapper.copy_aws_jars.assert_called_once()
     default_bootstrapper.copy_cluster_config.assert_called_once()
     default_bootstrapper.start_spark_standalone_primary.assert_called_once()
+
+
+@patch("requests.get")
+def test_wait_for_hadoop(mock_get, default_bootstrapper) -> None:
+    mock_response = Mock()
+    mock_response.ok = True
+    mock_get.return_value = mock_response
+    default_bootstrapper.wait_for_hadoop()
 
 
 @patch("shutil.copyfile", side_effect=None)

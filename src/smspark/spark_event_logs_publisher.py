@@ -21,23 +21,31 @@ class SparkEventLogPublisher(Thread):
 
         The spark.history.fs.logDirectory will be set to /tmp/spark-events, where the spark events will be
         sent to locally. This SparkEventLogPublisher will copy the event logs file to the dst passed from
-        python sdk. The path stores in SPARK_LOCAL_EVENT_LOG_DIR.
+        python sdk. The path stores in local_spark_event_logs_dir.
     """
 
-    def __init__(self, copy_interval=20):
+    def __init__(self, spark_event_logs_s3_uri, local_spark_event_logs_dir, copy_interval=20):
         Thread.__init__(self)
         self._stop_publishing = False
         self._copy_interval = copy_interval
+        self.spark_event_logs_s3_uri = spark_event_logs_s3_uri
+        self.local_spark_event_logs_dir = local_spark_event_logs_dir
 
     def run(self):
+        # If spark_event_logs_s3_uri is specified, spark events will be published to
+        # s3 via spark's s3a client.
+        if self.spark_event_logs_s3_uri is not None:
+            log.info("spark_event_logs_s3_uri is specified, publishing to s3 directly")
+            self._config_event_log_with_s3_uri()
+            return
 
-        if "SPARK_LOCAL_EVENT_LOG_DIR" not in os.environ:
+        if self.local_spark_event_logs_dir is None:
             log.info("Spark event log not enabled.")
             return
 
         log.info("Start to copy the spark event logs file.")
         self._config_event_log()
-        dst_dir = os.environ["SPARK_LOCAL_EVENT_LOG_DIR"]
+        dst_dir = self.local_spark_event_logs_dir
 
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
@@ -85,3 +93,9 @@ class SparkEventLogPublisher(Thread):
             log.info("Writing event log config to spark-defaults.conf")
             spark_config.write(CONFIG_ENABLE_EVENT_LOG + "\n")
             spark_config.write(CONFIG_EVENT_LOG_DIR_FORMAT.format(EVENT_LOG_DIR) + "\n")
+
+    def _config_event_log_with_s3_uri(self):
+        s3_path = re.sub("s3://", "s3a://", self.spark_event_logs_s3_uri, 1)
+        with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
+            spark_config.write(CONFIG_ENABLE_EVENT_LOG + "\n")
+            spark_config.write(CONFIG_EVENT_LOG_DIR_FORMAT.format(s3_path) + "\n")

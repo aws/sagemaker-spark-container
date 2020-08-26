@@ -50,7 +50,7 @@ class SubmitTest:
 
     name: str
     args: str
-    expected: Union[str, Type[BaseException]]
+    expected_cmd: Union[str, Type[BaseException]]
 
 
 def get_test_cases() -> List[SubmitTest]:
@@ -60,71 +60,71 @@ def get_test_cases() -> List[SubmitTest]:
             SubmitTest(
                 name="single local jar should pass",
                 args=arg + " {jar_file} app.jar",
-                expected="spark-submit --master yarn --deploy-mode client " + arg + " {jar_file} app.jar",
+                expected_cmd="spark-submit --master yarn --deploy-mode client " + arg + " {jar_file} app.jar",
             ),
             SubmitTest(
                 name="list of local jars should pass",
                 args=arg + " {jar_file},{other_jar_file} app.jar",
-                expected="spark-submit --master yarn --deploy-mode client "
+                expected_cmd="spark-submit --master yarn --deploy-mode client "
                 + arg
                 + " {jar_file},{other_jar_file} app.jar",
             ),
             SubmitTest(
                 name="s3 url to jar should pass",
                 args=arg + " s3://bucket/to/jar1.jar app.jar",
-                expected="spark-submit --master yarn --deploy-mode client " + arg + " s3://bucket/to/jar1.jar app.jar",
+                expected_cmd="spark-submit --master yarn --deploy-mode client " + arg + " s3://bucket/to/jar1.jar app.jar",
             ),
             SubmitTest(
                 name="s3a url to jar should pass",
                 args=arg + " s3a://bucket/to/jar1.jar app.jar",
-                expected="spark-submit --master yarn --deploy-mode client " + arg + " s3a://bucket/to/jar1.jar app.jar",
+                expected_cmd="spark-submit --master yarn --deploy-mode client " + arg + " s3a://bucket/to/jar1.jar app.jar",
             ),
             SubmitTest(
                 name="multiple s3 urls to jar should pass",
                 args=arg + " s3://bucket/to/jar1.jar,s3://bucket/to/jar2.jar app.jar",
-                expected="spark-submit --master yarn --deploy-mode client "
+                expected_cmd="spark-submit --master yarn --deploy-mode client "
                 + arg
                 + " s3://bucket/to/jar1.jar,s3://bucket/to/jar2.jar app.jar",
             ),
             SubmitTest(
                 name="mixed s3 urls to jars and local paths should pass",
                 args=arg + " s3://bucket/to/jar1.jar,{jar_file} app.jar",
-                expected="spark-submit --master yarn --deploy-mode client "
+                expected_cmd="spark-submit --master yarn --deploy-mode client "
                 + arg
                 + " s3://bucket/to/jar1.jar,{jar_file} app.jar",
             ),
             SubmitTest(
-                name="relative paths should fail", args=arg + " relative/path/to/jar.jar app.jar", expected=ValueError,
+                name="relative paths should fail", args=arg + " relative/path/to/jar.jar app.jar", expected_cmd=ValueError,
             ),
             SubmitTest(
                 name="nonexistent paths should fail",
                 args=arg + " /path/to/nonexistent/file app.jar",
-                expected=ValueError,
+                expected_cmd=ValueError,
             ),
             SubmitTest(
                 name="directory with no files should fail",
                 args=arg + " {empty_tempdir_path} app.jar",
-                expected=ValueError,
+                expected_cmd=ValueError,
             ),
         ]
         test_cases = test_cases + files_test_cases
 
     test_cases = [
-        SubmitTest(name="missing APP arg should fail", args="", expected=click.exceptions.MissingParameter),
+        SubmitTest(name="missing APP arg should fail", args="", expected_cmd=click.exceptions.MissingParameter),
         SubmitTest(
             name="invalid spark options should fail",
             args="--invalid-spark-option opt arg.py",
-            expected=click.exceptions.NoSuchOption,
+            expected_cmd=click.exceptions.NoSuchOption,
         ),
         SubmitTest(
             name="happy path should pass",
             args="app.py",
-            expected="spark-submit --master yarn --deploy-mode client app.py",
+            expected_cmd="spark-submit --master yarn --deploy-mode client app.py",
         ),
         SubmitTest(
             name="valid spark option should pass",
             args="--class com.app.Main app.jar",
-            expected="spark-submit --master yarn --deploy-mode client --class com.app.Main app.jar",
+            expected_cmd="spark-submit --master yarn --deploy-mode client --class com.app.Main app.jar",
         ),
     ] + test_cases
 
@@ -151,13 +151,14 @@ def test_submit(
     result = runner.invoke(submit, args, standalone_mode=False)
 
     # happy
-    if isinstance(test_case.expected, str):
-        expected = test_case.expected.format(jar_file=jar_file, other_jar_file=other_jar_file)
+    if isinstance(test_case.expected_cmd, str):
+        expected_cmd = test_case.expected_cmd.format(jar_file=jar_file, other_jar_file=other_jar_file)
         assert result.exception is None, result.output
         assert result.exit_code == 0
         patched_processing_job_manager.assert_called_once()
-        patched_processing_job_manager.return_value.run.assert_called_once_with(expected)
+        patched_processing_job_manager.return_value.run.assert_called_once_with(expected_cmd, None, None)
+
     # sad
     else:
         assert result.exit_code != 0, result.output
-        assert isinstance(result.exception, test_case.expected)
+        assert isinstance(result.exception, test_case.expected_cmd)
