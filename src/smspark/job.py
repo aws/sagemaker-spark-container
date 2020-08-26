@@ -13,6 +13,7 @@ from typing import Any, Dict, Mapping, Sequence
 from smspark.bootstrapper import Bootstrapper
 from smspark.defaults import (default_processing_job_config,
                               default_resource_config)
+from smspark.errors import AlgorithmError
 from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
 from smspark.status import (Status, StatusApp, StatusClient, StatusMessage,
@@ -85,10 +86,7 @@ class ProcessingJobManager(object):
     def _dns_lookup(self, host: str) -> None:
         socket.gethostbyname(host)
 
-    def run(self,
-            spark_submit_cmd: str,
-            spark_event_logs_s3_uri: str,
-            local_spark_event_logs_dir: str) -> None:
+    def run(self, spark_submit_cmd: str, spark_event_logs_s3_uri: str, local_spark_event_logs_dir: str) -> None:
         """Run a Spark job.
 
         First, wait for workers to come up and bootstraps the cluster.
@@ -106,19 +104,41 @@ class ProcessingJobManager(object):
         self._bootstrap_yarn()
         self.logger.info("starting executor logs watcher")
         self._start_executor_logs_watcher()
+        self.logger.info("start log event log publisher")
+        spark_log_publisher = self._start_spark_event_log_publisher(spark_event_logs_s3_uri, local_spark_event_logs_dir)
 
         if self._is_primary_host:
 
+            self.logger.info(f"Waiting for hosts to bootstrap: {self.hosts}")
+
             def all_hosts_have_bootstrapped() -> bool:
                 host_statuses: Mapping[str, StatusMessage] = self.status_client.get_status(self.hosts)
+                self.logger.info(f"Received host statuses: {host_statuses.items()}")
                 has_bootstrapped = [message.status == Status.WAITING for message in host_statuses.values()]
                 return all(has_bootstrapped)
 
             self.waiter.wait_for(predicate_fn=all_hosts_have_bootstrapped, timeout=180.0, period=5.0)
-            self.logger.info(f"running {spark_submit_cmd}")
-            self._run_spark_submit(spark_submit_cmd, spark_event_logs_s3_uri, local_spark_event_logs_dir)
-            self.logger.info("spark submit finished with exit code {}.".format(0))
-            sys.exit(0)
+
+            try:
+                subprocess.run(spark_submit_cmd, check=True, shell=True)
+                self.logger.info("spark submit was successful. primary node exiting.")
+            except subprocess.CalledProcessError as e:
+                self.logger.error(
+                    f"spark-submit command failed with exit code {e.returncode}: {str(e)}\n{traceback.format_exc()}"
+                    + str(e)
+                    + "\n"
+                    + traceback.format_exc()
+                )
+                raise AlgorithmError("spark failed with a non-zero exit code", caused_by=e, exit_code=e.returncode)
+            except Exception as e:
+                self.logger.error("Exception during processing: " + str(e) + "\n" + traceback.format_exc())
+                raise AlgorithmError(
+                    message="error occurred during spark-submit execution. Please see logs for details.", caused_by=e,
+                )
+
+            finally:
+                spark_log_publisher.down()
+
         else:
             # workers wait until the primary is up, then wait until it's down.
             def primary_is_up() -> bool:
@@ -131,46 +151,32 @@ class ProcessingJobManager(object):
             def primary_is_down() -> bool:
                 return not primary_is_up()
 
+            self.logger.info("waiting for the primary to come up")
             self.waiter.wait_for(primary_is_up, timeout=60.0, period=1.0)
+            self.logger.info("waiting for the primary to go down")
             self.waiter.wait_for(primary_is_down, timeout=float("inf"), period=5.0)
-
-    def _run_spark_submit(self,
-                          spark_submit_cmd: str,
-                          spark_event_logs_s3_uri: str,
-                          local_spark_event_logs_dir: str) -> None:
-        spark_log_publisher = SparkEventLogPublisher(spark_event_logs_s3_uri, local_spark_event_logs_dir)
-        spark_log_publisher.start()
-
-        # SparkEventLogPublisher writes event log config to spark-defaults.conf, give it 1 seconds.
-        time.sleep(1)
-        try:
-            subprocess.run(spark_submit_cmd, check=True, shell=True)
-        except Exception as e:
-            self.logger.info("Exception during processing: " + str(e) + "\n" + traceback.format_exc())
-            self._write_output_message("Exception during processing: " + str(e))
-            sys.exit(255)
-        finally:
-            spark_log_publisher.down()
-
-    def _write_output_message(self, message: str) -> None:
-        if not path.exists("/opt/ml/output"):
-            os.makedirs("/opt/ml/output")
-
-        with open("/opt/ml/output/message", "w") as output_message_file:
-            output_message_file.write(message)
+            self.logger.info("primary is down, worker now exiting")
 
     def _bootstrap_yarn(self) -> None:
         self.status_app.status = Status.BOOTSTRAPPING
         self.bootstrapper.bootstrap_smspark_submit()
         self.status_app.status = Status.WAITING
 
-    def _start_executor_logs_watcher(self, log_dir="/var/log/yarn"):
+    def _start_executor_logs_watcher(self, log_dir="/var/log/yarn") -> None:
         # TODO: check Yarn configs for yarn.log.dir/YARN_LOG_DIR, in case of overrides
         spark_executor_logs_watcher = SparkExecutorLogsWatcher(log_dir)
         spark_executor_logs_watcher.daemon = True
         spark_executor_logs_watcher.start()
 
-    def _start_status_server(self):
+    def _start_status_server(self) -> None:
         server = StatusServer(self.status_app, self.hostname)
         server.daemon = True
         server.start()
+
+    def _start_spark_event_log_publisher(
+        self, spark_event_logs_s3_uri: str, local_spark_event_logs_dir: str
+    ) -> None:
+        spark_log_publisher = SparkEventLogPublisher(spark_event_logs_s3_uri, local_spark_event_logs_dir)
+        spark_log_publisher.daemon = True
+        spark_log_publisher.start()
+        return spark_log_publisher

@@ -2,6 +2,7 @@ import logging
 
 import click
 from smspark import history_server_utils, nginx_utils
+from smspark.bootstrapper import Bootstrapper
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

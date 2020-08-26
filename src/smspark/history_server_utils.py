@@ -53,11 +53,10 @@ def _config_history_log_dir(event_logs_s3_uri):
         # customers only need to know their s3 path and container converts it to
         # s3a://{bucket}/{folder}
         # TODO (guoqiao): EMRFS should support talking to s3 directly according to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-file-systems.html
-        s3_path = re.sub("s3://", "s3a://", event_logs_s3_uri, 1)
 
         with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
-            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path))
-            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path) + "\n")
+            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri))
+            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri) + "\n")
     else:
         log.info("Env variable HISTORY_LOG_DIR does not exist, exiting")
         exit(

@@ -1,8 +1,7 @@
 import os
 import subprocess
 from shutil import copyfile, rmtree
-
-from unittest.mock import call, mock_open, patch, MagicMock
+from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
 from smspark.bootstrapper import Bootstrapper
@@ -25,7 +24,7 @@ def notebook_instance_env_var() -> None:
 
 
 @patch("smspark.history_server_utils.open", new_callable=mock_open)
-def test_config_history_server_with_env_variable(mock_open_file, notebook_instance_env_var):
+def test_config_history_server_with_env_variable(mock_open_file, notebook_instance_env_var) -> None:
     config_history_server(EVENT_LOGS_S3_URI)
 
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
@@ -41,7 +40,7 @@ def test_config_history_server_without_env_variable():
 @patch("smspark.history_server_utils.config_history_server")
 @patch("smspark.history_server_utils.Bootstrapper")
 @patch("subprocess.run")
-def test_start_history_server(mock_subprocess_run, mock_bootstrapper, mock_config_history_server):
+def test_start_history_server(mock_subprocess_run, mock_bootstrapper, mock_config_history_server) -> None:
     bootstrapper = MagicMock()
     mock_bootstrapper.return_value = bootstrapper
     start_history_server(SPARK_DEFAULTS_CONFIG_PATH)

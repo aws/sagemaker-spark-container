@@ -56,7 +56,7 @@ class StatusClient:
                     return status_message
                 else:
                     raise AlgorithmError(
-                        message="Could not get status for host {}:\nstatus code: {}\nresponse: {}".format(
+                        message="Could not get status for host {} status code: {} response: {}".format(
                             host, resp.status_code, resp.text
                         )
                     )

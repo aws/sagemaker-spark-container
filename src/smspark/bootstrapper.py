@@ -19,6 +19,8 @@ from smspark.waiter import Waiter
 class Bootstrapper:
     """Initializes the cluster."""
 
+    NODEMANAGER_WEBAPP_ADDR_PORT = 8042
+
     HADOOP_CONFIG_PATH = "/opt/hadoop-config/"
     HADOOP_PATH = "/usr/lib/hadoop"
     SPARK_PATH = "/usr/lib/spark"
@@ -115,6 +117,9 @@ class Bootstrapper:
         file_data = file_data.replace("rm_hostname", primary_ip)
         file_data = file_data.replace("nm_hostname", current_host)
         file_data = file_data.replace("nm_webapp_address", "{}:{}".format(current_host, 8042))
+        file_data = file_data.replace(
+            "nm_webapp_address", "{}:{}".format(current_host, self.NODEMANAGER_WEBAPP_ADDR_PORT)
+        )
         with open(yarn_site_file_path, "w") as yarn_file:
             yarn_file.write(file_data)
 
