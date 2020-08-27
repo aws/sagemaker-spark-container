@@ -6,6 +6,7 @@ from typing import Any, Dict, Sequence
 from urllib.parse import urlparse
 
 import click
+from smspark.errors import AlgorithmError, BaseError, InputError
 from smspark.job import ProcessingJobManager
 
 logging.basicConfig(level=logging.INFO)
@@ -21,7 +22,7 @@ log = logging.getLogger(__name__)
 )
 @click.option(
     "--py-files",
-    help="Either a directory or a comma-separated list of .zip, .egg, or .py files to place on the PYTHONPATH."  # type: ignore # noqa
+    help="Either a directory or a comma-separated list of .zip, .egg, or .py files to place on the PYTHONPATH."
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
 @click.option(
@@ -30,18 +31,27 @@ log = logging.getLogger(__name__)
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
 @click.option(
-    "--spark-event-logs-s3-uri",
-    help="Optional, spark events file will be published to this s3 destination",
+    "--spark-event-logs-s3-uri", help="Optional, spark events file will be published to this s3 destination",
 )
 @click.option(
-    "--local-spark-event-logs-dir",
-    help="Optional, spark events will be stored in this local path",
+    "--local-spark-event-logs-dir", help="Optional, spark events will be stored in this local path",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Print additional debug output.")
 @click.argument("app")
 @click.argument("app_arguments", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_spark_event_logs_dir, verbose, app, app_arguments) -> None:
+def submit(
+    ctx: click.Context,
+    class_: str,
+    jars: str,
+    py_files: str,
+    files: str,
+    spark_event_logs_s3_uri: str,
+    local_spark_event_logs_dir: str,
+    verbose: bool,
+    app: str,
+    app_arguments: str,
+) -> None:
     """Submit a job to smspark-submit.
 
     smspark-submit generally passes options through to spark-submit, but with the exception of certain options,
@@ -58,7 +68,6 @@ def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_sp
     as application arguments.
     """
     log.info(f"Parsing arguments. argv: {sys.argv}")
-    # FIXME: unified error handling. This will need a try/catch to determine fault
 
     # Parse smspark-submit options which will be passed to spark-submit as spark options.
     spark_options: Dict[str, Any] = ctx.params
@@ -87,24 +96,25 @@ def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_sp
     processing_job_manager = ProcessingJobManager()
 
     log.info(f"running spark submit command: {spark_submit_cmd}")
-    processing_job_manager.run(
-        spark_submit_cmd,
-        spark_event_logs_s3_uri,
-        local_spark_event_logs_dir)
+    processing_job_manager.run(spark_submit_cmd, spark_event_logs_s3_uri, local_spark_event_logs_dir)
 
 
 def submit_main() -> None:
+    """Run main and handle errors."""
     try:
         submit.main(standalone_mode=False)
-    # FIXME: error handling, error prefixing.
+        sys.exit(0)
     except click.exceptions.MissingParameter as e:
         # "ValueError: missing parameter: app"
-        print(e)
-        raise ValueError(e)
+        AlgorithmError(message="Couldn't parse input.", caused_by=e).log_and_exit()
     except click.exceptions.NoSuchOption as e:
         # "ValueError: no such option: --nonexistent"
-        print(e)
-        raise ValueError(e)
+        AlgorithmError(message="Couldn't parse input.", caused_by=e).log_and_exit()
+    except Exception as e:
+        if isinstance(e, BaseError):
+            e.log_and_exit()
+        else:
+            AlgorithmError(message="error running Spark job", caused_by=e).log_and_exit()
 
 
 def _render_spark_opts(spark_opts: Dict[str, Any]) -> Dict[str, Any]:
@@ -146,7 +156,7 @@ def _get_list_of_files(path_str: str) -> str:
     of the given path.
     """
     if not path_str:
-        raise ValueError("Empty file path")
+        raise InputError(ValueError(f"path {path_str} must not be empty"))
 
     paths = path_str.split(",")
     expanded_paths = []
@@ -157,23 +167,24 @@ def _get_list_of_files(path_str: str) -> str:
         elif result.scheme == "file" or not result.scheme:
             file_path = pathlib.Path(path)
             if not file_path.is_absolute():
-                raise ValueError(f"file path {file_path} must be an absolute path to a file or directory")
+                raise InputError(ValueError(f"file path {file_path} must be an absolute path to a file or directory"))
+
             file_path = file_path.resolve()
 
             # In the typical case, file_path points to a directory containing files.
             if not file_path.exists():
-                raise ValueError(f"file path {file_path} does not exist")
+                raise InputError(ValueError(f"file path {file_path} does not exist"))
 
             if file_path.is_dir():
                 files = [str(f.resolve()) for f in file_path.iterdir() if f.is_file()]
                 if not files:
-                    raise ValueError(f"Found zero files in {file_path}")
+                    raise InputError(ValueError(f"Found zero files in {file_path}"))
                 for f in files:
                     expanded_paths.append(f)
             elif file_path.is_file():
                 expanded_paths.append(str(file_path))
             else:
-                raise ValueError(f"file at {file_path} is not a regular file or directory")
+                raise InputError(ValueError(f"file at {file_path} is not a regular file or directory"))
 
     return ",".join(expanded_paths)
 

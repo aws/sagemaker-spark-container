@@ -12,6 +12,7 @@ ARGS_FORMAT = "--event-logs-s3-uri {} --remote-domain-name {}"
 EVENT_LOGS_S3_URI = "s3://bucket"
 REMOTE_DOMAIN_NAME = "domain"
 
+
 @dataclass
 class SubmitTest:
     """Represents data for one submit test."""
@@ -22,15 +23,17 @@ class SubmitTest:
     expected_s3_uri: str = None
     expected_local_dir: str = None
 
+
 test_cases = [
-        SubmitTest(
-            name="When arguments are set, should be passed job manager",
-            args="--spark-event-logs-s3-uri s3://bucket --local-spark-event-logs-dir /opt/ml/processing app.py",
-            expected_cmd="spark-submit --master yarn --deploy-mode client app.py",
-            expected_s3_uri="s3://bucket",
-            expected_local_dir="/opt/ml/processing",
-        ),
-    ]
+    SubmitTest(
+        name="When arguments are set, should be passed job manager",
+        args="--spark-event-logs-s3-uri s3://bucket --local-spark-event-logs-dir /opt/ml/processing app.py",
+        expected_cmd="spark-submit --master yarn --deploy-mode client app.py",
+        expected_s3_uri="s3://bucket",
+        expected_local_dir="/opt/ml/processing",
+    ),
+]
+
 
 @patch("smspark.nginx_utils.start_nginx")
 @patch("smspark.history_server_utils.start_history_server")
@@ -45,10 +48,7 @@ def test_run_history_server(mock_start_history_server, mock_start_nginx):
 
 @patch("smspark.cli.ProcessingJobManager")
 @pytest.mark.parametrize("test_case", test_cases, ids=[submit_test.name for submit_test in test_cases])
-def test_submit(
-    patched_processing_job_manager: ProcessingJobManager,
-    test_case: SubmitTest,
-) -> None:
+def test_submit(patched_processing_job_manager: ProcessingJobManager, test_case: SubmitTest,) -> None:
     runner = CliRunner()
 
     result = runner.invoke(submit, test_case.args, standalone_mode=False)
@@ -58,9 +58,9 @@ def test_submit(
         assert result.exception is None, result.output
         assert result.exit_code == 0
         patched_processing_job_manager.assert_called_once()
-        patched_processing_job_manager.return_value.run.assert_called_once_with(test_case.expected_cmd,
-                                                                                test_case.expected_s3_uri,
-                                                                                test_case.expected_local_dir)
+        patched_processing_job_manager.return_value.run.assert_called_once_with(
+            test_case.expected_cmd, test_case.expected_s3_uri, test_case.expected_local_dir
+        )
 
     # sad
     else:

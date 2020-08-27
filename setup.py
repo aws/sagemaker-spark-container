@@ -36,7 +36,6 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
     ],
     setup_requires=["setuptools", "wheel"],
     # Be frugal when adding dependencies. Prefer Python's standard library.
@@ -46,10 +45,11 @@ setup(
         "click==7.1.2",  # parsing command-line options
         "watchdog==0.10.3",  # watching for filesystem events
         "waitress==1.4.4",  # WSGI python server implementation
-        "requests==2.24.0",
+        "requests==2.24.0", # for HTTP requests
     ],
     extras_require={
         "test": [
+            "safety",
             "black",
             "tox",
             "mypy",

@@ -1,8 +1,9 @@
+"""Utility functions for configuring and running the Spark history server."""
 import logging
 import os
-import re
 import subprocess
 import sys
+from typing import Optional
 
 from smspark.bootstrapper import Bootstrapper
 
@@ -20,7 +21,8 @@ logging.basicConfig(
 log = logging.getLogger("sagemaker-spark")
 
 
-def start_history_server(event_logs_s3_uri):
+def start_history_server(event_logs_s3_uri: str) -> None:
+    """Bootstrap the history server instance and starts the Spark history server instance."""
     bootstrapper = Bootstrapper()
     log.info("copying aws jars")
     bootstrapper.copy_aws_jars()
@@ -38,12 +40,13 @@ def start_history_server(event_logs_s3_uri):
         sys.exit(255)
 
 
-def config_history_server(event_logs_s3_uri):
+def config_history_server(event_logs_s3_uri: str) -> None:
+    """Configure the Spark history server."""
     _config_history_log_dir(event_logs_s3_uri)
     _config_proxy_base()
 
 
-def _config_history_log_dir(event_logs_s3_uri):
+def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
     if event_logs_s3_uri is not None:
         log.info("s3 path presents, starting history server")
 
@@ -53,11 +56,10 @@ def _config_history_log_dir(event_logs_s3_uri):
         # customers only need to know their s3 path and container converts it to
         # s3a://{bucket}/{folder}
         # TODO (guoqiao): EMRFS should support talking to s3 directly according to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-file-systems.html
-        s3_path = re.sub("s3://", "s3a://", event_logs_s3_uri, 1)
 
         with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
-            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path))
-            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path) + "\n")
+            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri))
+            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri) + "\n")
     else:
         log.info("Env variable HISTORY_LOG_DIR does not exist, exiting")
         exit(
@@ -68,10 +70,11 @@ def _config_history_log_dir(event_logs_s3_uri):
 # The method sets spark.ui.proxyBase, otherwise the Spark UI resource cannot be found. The history server only supported in two cases: 1) local machine 2)
 # notebook instance. The presence of Env variable "NOTEBOOK_INSTANCE" indicates if we need to update spark.ui.proxyBase or not, this variable is passed from
 # python sdk
-def _config_proxy_base():
+def _config_proxy_base() -> None:
     with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
         spark_config.write(CONFIG_NOTEBOOK_PROXY_BASE + "\n")
 
 
-def is_notebook_instance():
+def is_notebook_instance() -> bool:
+    """Decide whether this is running on a SageMaker notebook instance."""
     return "SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN" in os.environ

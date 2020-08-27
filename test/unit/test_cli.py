@@ -7,7 +7,8 @@ from unittest.mock import patch
 import click
 import pytest
 from click.testing import CliRunner
-from smspark.cli import submit
+from smspark.cli import submit, submit_main
+from smspark.errors import InputError
 from smspark.job import ProcessingJobManager
 
 
@@ -72,12 +73,16 @@ def get_test_cases() -> List[SubmitTest]:
             SubmitTest(
                 name="s3 url to jar should pass",
                 args=arg + " s3://bucket/to/jar1.jar app.jar",
-                expected_cmd="spark-submit --master yarn --deploy-mode client " + arg + " s3://bucket/to/jar1.jar app.jar",
+                expected_cmd="spark-submit --master yarn --deploy-mode client "
+                + arg
+                + " s3://bucket/to/jar1.jar app.jar",
             ),
             SubmitTest(
                 name="s3a url to jar should pass",
                 args=arg + " s3a://bucket/to/jar1.jar app.jar",
-                expected_cmd="spark-submit --master yarn --deploy-mode client " + arg + " s3a://bucket/to/jar1.jar app.jar",
+                expected_cmd="spark-submit --master yarn --deploy-mode client "
+                + arg
+                + " s3a://bucket/to/jar1.jar app.jar",
             ),
             SubmitTest(
                 name="multiple s3 urls to jar should pass",
@@ -94,23 +99,25 @@ def get_test_cases() -> List[SubmitTest]:
                 + " s3://bucket/to/jar1.jar,{jar_file} app.jar",
             ),
             SubmitTest(
-                name="relative paths should fail", args=arg + " relative/path/to/jar.jar app.jar", expected_cmd=ValueError,
+                name="relative paths should fail",
+                args=arg + " relative/path/to/jar.jar app.jar",
+                expected_cmd=InputError,
             ),
             SubmitTest(
                 name="nonexistent paths should fail",
                 args=arg + " /path/to/nonexistent/file app.jar",
-                expected_cmd=ValueError,
+                expected_cmd=InputError,
             ),
             SubmitTest(
                 name="directory with no files should fail",
                 args=arg + " {empty_tempdir_path} app.jar",
-                expected_cmd=ValueError,
+                expected_cmd=InputError,
             ),
         ]
         test_cases = test_cases + files_test_cases
 
     test_cases = [
-        SubmitTest(name="missing APP arg should fail", args="", expected_cmd=click.exceptions.MissingParameter),
+        SubmitTest(name="missing APP arg should fail", args="", expected_cmd=click.exceptions.MissingParameter,),
         SubmitTest(
             name="invalid spark options should fail",
             args="--invalid-spark-option opt arg.py",

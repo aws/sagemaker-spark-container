@@ -11,7 +11,7 @@ from sagemaker.spark.processing import PySparkProcessor, SparkJarProcessor
 @pytest.fixture(autouse=True)
 def jitter():
     "Add random sleeps before tests to avoid breaching CreateProcessingJob API limits"
-    time.sleep(random.random()*10)
+    time.sleep(random.random() * 10)
 
 
 @pytest.fixture
@@ -27,12 +27,12 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
         },
-        {"Classification": "core-site", "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"}},
+        {"Classification": "core-site", "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"},},
         {"Classification": "hadoop-log4j", "Properties": {"key": "value"}},
         {
             "Classification": "hive-env",
@@ -40,7 +40,7 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
@@ -55,7 +55,7 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
@@ -70,13 +70,38 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
         },
     ]
     return configuration
+
+
+def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri):
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-py-customer-error",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=1,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+    )
+
+    try:
+        spark.run(
+            submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+            arguments=["invalid_arg"],
+            wait=True,
+            logs=False,
+        )
+    except Exception:
+        pass  # this job is expected to fail
+    processing_job = spark.latest_job
+
+    assert "Algorithm Error: (caused by CalledProcessError)" in processing_job.describe()["ExitMessage"]
 
 
 def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
@@ -100,7 +125,9 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagema
     with open("test/resources/data/files/data.jsonl") as data:
         body = data.read()
         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+        S3Uploader.upload_string_as_file_body(
+            body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
+        )
 
     spark.run(
         submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
@@ -168,7 +195,9 @@ def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sage
     with open("test/resources/data/files/data.jsonl") as data:
         body = data.read()
         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+        S3Uploader.upload_string_as_file_body(
+            body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
+        )
     output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
 
     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
@@ -211,7 +240,9 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagem
     with open("test/resources/data/files/data.jsonl") as data:
         body = data.read()
         input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
-        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session)
+        S3Uploader.upload_string_as_file_body(
+            body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
+        )
     output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
 
     java_project_dir = "test/resources/code/java/hello-java-spark"
