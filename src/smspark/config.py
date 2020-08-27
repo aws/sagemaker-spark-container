@@ -5,7 +5,7 @@ from __future__ import annotations
 import pathlib
 from collections import namedtuple
 from dataclasses import dataclass
-from typing import ClassVar, List, Mapping, Sequence, Union
+from typing import ClassVar, Mapping, Sequence
 
 _ClassificationData = namedtuple("ClassificationData", ["classification", "path", "serializer"])
 

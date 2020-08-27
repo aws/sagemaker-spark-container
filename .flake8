@@ -1,0 +1,24 @@
+[flake8]
+exclude =
+    build/
+    .git
+    __pycache__
+    examples/
+    *pb2.py
+    .tox
+    tests/data/
+    venv/
+    *service_pb2_grpc.py
+
+max-complexity = 10
+
+ignore =
+    C901,  # Function is too complex
+    D104,  # Missing docstring in public package
+    D107,  # Allow init not to have a docstring.
+    D105,  # Allow magic methods (__repr__, __str__, ...) not to have docstrings.
+    E203,  # whitespace before ':': Black disagrees with and explicitly violates this.
+    E501,  # line too long -- follow black formatting instead.
+    W503   # Line break occurred before a binary operator
+
+require-code = True

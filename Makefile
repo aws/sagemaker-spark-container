@@ -47,6 +47,7 @@ build-container-library:
 
 install-container-library:
 	pip install --upgrade dist/smspark-0.1-py3-none-any.whl
+	safety check  # https://github.com/pyupio/safety
 
 # Builds docker image.
 build: download-emr-packages build-container-library
@@ -69,8 +70,7 @@ lint:
 	black --check ./src
 	black --check ./test
 	mypy --follow-imports=skip src/smspark   # see mypy.ini for configuration
-	flake8 src         # see .flake8.ini for configuration
-	flake8 test --ignore D100,D103,D104,D400 # ignore flake-docstrings errors in test
+	flake8 src         # see .flake8 for configuration
 
 test-unit: build-container-library install-container-library
 	pytest -s -vv test/unit

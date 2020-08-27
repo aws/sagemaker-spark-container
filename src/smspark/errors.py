@@ -1,3 +1,4 @@
+"""Error types."""
 import logging
 import pathlib
 import sys
@@ -7,8 +8,7 @@ EXIT_CODE_ALGORITHM_ERROR = 1
 
 
 class BaseError(Exception):
-    """Abstract base for all errors that may cause the container to exit/terminate
-    unsuccessfully. All direct sub-classes should be kept/maintained in this file.
+    """Abstract base for all errors that may cause the container to exit unsuccessfully.
 
     Args: see `Attributes` below.
 
@@ -28,6 +28,7 @@ class BaseError(Exception):
     def __init__(
         self, message: str, caused_by: Exception, exit_code: int = 127, failure_prefix: str = "Algorithm Error",
     ):
+        """Initialize."""
         formatted_message = BaseError._format_exception_message(failure_prefix, message, caused_by)
         super(BaseError, self).__init__(formatted_message)
         self.logger = logging.getLogger("smspark-submit")
@@ -59,6 +60,7 @@ class AlgorithmError(BaseError):
     """Exception used to indicate a problem that occurred with the algorithm."""
 
     def __init__(self, message: str, caused_by: Exception, exit_code: int = EXIT_CODE_ALGORITHM_ERROR):
+        """Initialize."""
         super(AlgorithmError, self).__init__(message, caused_by, failure_prefix="Algorithm Error", exit_code=exit_code)
 
 
@@ -66,4 +68,5 @@ class InputError(AlgorithmError):
     """Exception used to indicate that the customer's input caused spark-submit to fail."""
 
     def __init__(self, caused_by: Exception) -> None:
+        """Initialize."""
         super(InputError, self).__init__(message="error preparing for spark submit", caused_by=caused_by)

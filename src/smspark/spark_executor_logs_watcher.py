@@ -1,3 +1,4 @@
+"""Tail Spark executor logs and write them to stdout to publish them to CloudWatch."""
 import os.path
 import time
 from subprocess import PIPE, Popen
@@ -11,10 +12,12 @@ class SparkExecutorLogsWatcher(Thread):
     """A thread that tails executor logs and writes them to stdout."""
 
     def __init__(self, log_dir: str = "/var/log/yarn") -> None:
+        """Initialize the executor log watcher."""
         Thread.__init__(self)
         self.log_dir = log_dir
 
     def run(self) -> None:
+        """Run the executor log watcher."""
         if not os.path.isdir(self.log_dir):
             os.makedirs(self.log_dir)
 
@@ -26,15 +29,18 @@ class SparkExecutorLogsWatcher(Thread):
         try:
             while True:
                 time.sleep(5)
-        except:
+        except BaseException:
             observer.stop()
 
         observer.join()
 
 
 class SparkExecutorLogsHandler(FileSystemEventHandler):  # type: ignore
+    """Handler for `SparkExecutorLogsWatcher`."""
+
     @staticmethod
     def on_created(event: FileSystemEvent) -> None:
+        """Tail executor logs upon filesystem create event."""
         if event.is_directory:
             return None
 

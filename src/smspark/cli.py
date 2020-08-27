@@ -100,6 +100,7 @@ def submit(
 
 
 def submit_main() -> None:
+    """Run main and handle errors."""
     try:
         submit.main(standalone_mode=False)
         sys.exit(0)

@@ -1,7 +1,7 @@
+"""Status server and client implementation."""
 import asyncio
 import json
 import logging
-import time
 from dataclasses import asdict, dataclass
 from datetime import date, datetime
 from enum import Enum
@@ -24,6 +24,7 @@ class Status(str, Enum):
     WAITING = "WAITING"
 
     def __repr__(self) -> str:
+        """Enclose the name of the status in quotes."""
         return '"{}"'.format(self.name)
 
     def __str__(self) -> str:
@@ -32,9 +33,11 @@ class Status(str, Enum):
 
 @dataclass
 class StatusMessage:
-    """ Response message containing information about a host's status. For example,
+    """Response message containing information about a host's status.
 
-        {"status": "WAITING", "timestamp": "2020-08-01T01:23:45.56789"}
+    For example,
+
+    {"status": "WAITING", "timestamp": "2020-08-01T01:23:45.56789"}
     """
 
     status: Status
@@ -42,7 +45,7 @@ class StatusMessage:
 
 
 class StatusClient:
-    """Gets the status for lists of hosts"""
+    """Get the status for lists of hosts."""
 
     async def _get_host_statuses(self, hosts: Iterable[str]) -> Iterable[StatusMessage]:
         async def get_host_status(host: str) -> StatusMessage:
@@ -77,7 +80,8 @@ class StatusClient:
 class _Clock:
     """Stub for datetime.datetime.now().
 
-    This exists because attributes on datetime.datetime can't be patched."""
+    This exists because attributes on datetime.datetime can't be patched.
+    """
 
     def __init__(self, now_fn: Callable[[], date] = lambda: datetime.now()):
         self._now_fn = now_fn
@@ -114,6 +118,7 @@ class StatusApp:
 
     @property
     def status(self) -> Status:
+        """Get the host's status."""
         return self._status
 
     @status.setter
@@ -123,6 +128,7 @@ class StatusApp:
 
 
 class StatusServer(Thread):
+    """HTTP server for a WSGI app."""
 
     port = 5555
 
@@ -133,7 +139,7 @@ class StatusServer(Thread):
         self.hostname = hostname
 
     def run(self) -> None:
-        """Runs a WSGI server in a thread"""
+        """Run a WSGI server in a thread."""
         addr = "{}:{}".format(self.hostname, StatusServer.port)
         self.logger.info("Status server listening on {}".format(addr))
         waitress.serve(app=self.app, listen="{}".format(addr))

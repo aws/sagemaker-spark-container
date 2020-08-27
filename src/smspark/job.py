@@ -1,13 +1,9 @@
 """Manages the lifecycle of a running Spark job."""
 import json
 import logging
-import os
 import socket
 import subprocess
-import sys
-import time
 import traceback
-from os import path
 from typing import Any, Dict, Mapping, Sequence
 
 from smspark.bootstrapper import Bootstrapper
@@ -27,7 +23,6 @@ class ProcessingJobManager(object):
         self, resource_config: Dict[str, Any] = None, processing_job_config: Dict[str, Any] = None,  # type: ignore
     ) -> None:
         """Initialize a ProcessingJobManager, loading configs if not provided."""
-
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger("smspark-submit")
 
@@ -61,10 +56,12 @@ class ProcessingJobManager(object):
 
     @property
     def hostname(self) -> str:
+        """Return the current host's hostname."""
         return self._resource_config["current_host"]
 
     @property
     def hosts(self) -> Sequence[str]:
+        """Return a sequence of all the hostnames in the cluster."""
         return self._resource_config["hosts"]
 
     @property

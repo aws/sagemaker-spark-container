@@ -1,3 +1,4 @@
+"""Thread to offload Spark events to S3 for the history server."""
 import logging
 import os
 import re
@@ -18,16 +19,17 @@ EVENT_LOG_DIR = "/tmp/spark-events/"
 
 
 class SparkEventLogPublisher(Thread):
-    """ Child thread copy the spark event logs to a place can be recognized by SageMaker
+    """Child thread copy the spark event logs to a place can be recognized by SageMaker.
 
-        The spark.history.fs.logDirectory will be set to /tmp/spark-events, where the spark events will be
-        sent to locally. This SparkEventLogPublisher will copy the event logs file to the dst passed from
-        python sdk. The path stores in local_spark_event_logs_dir.
+    The spark.history.fs.logDirectory will be set to /tmp/spark-events, where the spark events will be
+    sent to locally. This SparkEventLogPublisher will copy the event logs file to the dst passed from
+    python sdk. The path stores in local_spark_event_logs_dir.
     """
 
     def __init__(
         self, spark_event_logs_s3_uri: Optional[str], local_spark_event_logs_dir: Optional[str], copy_interval: int = 20
     ) -> None:
+        """Initialize."""
         Thread.__init__(self)
         self._stop_publishing = False
         self._copy_interval = copy_interval
@@ -35,8 +37,11 @@ class SparkEventLogPublisher(Thread):
         self.local_spark_event_logs_dir = local_spark_event_logs_dir
 
     def run(self) -> None:
-        # If spark_event_logs_s3_uri is specified, spark events will be published to
-        # s3 via spark's s3a client.
+        """Publish spark events to the given S3 URL.
+
+        If spark_event_logs_s3_uri is specified, spark events will be published to
+        s3 via spark's s3a client.
+        """
         if self.spark_event_logs_s3_uri is not None:
             log.info("spark_event_logs_s3_uri is specified, publishing to s3 directly")
             self._config_event_log_with_s3_uri()
@@ -61,6 +66,7 @@ class SparkEventLogPublisher(Thread):
         self._copy_spark_event_logs(EVENT_LOG_DIR, dst_dir)
 
     def down(self) -> None:
+        """Stop publishing Spark events."""
         self._stop_publishing = True
 
     def _copy_spark_event_logs(self, src_dir: str, dst_dir: str) -> None:

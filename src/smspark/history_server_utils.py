@@ -1,6 +1,6 @@
+"""Utility functions for configuring and running the Spark history server."""
 import logging
 import os
-import re
 import subprocess
 import sys
 from typing import Optional
@@ -22,6 +22,7 @@ log = logging.getLogger("sagemaker-spark")
 
 
 def start_history_server(event_logs_s3_uri: str) -> None:
+    """Bootstrap the history server instance and starts the Spark history server instance."""
     bootstrapper = Bootstrapper()
     log.info("copying aws jars")
     bootstrapper.copy_aws_jars()
@@ -40,6 +41,7 @@ def start_history_server(event_logs_s3_uri: str) -> None:
 
 
 def config_history_server(event_logs_s3_uri: str) -> None:
+    """Configure the Spark history server."""
     _config_history_log_dir(event_logs_s3_uri)
     _config_proxy_base()
 
@@ -74,4 +76,5 @@ def _config_proxy_base() -> None:
 
 
 def is_notebook_instance() -> bool:
+    """Decide whether this is running on a SageMaker notebook instance."""
     return "SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN" in os.environ
