@@ -16,21 +16,15 @@ from smspark.history_server_utils import (
 EVENT_LOGS_S3_URI = "s3://bucket/spark-events"
 
 
-@pytest.fixture(scope="function")
-def notebook_instance_env_var() -> None:
-    os.environ["SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN"] = "value"
-    os.environ["SPARK_EVENT_LOGS_S3_URI"] = "s3://bucket/key"
-    yield
-    del os.environ["SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN"]
-    del os.environ["SPARK_EVENT_LOGS_S3_URI"]
-
-
 @patch("smspark.history_server_utils.open", new_callable=mock_open)
-def test_config_history_server_with_env_variable(mock_open_file, notebook_instance_env_var) -> None:
+def test_config_history_server_with_env_variable(mock_open_file) -> None:
     config_history_server(EVENT_LOGS_S3_URI)
 
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
-    mock_open_file().write.assert_has_calls([call("spark.ui.proxyBase=/proxy/15050\n")])
+    mock_open_file().write.assert_has_calls([
+        call("spark.history.fs.logDirectory=s3a://bucket/spark-events\n"),
+        call("spark.ui.proxyBase=/proxy/15050\n"),
+    ])
 
 
 def test_config_history_server_without_env_variable():

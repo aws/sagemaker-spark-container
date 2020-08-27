@@ -1,6 +1,6 @@
 """Utility functions for configuring and running the Spark history server."""
 import logging
-import os
+import re
 import subprocess
 import sys
 from typing import Optional
@@ -56,10 +56,11 @@ def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
         # customers only need to know their s3 path and container converts it to
         # s3a://{bucket}/{folder}
         # TODO (guoqiao): EMRFS should support talking to s3 directly according to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-file-systems.html
+        s3_path = re.sub("s3://", "s3a://", event_logs_s3_uri, 1)
 
         with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
-            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri))
-            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(event_logs_s3_uri) + "\n")
+            print(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path))
+            spark_config.write(CONFIG_HISTORY_LOG_DIR_FORMAT.format(s3_path) + "\n")
     else:
         log.info("Env variable HISTORY_LOG_DIR does not exist, exiting")
         exit(
@@ -73,8 +74,3 @@ def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
 def _config_proxy_base() -> None:
     with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
         spark_config.write(CONFIG_NOTEBOOK_PROXY_BASE + "\n")
-
-
-def is_notebook_instance() -> bool:
-    """Decide whether this is running on a SageMaker notebook instance."""
-    return "SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN" in os.environ
