@@ -79,6 +79,31 @@ def configuration() -> list:
     return configuration
 
 
+def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri):
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-py-customer-error",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=1,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+    )
+
+    try:
+        spark.run(
+            submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+            arguments=["invalid_arg"],
+            wait=True,
+            logs=False,
+        )
+    except Exception:
+        pass  # this job is expected to fail
+    processing_job = spark.latest_job
+
+    assert "Algorithm Error: (caused by CalledProcessError)" in processing_job.describe()["ExitMessage"]
+
+
 def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
     """Test that basic multinode case works on 32KB of data"""
     spark = PySparkProcessor(
