@@ -6,6 +6,7 @@ from sagemaker.spark.processing import PySparkProcessor
 
 MAX_RETRIES = 10
 
+
 def test_history_server(tag, role, image_uri):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
@@ -22,7 +23,9 @@ def test_history_server(tag, role, image_uri):
 
     with open("test/resources/data/files/sample_spark_event_logs") as data:
         body = data.read()
-        S3Uploader.upload_string_as_file_body(body=body, desired_s3_uri=spark_event_logs_s3_uri + "/sample_spark_event_logs")
+        S3Uploader.upload_string_as_file_body(
+            body=body, desired_s3_uri=spark_event_logs_s3_uri + "/sample_spark_event_logs"
+        )
 
     spark.start_history_server(spark_event_logs_s3_uri=spark_event_logs_s3_uri)
 

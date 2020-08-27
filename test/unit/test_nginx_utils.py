@@ -1,12 +1,16 @@
 from unittest.mock import call, mock_open, patch
 
-from smspark.nginx_utils import (DOMAIN_LOCALHOST, NGINX_CONFIG_PATH,
-                                 NGINX_CONTAINER_CONFIG_PATH,
-                                 NGINX_CONTAINER_DEFAULT_CONFIG_PATH,
-                                 NGINX_DEFAULT_CONFIG_PATH,
-                                 NGINX_ENV_VARIABLE_CONFIG_FORMAT,
-                                 copy_nginx_default_conf, start_nginx,
-                                 write_nginx_default_conf)
+from smspark.nginx_utils import (
+    DOMAIN_LOCALHOST,
+    NGINX_CONFIG_PATH,
+    NGINX_CONTAINER_CONFIG_PATH,
+    NGINX_CONTAINER_DEFAULT_CONFIG_PATH,
+    NGINX_DEFAULT_CONFIG_PATH,
+    NGINX_ENV_VARIABLE_CONFIG_FORMAT,
+    copy_nginx_default_conf,
+    start_nginx,
+    write_nginx_default_conf,
+)
 
 REMOTE_DOMAIN_NAME = "http://domain.com"
 

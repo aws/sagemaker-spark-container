@@ -68,7 +68,9 @@ class Configuration:
         _ClassificationData("hadoop-log4j", "/usr/lib/hadoop/etc/hadoop/log4j.properties", properties_serializer),
         _ClassificationData("hive-env", "/usr/lib/hive/conf/hive-env.sh", env_serializer),
         _ClassificationData("hive-log4j", "/usr/lib/hive/conf/hive-log4j2.properties", properties_serializer),
-        _ClassificationData("hive-exec-log4j", "/usr/lib/hive/conf/hive-exec-log4j2.properties", properties_serializer),
+        _ClassificationData(
+            "hive-exec-log4j", "/usr/lib/hive/conf/hive-exec-log4j2.properties", properties_serializer,
+        ),
         _ClassificationData("hive-site", "/usr/lib/hive/conf/hive-site.xml", xml_serializer),
         _ClassificationData("spark-defaults", "/usr/lib/spark/conf/spark-defaults.conf", conf_serializer),
         _ClassificationData("spark-env", "/usr/lib/spark/conf/spark-env.sh", env_serializer),

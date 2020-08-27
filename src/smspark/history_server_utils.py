@@ -3,6 +3,7 @@ import os
 import re
 import subprocess
 import sys
+from typing import Optional
 
 from smspark.bootstrapper import Bootstrapper
 
@@ -20,7 +21,7 @@ logging.basicConfig(
 log = logging.getLogger("sagemaker-spark")
 
 
-def start_history_server(event_logs_s3_uri):
+def start_history_server(event_logs_s3_uri: str) -> None:
     bootstrapper = Bootstrapper()
     log.info("copying aws jars")
     bootstrapper.copy_aws_jars()
@@ -38,12 +39,12 @@ def start_history_server(event_logs_s3_uri):
         sys.exit(255)
 
 
-def config_history_server(event_logs_s3_uri):
+def config_history_server(event_logs_s3_uri: str) -> None:
     _config_history_log_dir(event_logs_s3_uri)
     _config_proxy_base()
 
 
-def _config_history_log_dir(event_logs_s3_uri):
+def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
     if event_logs_s3_uri is not None:
         log.info("s3 path presents, starting history server")
 
@@ -67,10 +68,10 @@ def _config_history_log_dir(event_logs_s3_uri):
 # The method sets spark.ui.proxyBase, otherwise the Spark UI resource cannot be found. The history server only supported in two cases: 1) local machine 2)
 # notebook instance. The presence of Env variable "NOTEBOOK_INSTANCE" indicates if we need to update spark.ui.proxyBase or not, this variable is passed from
 # python sdk
-def _config_proxy_base():
+def _config_proxy_base() -> None:
     with open(SPARK_DEFAULTS_CONFIG_PATH, "a") as spark_config:
         spark_config.write(CONFIG_NOTEBOOK_PROXY_BASE + "\n")
 
 
-def is_notebook_instance():
+def is_notebook_instance() -> bool:
     return "SAGEMAKER_NOTEBOOK_INSTANCE_DOMAIN" in os.environ

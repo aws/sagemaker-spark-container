@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Sequence, Union
 
 import psutil
 import requests
@@ -34,7 +34,7 @@ class Bootstrapper:
         self.resource_config = resource_config
         self.waiter = Waiter()
 
-    def bootstrap_smspark_submit(self):
+    def bootstrap_smspark_submit(self) -> None:
         self.copy_aws_jars()
         self.copy_cluster_config()
         self.write_runtime_cluster_config()
@@ -42,7 +42,7 @@ class Bootstrapper:
         self.start_hadoop_daemons()
         self.wait_for_hadoop()
 
-    def bootstrap_history_server(self):
+    def bootstrap_history_server(self) -> None:
         self.copy_aws_jars()
         self.copy_cluster_config()
         self.start_spark_standalone_primary()
@@ -69,14 +69,22 @@ class Bootstrapper:
     def copy_cluster_config(self) -> None:
         self.logger.info("copying cluster config")
 
-        def copy_config(src, dst):
+        def copy_config(src: str, dst: str) -> None:
             self.logger.info("copying {} to {}".format(src, dst))
             shutil.copyfile(src, dst)
 
-        copy_config("/opt/hadoop-config/hdfs-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml")
-        copy_config("/opt/hadoop-config/core-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml")
-        copy_config("/opt/hadoop-config/yarn-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml")
-        copy_config("/opt/hadoop-config/spark-defaults.conf", Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf")
+        copy_config(
+            "/opt/hadoop-config/hdfs-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml",
+        )
+        copy_config(
+            "/opt/hadoop-config/core-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml",
+        )
+        copy_config(
+            "/opt/hadoop-config/yarn-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml",
+        )
+        copy_config(
+            "/opt/hadoop-config/spark-defaults.conf", Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf",
+        )
         copy_config("/opt/hadoop-config/spark-env.sh", Bootstrapper.SPARK_PATH + "/conf/spark-env.sh")
 
     def write_runtime_cluster_config(self) -> None:
@@ -203,27 +211,30 @@ class Bootstrapper:
         cmd_start_primary = "/usr/lib/spark/sbin/start-master.sh"
         subprocess.Popen(cmd_start_primary, shell=True)
 
-    def deserialize_user_configuration(self, configuration_dict_or_list) -> Union[List[Configuration], Configuration]:
+    def deserialize_user_configuration(
+        self, configuration_dict_or_list: Union[Dict[str, Any], List[Dict[str, Any]]]
+    ) -> Union[Sequence[Configuration], Configuration]:
         if isinstance(configuration_dict_or_list, dict):
             return self.deserialize_user_configuration_dict(configuration_dict_or_list)
-        elif isinstance(configuration_dict_or_list, list):
-            list_of_configurations = []
-            for conf in configuration_dict_or_list:
-                configuration = self.deserialize_user_configuration_dict(conf)
-                list_of_configurations.append(configuration)
-        return list_of_configurations
+        else:
+            return self._deserialize_user_configuration_to_sequence(configuration_dict_or_list)
 
-    def deserialize_user_configuration_dict(self, configuration_dict: dict) -> Configuration:
+    def _deserialize_user_configuration_to_sequence(
+        self, configuration_list: List[Dict[str, Any]]
+    ) -> Sequence[Configuration]:
+        return [self.deserialize_user_configuration_dict(conf) for conf in configuration_list]
+
+    def deserialize_user_configuration_dict(self, configuration_dict: Dict[str, Any]) -> Configuration:
         if configuration_dict.get("Configurations"):
             configurations_inner = configuration_dict["Configurations"] if configuration_dict["Configurations"] else ()
             return Configuration(
                 Classification=configuration_dict["Classification"],
                 Properties=configuration_dict["Properties"],
-                Configurations=self.deserialize_user_configuration(configurations_inner),
+                Configurations=self._deserialize_user_configuration_to_sequence(configurations_inner),
             )
         else:
             return Configuration(
-                Classification=configuration_dict["Classification"], Properties=configuration_dict["Properties"]
+                Classification=configuration_dict["Classification"], Properties=configuration_dict["Properties"],
             )
 
     def write_user_configuration(self) -> None:

@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 )
 @click.option(
     "--py-files",
-    help="Either a directory or a comma-separated list of .zip, .egg, or .py files to place on the PYTHONPATH."  # type: ignore # noqa
+    help="Either a directory or a comma-separated list of .zip, .egg, or .py files to place on the PYTHONPATH."
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
 @click.option(
@@ -31,18 +31,27 @@ log = logging.getLogger(__name__)
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
 @click.option(
-    "--spark-event-logs-s3-uri",
-    help="Optional, spark events file will be published to this s3 destination",
+    "--spark-event-logs-s3-uri", help="Optional, spark events file will be published to this s3 destination",
 )
 @click.option(
-    "--local-spark-event-logs-dir",
-    help="Optional, spark events will be stored in this local path",
+    "--local-spark-event-logs-dir", help="Optional, spark events will be stored in this local path",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Print additional debug output.")
 @click.argument("app")
 @click.argument("app_arguments", nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
-def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_spark_event_logs_dir, verbose, app, app_arguments) -> None:
+def submit(
+    ctx: click.Context,
+    class_: str,
+    jars: str,
+    py_files: str,
+    files: str,
+    spark_event_logs_s3_uri: str,
+    local_spark_event_logs_dir: str,
+    verbose: bool,
+    app: str,
+    app_arguments: str,
+) -> None:
     """Submit a job to smspark-submit.
 
     smspark-submit generally passes options through to spark-submit, but with the exception of certain options,
@@ -87,10 +96,7 @@ def submit(ctx, class_, jars, py_files, files, spark_event_logs_s3_uri, local_sp
     processing_job_manager = ProcessingJobManager()
 
     log.info(f"running spark submit command: {spark_submit_cmd}")
-    processing_job_manager.run(
-        spark_submit_cmd,
-        spark_event_logs_s3_uri,
-        local_spark_event_logs_dir)
+    processing_job_manager.run(spark_submit_cmd, spark_event_logs_s3_uri, local_spark_event_logs_dir)
 
 
 def submit_main() -> None:
@@ -99,10 +105,10 @@ def submit_main() -> None:
         sys.exit(0)
     except click.exceptions.MissingParameter as e:
         # "ValueError: missing parameter: app"
-        AlgorithmError(e).log_and_exit()
+        AlgorithmError(message="Couldn't parse input.", caused_by=e).log_and_exit()
     except click.exceptions.NoSuchOption as e:
         # "ValueError: no such option: --nonexistent"
-        AlgorithmError(e).log_and_exit()
+        AlgorithmError(message="Couldn't parse input.", caused_by=e).log_and_exit()
     except Exception as e:
         if isinstance(e, BaseError):
             e.log_and_exit()

@@ -26,7 +26,7 @@ class BaseError(Exception):
     message_path = "/opt/ml/output/message"
 
     def __init__(
-        self, message: str, caused_by: Exception, exit_code: int = 127, failure_prefix: str = "Algorithm Error"
+        self, message: str, caused_by: Exception, exit_code: int = 127, failure_prefix: str = "Algorithm Error",
     ):
         formatted_message = BaseError._format_exception_message(failure_prefix, message, caused_by)
         super(BaseError, self).__init__(formatted_message)

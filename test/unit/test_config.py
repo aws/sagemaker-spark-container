@@ -17,7 +17,7 @@ def test_hadoop_env_sh() -> None:
         "hadoop-env",
         {},
         Configurations=[
-            Configuration("export", {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"})
+            Configuration("export", {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},)
         ],
     )
 
@@ -29,7 +29,7 @@ def test_hadoop_env_sh() -> None:
 def test_hadoop_log4j() -> None:
     configuration = Configuration(
         "hadoop-log4j",
-        {"hadoop.root.logger": "INFO,console", "hadoop.log.dir": "/var/log/hadoop", "hadoop.log.file": "hadoop.log"},
+        {"hadoop.root.logger": "INFO,console", "hadoop.log.dir": "/var/log/hadoop", "hadoop.log.file": "hadoop.log",},
     )
 
     serialized_conf = configuration.serialized
@@ -62,7 +62,7 @@ def test_hive_log4j() -> None:
 
 def test_hive_exec_log4j() -> None:
     configuration = Configuration(
-        "hive-exec-log4j", {"loggers": "NIOServerCnxn,ClientCnxnSocketNIO,DataNucleus,Datastore,JPOX"}
+        "hive-exec-log4j", {"loggers": "NIOServerCnxn,ClientCnxnSocketNIO,DataNucleus,Datastore,JPOX"},
     )
 
     serialized_conf = configuration.serialized
@@ -100,7 +100,7 @@ def test_spark_env():
         "hadoop-env",
         {},
         Configurations=[
-            Configuration("export", {"SPARK_MASTER_PORT": "7077", "SPARK_MASTER_IP": "$STANDALONE_SPARK_MASTER_HOST"})
+            Configuration("export", {"SPARK_MASTER_PORT": "7077", "SPARK_MASTER_IP": "$STANDALONE_SPARK_MASTER_HOST"},)
         ],
     )
 

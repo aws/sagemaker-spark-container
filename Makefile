@@ -66,8 +66,9 @@ build-test-java:
 build-tests: build-test-scala build-test-java
 
 lint:
-	black --check ./
-	mypy src/smspark   # see mypy.ini for configuration
+	black --check ./src
+	black --check ./test
+	mypy --follow-imports=skip src/smspark   # see mypy.ini for configuration
 	flake8 src         # see .flake8.ini for configuration
 	flake8 test --ignore D100,D103,D104,D400 # ignore flake-docstrings errors in test
 

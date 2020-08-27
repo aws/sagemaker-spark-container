@@ -11,13 +11,11 @@ from os import path
 from typing import Any, Dict, Mapping, Sequence
 
 from smspark.bootstrapper import Bootstrapper
-from smspark.defaults import (default_processing_job_config,
-                              default_resource_config)
+from smspark.defaults import default_processing_job_config, default_resource_config
 from smspark.errors import AlgorithmError
 from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
-from smspark.status import (Status, StatusApp, StatusClient, StatusMessage,
-                            StatusServer)
+from smspark.status import Status, StatusApp, StatusClient, StatusMessage, StatusServer
 from smspark.waiter import Waiter
 from tenacity import retry, stop_after_delay
 
@@ -162,7 +160,7 @@ class ProcessingJobManager(object):
         self.bootstrapper.bootstrap_smspark_submit()
         self.status_app.status = Status.WAITING
 
-    def _start_executor_logs_watcher(self, log_dir="/var/log/yarn") -> None:
+    def _start_executor_logs_watcher(self, log_dir: str = "/var/log/yarn") -> None:
         # TODO: check Yarn configs for yarn.log.dir/YARN_LOG_DIR, in case of overrides
         spark_executor_logs_watcher = SparkExecutorLogsWatcher(log_dir)
         spark_executor_logs_watcher.daemon = True
@@ -175,7 +173,7 @@ class ProcessingJobManager(object):
 
     def _start_spark_event_log_publisher(
         self, spark_event_logs_s3_uri: str, local_spark_event_logs_dir: str
-    ) -> None:
+    ) -> SparkEventLogPublisher:
         spark_log_publisher = SparkEventLogPublisher(spark_event_logs_s3_uri, local_spark_event_logs_dir)
         spark_log_publisher.daemon = True
         spark_log_publisher.start()

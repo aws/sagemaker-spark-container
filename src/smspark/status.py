@@ -13,6 +13,7 @@ import waitress
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 from smspark.errors import AlgorithmError
+from urllib3.exceptions import HTTPError
 
 
 class Status(str, Enum):
@@ -58,7 +59,8 @@ class StatusClient:
                     raise AlgorithmError(
                         message="Could not get status for host {} status code: {} response: {}".format(
                             host, resp.status_code, resp.text
-                        )
+                        ),
+                        caused_by=HTTPError(),
                     )
             except Exception as e:
                 raise AlgorithmError(message="Exception while getting status for host {}".format(host), caused_by=e)

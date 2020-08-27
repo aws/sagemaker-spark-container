@@ -3,11 +3,13 @@ import time
 from unittest.mock import call, mock_open, patch
 
 import pytest
-from smspark.spark_event_logs_publisher import (CONFIG_ENABLE_EVENT_LOG,
-                                                CONFIG_EVENT_LOG_DIR_FORMAT,
-                                                EVENT_LOG_DIR,
-                                                SPARK_DEFAULTS_CONFIG_PATH,
-                                                SparkEventLogPublisher)
+from smspark.spark_event_logs_publisher import (
+    CONFIG_ENABLE_EVENT_LOG,
+    CONFIG_EVENT_LOG_DIR_FORMAT,
+    EVENT_LOG_DIR,
+    SPARK_DEFAULTS_CONFIG_PATH,
+    SparkEventLogPublisher,
+)
 
 SPARK_LOCAL_EVENT_LOG_DIR = "spark/spark-events/"
 SPARK_EVENT_LOG_S3_URI = "s3://bucket/folder"
@@ -39,7 +41,7 @@ def test_run_with_event_log_dir(mock_open_file, mock_os_path_exists, mock_os_lis
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
 
     mock_open_file().write.assert_has_calls(
-        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format(EVENT_LOG_DIR) + "\n")]
+        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format(EVENT_LOG_DIR) + "\n"),]
     )
 
     src_file = EVENT_LOG_DIR + EVENT_FILE_NAME + EVENT_FILE_SUFFIX
@@ -57,5 +59,5 @@ def test_run_with_spark_events_s3_uri(mock_open_file):
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
 
     mock_open_file().write.assert_has_calls(
-        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format("s3a://bucket/folder") + "\n")]
+        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format("s3a://bucket/folder") + "\n"),]
     )

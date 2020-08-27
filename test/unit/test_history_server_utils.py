@@ -5,11 +5,13 @@ from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
 from smspark.bootstrapper import Bootstrapper
-from smspark.history_server_utils import (CONFIG_HISTORY_LOG_DIR_FORMAT,
-                                          CONFIG_NOTEBOOK_PROXY_BASE,
-                                          SPARK_DEFAULTS_CONFIG_PATH,
-                                          config_history_server,
-                                          start_history_server)
+from smspark.history_server_utils import (
+    CONFIG_HISTORY_LOG_DIR_FORMAT,
+    CONFIG_NOTEBOOK_PROXY_BASE,
+    SPARK_DEFAULTS_CONFIG_PATH,
+    config_history_server,
+    start_history_server,
+)
 
 EVENT_LOGS_S3_URI = "s3://bucket/spark-events"
 
