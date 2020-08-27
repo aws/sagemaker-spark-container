@@ -1,8 +1,8 @@
+from unittest.mock import patch
+
 import requests.packages.urllib3 as urllib3
 from requests.packages.urllib3.util.retry import Retry
-
 from sagemaker.s3 import S3Uploader
-from unittest.mock import patch
 from sagemaker.spark.processing import PySparkProcessor
 
 HISTORY_SERVER_ENDPOINT = "http://0.0.0.0/proxy/15050"
@@ -50,7 +50,7 @@ def test_history_server(tag, role, image_uri, sagemaker_session):
 
 
 @patch("sagemaker.spark.processing.print")
-def test_integ_history_server_with_expected_failure(mock_print, tag, role, image_uri, sagemaker_session):
+def test_history_server_with_expected_failure(mock_print, tag, role, image_uri, sagemaker_session):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
         framework_version=tag,

@@ -54,7 +54,7 @@ class Bootstrapper:
         jar_dest = Bootstrapper.SPARK_PATH + "/jars"
         for f in glob.glob("/usr/share/aws/aws-java-sdk/*.jar"):
             shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
-        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-5.jar"
+        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-6.jar"
         jets3t_jar = "jets3t-0.9.0.jar"
         shutil.copyfile(
             os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(jar_dest, hadoop_aws_jar),

@@ -2,10 +2,10 @@ import os
 import subprocess
 from shutil import copyfile, rmtree
 from unittest.mock import MagicMock, call, mock_open, patch
-from smspark.errors import InputError
 
 import pytest
 from smspark.bootstrapper import Bootstrapper
+from smspark.errors import InputError
 from smspark.history_server_utils import (
     CONFIG_HISTORY_LOG_DIR_FORMAT,
     CONFIG_NOTEBOOK_PROXY_BASE,

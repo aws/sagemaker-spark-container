@@ -1,8 +1,8 @@
 """Utility functions for configuring and running the Spark history server."""
 import logging
 import subprocess
-import traceback
 import sys
+import traceback
 from typing import Optional
 
 from smspark.bootstrapper import Bootstrapper
