@@ -1,6 +1,5 @@
 """Utility functions for configuring and running the Spark history server."""
 import logging
-import re
 import subprocess
 import sys
 from typing import Optional
