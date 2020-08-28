@@ -55,7 +55,7 @@ def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
     else:
         log.info("event_logs_s3_uri does not exist, exiting")
         exit(
-            "event_logs_s3_uri was not specified, please specify a valid s3 path for the Spark event logs."
+            "spark event logs s3 uri was not specified, please specify a valid s3 path for the Spark event logs."
         )
 
 
