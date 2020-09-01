@@ -5,7 +5,7 @@ import sys
 
 EXIT_CODE_SUCCESS = 0
 EXIT_CODE_ALGORITHM_ERROR = 1
-
+DEFAULT_INPUT_ERROR_MSG = "error preparing for spark submit"
 
 class BaseError(Exception):
     """Abstract base for all errors that may cause the container to exit unsuccessfully.
@@ -67,6 +67,6 @@ class AlgorithmError(BaseError):
 class InputError(AlgorithmError):
     """Exception used to indicate that the customer's input caused spark-submit to fail."""
 
-    def __init__(self, caused_by: Exception) -> None:
+    def __init__(self, caused_by: Exception, message: str = DEFAULT_INPUT_ERROR_MSG) -> None:
         """Initialize."""
-        super(InputError, self).__init__(message="error preparing for spark submit", caused_by=caused_by)
+        super(InputError, self).__init__(message=message, caused_by=caused_by)
