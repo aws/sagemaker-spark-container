@@ -49,8 +49,12 @@ install-container-library:
 	pip install --upgrade dist/smspark-0.1-py3-none-any.whl
 	safety check  # https://github.com/pyupio/safety
 
+build-static-config:
+	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
+	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
+
 # Builds docker image.
-build: download-emr-packages build-container-library
+build: download-emr-packages build-container-library build-static-config
 	./scripts/build.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
