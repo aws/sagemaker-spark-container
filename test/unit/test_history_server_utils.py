@@ -2,6 +2,7 @@ import os
 import subprocess
 from shutil import copyfile, rmtree
 from unittest.mock import MagicMock, call, mock_open, patch
+from smspark.errors import InputError
 
 import pytest
 from smspark.bootstrapper import Bootstrapper
@@ -28,15 +29,15 @@ def test_config_history_server_with_env_variable(mock_open_file) -> None:
 
 
 def test_config_history_server_without_env_variable():
-    with pytest.raises(SystemExit) as e:
+    with pytest.raises(InputError) as e:
         config_history_server(None)
-    assert e.type == SystemExit
+    assert e.type == InputError
 
 
 @patch("smspark.history_server_utils.config_history_server")
 @patch("smspark.history_server_utils.Bootstrapper")
-@patch("subprocess.run")
-def test_start_history_server(mock_subprocess_run, mock_bootstrapper, mock_config_history_server) -> None:
+@patch("subprocess.check_output")
+def test_start_history_server(mock_subprocess_check_output, mock_bootstrapper, mock_config_history_server) -> None:
     bootstrapper = MagicMock()
     mock_bootstrapper.return_value = bootstrapper
     start_history_server(SPARK_DEFAULTS_CONFIG_PATH)
@@ -44,4 +45,4 @@ def test_start_history_server(mock_subprocess_run, mock_bootstrapper, mock_confi
     bootstrapper.copy_cluster_config.assert_called_once()
     bootstrapper.copy_aws_jars.assert_called_once()
     mock_config_history_server.assert_called_once()
-    mock_subprocess_run.assert_called_once_with("sbin/start-history-server.sh", check=True, shell=True)
+    mock_subprocess_check_output.assert_called_once_with("sbin/start-history-server.sh", stderr=subprocess.PIPE)

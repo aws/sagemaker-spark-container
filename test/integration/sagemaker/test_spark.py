@@ -79,7 +79,7 @@ def configuration() -> list:
     return configuration
 
 
-def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri):
+def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri, sagemaker_session):
     spark = PySparkProcessor(
         base_job_name="sm-spark-py-customer-error",
         framework_version=tag,
@@ -88,6 +88,7 @@ def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri):
         instance_count=1,
         instance_type="ml.c5.xlarge",
         max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session
     )
 
     try:
