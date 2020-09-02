@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 
 import psutil
 import requests
@@ -26,6 +26,8 @@ class Bootstrapper:
     SPARK_PATH = "/usr/lib/spark"
     HIVE_PATH = "/usr/lib/hive"
     PROCESSING_CONF_INPUT_PATH = "/opt/ml/processing/input/conf/configuration.json"
+    PROCESSING_JOB_CONFIG_PATH = "/opt/ml/config/processingjobconfig.json"
+    INSTANCE_TYPE_INFO_PATH = "/opt/aws-config/ec2-instance-type-info.json"
     EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
 
     def __init__(self, resource_config: Dict[str, Any] = default_resource_config):
@@ -124,46 +126,23 @@ class Bootstrapper:
             file_data = yarn_file.read()
         file_data = file_data.replace("rm_hostname", primary_ip)
         file_data = file_data.replace("nm_hostname", current_host)
-        file_data = file_data.replace("nm_webapp_address", "{}:{}".format(current_host, 8042))
         file_data = file_data.replace(
             "nm_webapp_address", "{}:{}".format(current_host, self.NODEMANAGER_WEBAPP_ADDR_PORT)
         )
         with open(yarn_site_file_path, "w") as yarn_file:
             yarn_file.write(file_data)
-
-        # Configure yarn resource limitation
-        mem = int(psutil.virtual_memory().total / (1024 * 1024))  # total physical memory in mb
-        cores = psutil.cpu_count(logical=True)  # vCPUs
-
-        minimum_allocation_mb = "1"
-        maximum_allocation_mb = str(mem)
-        minimum_allocation_vcores = "1"
-        maximum_allocation_vcores = str(cores)
-        # Add some residual in memory due to rounding in memory allocation
-        memory_mb_total = str(mem + 2048)
-        # Ensure core allocations
-        cpu_vcores_total = str(cores * 16)
-
-        with open(yarn_site_file_path, "r") as yarn_file:
-            file_data = yarn_file.read()
-        file_data = file_data.replace("minimum_allocation_mb", minimum_allocation_mb)
-        file_data = file_data.replace("maximum_allocation_mb", maximum_allocation_mb)
-        file_data = file_data.replace("minimum_allocation_vcores", minimum_allocation_vcores)
-        file_data = file_data.replace("maximum_allocation_vcores", maximum_allocation_vcores)
-        file_data = file_data.replace("memory_mb_total", memory_mb_total)
-        file_data = file_data.replace("cpu_vcores_total", cpu_vcores_total)
         with open(yarn_site_file_path, "w") as yarn_file:
             yarn_file.write(file_data)
 
-        # Configure Spark defaults
         with open(spark_conf_file_path, "r") as spark_file:
             file_data = spark_file.read()
         file_data = file_data.replace("sd_host", primary_ip)
-        file_data = file_data.replace("exec_mem", str(int((mem / 3) * 2.2)) + "m")
-        file_data = file_data.replace("exec_cores", str(min(5, cores - 1)))
         with open(spark_conf_file_path, "w") as spark_file:
             spark_file.write(file_data)
-        print("Finished Yarn configuration files setup.\n")
+
+        self.set_yarn_spark_resource_config()
+
+        logging.info("Finished Yarn configuration files setup.")
 
     def start_hadoop_daemons(self) -> None:
         current_host = self.resource_config["current_host"]
@@ -268,3 +247,120 @@ class Bootstrapper:
                     )
         else:
             logging.info("No file at {} exists, skipping user configuration".format(str(path)))
+
+    def load_processing_job_config(self) -> Optional[dict]:
+        if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):
+            logging.warning(f"Path does not exist: {self.PROCESSING_JOB_CONFIG_PATH}")
+            return None
+        with open(self.PROCESSING_JOB_CONFIG_PATH, "r") as f:
+            return json.loads(f.read())
+
+    def load_instance_type_info(self) -> Optional[dict]:
+        if not os.path.exists(self.INSTANCE_TYPE_INFO_PATH):
+            logging.warning(f"Path does not exist: {self.INSTANCE_TYPE_INFO_PATH}")
+            return None
+        with open(self.INSTANCE_TYPE_INFO_PATH, "r") as f:
+            instance_type_info_list = json.loads(f.read())
+            return {instance["InstanceType"]: instance for instance in instance_type_info_list}
+
+    def set_yarn_spark_resource_config(self):
+        processing_job_config = self.load_processing_job_config()
+        instance_type_info = self.load_instance_type_info()
+
+        if processing_job_config and instance_type_info:
+            instance_type = processing_job_config["ProcessingResources"]["ClusterConfig"]["InstanceType"].replace(
+                "ml.", ""
+            )
+            instance_count = processing_job_config["ProcessingResources"]["ClusterConfig"]["InstanceCount"]
+            instance_type_info = instance_type_info[instance_type]
+            instance_mem_mb = instance_type_info["MemoryInfo"]["SizeInMiB"]
+            instance_cores = instance_type_info["VCpuInfo"]["DefaultVCpus"]
+            logging.info(
+                f"Detected instance type: {instance_type} with "
+                f"total memory: {instance_mem_mb}M and total cores: {instance_cores}"
+            )
+        else:
+            instance_count = 1
+            instance_mem_mb = int(psutil.virtual_memory().total / (1024 * 1024))
+            instance_cores = psutil.cpu_count(logical=True)
+            logging.warning(
+                f"Failed to detect instance type config. "
+                f"Found total memory: {instance_mem_mb}M and total cores: {instance_cores}"
+            )
+
+        yarn_config, spark_config = self.get_yarn_spark_resource_config(instance_count, instance_mem_mb, instance_cores)
+
+        logging.info("Writing default config to {}".format(yarn_config.path))
+        yarn_config_string = yarn_config.write_config()
+        logging.info("Configuration at {} is: \n{}".format(yarn_config.path, yarn_config_string))
+
+        logging.info("Writing default config to {}".format(spark_config.path))
+        spark_config_string = spark_config.write_config()
+        logging.info("Configuration at {} is: \n{}".format(spark_config.path, spark_config_string))
+
+    def get_yarn_spark_resource_config(
+        self, instance_count, instance_mem_mb, instance_cores
+    ) -> (Configuration, Configuration):
+        executor_cores = instance_cores
+        executor_count_per_instance = int(instance_cores / executor_cores)
+        executor_count_total = instance_count * executor_count_per_instance
+        default_parallelism = instance_count * instance_cores * 2
+
+        # Let's leave 3% of the instance memory free
+        instance_mem_mb = int(instance_mem_mb * 0.97)
+
+        driver_mem_mb = 2 * 1024
+        driver_mem_ovr_pct = 0.1
+        driver_mem_ovr_mb = int(driver_mem_mb * driver_mem_ovr_pct)
+        executor_mem_ovr_pct = 0.1
+        executor_mem_mb = int(
+            (instance_mem_mb - driver_mem_mb - driver_mem_ovr_mb)
+            / (executor_count_per_instance + executor_count_per_instance * executor_mem_ovr_pct)
+        )
+        executor_mem_ovr_mb = int(executor_mem_mb * executor_mem_ovr_pct)
+
+        driver_gc_config = (
+            "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 "
+            "-XX:+CMSClassUnloadingEnabled"
+        )
+        driver_java_opts = f"-XX:OnOutOfMemoryError='kill -9 %p' " f"{driver_gc_config}"
+
+        executor_gc_config = (
+            f"-XX:+UseParallelGC -XX:InitiatingHeapOccupancyPercent=70 "
+            f"-XX:ConcGCThreads={max(int(executor_cores / 4), 1)} "
+            f"-XX:ParallelGCThreads={max(int(3 * executor_cores / 4), 1)} "
+        )
+        executor_java_opts = (
+            f"-verbose:gc -XX:OnOutOfMemoryError='kill -9 %p' "
+            f"-XX:+PrintGCDetails -XX:+PrintGCDateStamps "
+            f"{executor_gc_config}"
+        )
+
+        yarn_site_config = Configuration(
+            "yarn-site",
+            {
+                "yarn.scheduler.minimum-allocation-mb": "1",
+                "yarn.scheduler.maximum-allocation-mb": str(instance_mem_mb),
+                "yarn.scheduler.minimum-allocation-vcores": "1",
+                "yarn.scheduler.maximum-allocation-vcores": str(instance_cores),
+                "yarn.nodemanager.resource.memory-mb": str(instance_mem_mb),
+                "yarn.nodemanager.resource.cpu-vcores": str(instance_cores),
+            },
+        )
+
+        spark_defaults_config = Configuration(
+            "spark-defaults",
+            {
+                "spark.driver.memory": f"{driver_mem_mb}m",
+                "spark.driver.memoryOverhead": f"{driver_mem_ovr_mb}m",
+                "spark.driver.defaultJavaOptions": f"{driver_java_opts}m",
+                "spark.executor.memory": f"{executor_mem_mb}m",
+                "spark.executor.memoryOverhead": f"{executor_mem_ovr_mb}m",
+                "spark.executor.cores": f"{executor_cores}",
+                "spark.executor.defaultJavaOptions": f"{executor_java_opts}",
+                "spark.executor.instances": f"{executor_count_total}",
+                "spark.default.parallelism": f"{default_parallelism}",
+            },
+        )
+
+        return yarn_site_config, spark_defaults_config

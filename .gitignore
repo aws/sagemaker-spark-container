@@ -24,12 +24,13 @@ wheels/
 *.egg
 pip-wheel-metadata/
 .venv/
+*.DS_Store
 
 # Compiling / running local tests
-test/resources/code/scala/hello-scala-spark/lib_managed/
-test/resources/code/scala/hello-scala-spark/project/
-test/resources/code/scala/hello-scala-spark/target/
-test/resources/code/java/hello-java-spark/target/
+test/resources/code/scala/*/lib_managed/
+test/resources/code/scala/*/project/
+test/resources/code/scala/*/target/
+test/resources/code/java/*/target/
 test/resources/data/output/*
 
 .vim
@@ -44,6 +45,8 @@ container/*.whl
 .idea/*
 *.iml
 
+aws-config/
+
 # Don't commit emr spark packages
 *.tar
 *.tar.gz
@@ -53,4 +56,3 @@ container/*.whl
 
 # FIXME: remove this once we're consuming EMR packages through build
 emr-spark-packages
-
