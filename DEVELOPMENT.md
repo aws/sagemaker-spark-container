@@ -34,6 +34,7 @@ You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 `docker` will be used to build and test the Spark container locally
 
 4. Ensure you have access to an AWS account i.e. [setup](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your environment such that awscli can access your account via either an IAM user or an IAM role. We recommend an IAM role for use with AWS. For the purposes of testing in your personal account, the following managed permissions should suffice:
+
 -- [AmazonSageMakerFullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonSageMakerFullAccess) <br>
 -- [AmazonS3FullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonS3FullAccess) <br>
 
