@@ -83,7 +83,7 @@ test-local: install-sdk build-tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
 test-sagemaker: install-sdk build-tests
 	# https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
-	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python -m pytest --workers auto -s -vv test/integration/sagemaker/test_spark_history_server.py --durations=0 \
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python -m pytest --workers auto -s -vv test/integration/sagemaker --durations=0 \
         --repo=$(DEST_REPO) --tag=$(VERSION) \
         --role $(ROLE) \
         --image_uri $(IMAGE_URI) \
