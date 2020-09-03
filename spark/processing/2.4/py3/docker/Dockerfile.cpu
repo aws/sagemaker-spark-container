@@ -49,7 +49,6 @@ COPY *.whl /opt/program/
 RUN /usr/bin/python3 -m pip install /opt/program/*.whl
 COPY hadoop-config /opt/hadoop-config
 COPY nginx-config /opt/nginx-config
-COPY aws-config /opt/aws-config
 
 # With this config, spark history server will not run as daemon, otherwise there
 # will be no server running and container will terminate immediately

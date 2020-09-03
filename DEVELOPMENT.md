@@ -1,32 +1,54 @@
 # Development
+This document describes how to set up a development environment for developing, building, and testing the SageMaker Spark Container image.
 
-This document describes how to set up a development environment for the SageMaker Spark Docker image
-and how to build, develop, test, and release it.
-
-## Build and Test dependencies
-
-You'll need to have python, pytest, docker, and docker-compose installed on your machine
+## Development Environment Setup
+You’ll need to have python, pytest, docker, and docker-compose installed on your machine
 and on your $PATH.
 
-To set up your python environment, I recommend creating and activating a virtual environment
-using `venv`, which is part of the Python standard library for python3+:
+This repository uses GNU `make` to run build targets specified in `Makefile`. Consult the `Makefile` for the full list of build targets.
 
+### Pulling Down the Code
+
+1. If you do not already have one, create a GitHub account by following the prompts at [Join Github](https://github.com/join).
+2. Create a fork of this repository on GitHub. You should end up with a fork at `https://github.com/<username>/sagemaker-spark-container`.
+   1. Follow the instructions at [Fork a Repo](https://help.github.com/en/articles/fork-a-repo) to fork a GitHub repository.
+3. Clone your fork of the repository: `git clone https://github.com/<username>/sagemaker-spark-container` where `<username>` is your github username.
+
+### Setting Up The Development Environment
+
+1. To set up your python environment, we recommend creating and activating a virtual environment
+using `venv`, which is part of the Python standard library for python3+:
 
 ```bash
 python3 -m venv .venv
-source activate .venv/bin/activate
+source .venv/bin/activate
 ```
 You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 
-Then install pytest into the virtual environment:
+2. Then install pytest into the virtual environment:
 
-`python -m pip install pytest`
+`python -m pip install pytest pytest-parallel`
 
-You can install `docker` and `docker-compose` can be installed by installing Docker for Mac from [Docker's website](https://docs.docker.com/docker-for-mac/install/).
+3. Ensure docker is installed (see: [Get Docker | Docker Documentation](https://docs.docker.com/get-docker/))
 
-`docker` is used to build and run the Spark
+`docker` will be used to build and test the Spark container locally
 
-### Scala Test dependencies
+4. Ensure you have access to an AWS account i.e. [setup](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html) your environment such that awscli can access your account via either an IAM user or an IAM role. We recommend an IAM role for use with AWS. For the purposes of testing in your personal account, the following managed permissions should suffice:
+-- [AmazonSageMakerFullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonSageMakerFullAccess) <br>
+-- [AmazonS3FullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonS3FullAccess) <br>
+
+5. [Create](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html) an ECR repository with the name "sagemaker-spark" in the us-west-2 region
+
+6. Setup required environment variables for the container build:
+```
+export AWS_ACCOUNT_ID=<YOUR_ACCOUNT_ID>
+export REGION=us-west-2
+export SPARK_REPOSITORY=sagemaker-spark
+export VERSION=latest
+export SAGEMAKER_ROLE=<YOUR_SAGEMAKER_ROLE>
+```
+
+### Building Scala Test Dependencies
 Compiling Scala test JARs requires SBT installed on your system.
 
 Mac users can easily install using Homebrew:
@@ -37,7 +59,7 @@ For more info see https://www.scala-sbt.org/1.x/docs/Setup.html
 To compile the Scala test JAR:
 `make build-test-scala`
 
-### Java Test dependencies
+### Building Java Test Dependencies
 Compiling Java test JARs requires Maven installed on your system.
 
 Mac users can easily install using Homebrew:
@@ -48,15 +70,56 @@ For more info see https://maven.apache.org/install.html
 To compile the Java test JAR:
 `make build-test-java`
 
-## Build, Test, and Release targets.
+### Building Your Image
 
-This repository uses GNU `make` to run build targets specified in `Makefile`.
+1. To build the container image, run the following command:
+```
+make build
+```
 
-For example, `make build` builds the SageMaker Spark Docker image.
-`make build-tests` compiles Scala and Java tests.
-`make test-local` runs local tests with `docker-compose`.
-`make test-sagemaker` builds and installs the Python library under `sagemaker-python-sdk-spark`/,
-and uses that library to run tests on SageMaker.
+Upon successful build, you will see two tags applied to the image. For example:
+```
+Successfully tagged sagemaker-spark:2.4-cpu-py37-v0.1
+Successfully tagged sagemaker-spark:latest
+```
 
-Consult `Makefile` for more build targets.
+2. To verify that the image is available in your local docker repository, run `docker images`. You should see an image with two tags. For example:
+```
+✗ docker images
+REPOSITORY                                                                             TAG                   IMAGE ID            CREATED             SIZE
+sagemaker-spark                                                                        2.4-cpu-py37-v0.1     a748a6e042d2        5 minutes ago        3.06GB
+sagemaker-spark                                                                        latest                a748a6e042d2        5 minutes ago        3.06GB
+```
+
+### Running Local Tests
+
+To run local tests (unit tests and local container tests using docker compose), run the following command:
+
+```
+make test-local
+```
+
+### Running SageMaker Tests
+
+To run tests against Amazon SageMaker using your newly built container image, first publish the image to your ECR repository.
+
+1. Bootstrap docker credentials for your repository
+```
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com
+```
+
+2. Tag the latest Spark image
+```
+docker tag $SPARK_REPOSITORY_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
+```
+
+3. Push the latest Spark image to your ECR repository
+```
+docker push $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
+```
+
+5. Run the SageMaker tests
+```
+make test-sagemaker
+```
 

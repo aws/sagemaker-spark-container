@@ -22,6 +22,7 @@ setup(
     name="smspark",
     description="Library that enables running Spark Processing jobs on Amazon SageMaker",
     version=version,
+    python_requires=">3.7.0",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob.glob("src/smspark/*.py")],

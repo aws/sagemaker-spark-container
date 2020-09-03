@@ -35,7 +35,7 @@ def start_history_server(event_logs_s3_uri: str) -> None:
     bootstrapper.start_spark_standalone_primary()
 
     try:
-        subprocess.check_output("sbin/start-history-server.sh", stderr=subprocess.PIPE)
+        subprocess.check_output("sbin/start-history-server.sh")
     except subprocess.CalledProcessError as e:
         raise AlgorithmError(
             message=e.stderr.decode(sys.getfilesystemencoding()), caused_by=e, exit_code=e.returncode

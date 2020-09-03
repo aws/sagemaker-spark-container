@@ -7,7 +7,7 @@ build:
 	pip install --upgrade dist/sagemaker_python_sdk_spark-0.1-py2.py3-none-any.whl
 
 test:
-	pytest -s tests
+	python -m pytest -s tests
 
 clean:
 	rm -rf build

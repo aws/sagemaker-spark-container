@@ -11,10 +11,7 @@ information to effectively respond to your bug report or contribution.
 * [Table of Contents](#table-of-contents)
 * [Reporting Bugs/Feature Requests](#reporting-bugsfeature-requests)
 * [Contributing via Pull Requests (PRs)](#contributing-via-pull-requests-prs)
-  * [Setting up Your Development Environment *[Optional, but Recommended]*](#setting-up-your-development-environment-optional-but-recommended)  
-  * [Pulling Down the Code](#pulling-down-the-code)
-  * [Running the Unit Tests](#running-the-unit-tests)
-  * [Running the Integration Tests](#running-the-integration-tests)
+  * [Setting up Your Development Environment](#setting-up-your-development-environment)
   * [Making and Testing Your Change](#making-and-testing-your-change)
   * [Committing Your Change](#committing-your-change)
   * [Sending a Pull Request](#sending-a-pull-request)
@@ -55,37 +52,10 @@ To send us a pull request, please:
 GitHub provides additional document on [forking a repository](https://help.github.com/articles/fork-a-repo/) and
 [creating a pull request](https://help.github.com/articles/creating-a-pull-request/).
 
+
 ### Setting Up Your Development Environment 
-1. all supported versions of python installed
-1. pip installed
-1. tox installed `pip install tox`
+For instructions on how to setup your development environment, see [DEVELOPMENT.md](./DEVELOPMENT.md)
 
-### Pulling Down the Code
-
-1. If you do not already have one, create a GitHub account by following the prompts at [Join Github](https://github.com/join).
-1. Create a fork of this repository on GitHub. You should end up with a fork at `https://github.com/<username>/sagemaker-spark-container`.
-   1. Follow the instructions at [Fork a Repo](https://help.github.com/en/articles/fork-a-repo) to fork a GitHub repository.
-1. Clone your fork of the repository: `git clone https://github.com/<username>/sagemaker-spark-container` where `<username>` is your github username.
-
-### Running the Unit Tests
-
-1. cd into the sagemaker-spark-container folder: `cd sagemaker-spark-container` or `cd /environment/sagemaker-spark-container`
-1. Run the following tox command and verify that all code checks and unit tests pass: `tox -- tests/unit`
-
-You can also run a single test with the following command: `tox -e py37 -- -s -vv <path_to_file><file_name>::<test_function_name>`  
-  * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
-  * Example: `export IGNORE_COVERAGE=- ; tox -e py37 -- -s -vv tests/unit/test_container.py::test_container; unset IGNORE_COVERAGE`
-
-### Running the Integration Tests
-
-Our CI system runs integration tests (the ones in the `test/integration/local` directory), in parallel, for every Pull Request.  
-You should only worry about manually running any new integration tests that you write, or integration tests that test an area of code that you've modified.  
-
-1. Follow the instructions at [Set Up the AWS Command Line Interface (AWS CLI)](https://docs.aws.amazon.com/polly/latest/dg/setup-aws-cli.html).
-1. To run a test, specify the test file and method you want to run per the following command: `tox -e py37 -- -s -vv <path_to_file><file_name>::<test_function_name>`
-   * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
-   * Example: `export IGNORE_COVERAGE=- ; tox -e py37 -- -s -vv test/integration/local/test_container.py::test_container; unset IGNORE_COVERAGE`
-1. optionally run slow tests `tox -e slow-tests`
 
 ### Making and Testing Your Change
 
@@ -98,7 +68,7 @@ You should only worry about manually running any new integration tests that you 
       1. Prove that your code works correctly.
       1. Guard against future breaking changes to lower the maintenance cost.
    1. Please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
-1. Run all the unit tests as per [Running the Unit Tests](#running-the-unit-tests), and verify that all checks and tests pass.
+1. Run all the tests as per [DEVELOPMENT.md](./DEVELOPMENT.md), and verify that all checks and tests pass.
 1. Run ```tox -e black-format``` to format your code according to black. 
 
 ### Sending a Pull Request
@@ -119,9 +89,9 @@ Prefix your commit message with one of the following to indicate the version par
 | break, breaking | major
 | feat, feature | minor
 | depr, deprecation | minor
-| change, fix | patch
-| doc, documentation | patch
-| default | patch 
+| change, fix | minor
+| doc, documentation | minor
+| default | minor
 
 For the message use imperative style and keep things concise but informative. See [How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/) for guidance.
 
