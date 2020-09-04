@@ -22,10 +22,9 @@ def test_config_history_server_with_env_variable(mock_open_file) -> None:
     config_history_server(EVENT_LOGS_S3_URI)
 
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
-    mock_open_file().write.assert_has_calls([
-        call("spark.history.fs.logDirectory=s3://bucket/spark-events\n"),
-        call("spark.ui.proxyBase=/proxy/15050\n"),
-    ])
+    mock_open_file().write.assert_has_calls(
+        [call("spark.history.fs.logDirectory=s3://bucket/spark-events\n"), call("spark.ui.proxyBase=/proxy/15050\n"),]
+    )
 
 
 def test_config_history_server_without_env_variable():

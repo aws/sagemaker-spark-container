@@ -259,7 +259,7 @@ def test_load_processing_job_config(patched_exists, default_bootstrapper: Bootst
 @patch("os.path.exists")
 def test_load_processing_job_config_fallback(patched_exists, default_bootstrapper: Bootstrapper) -> None:
     patched_exists.return_value = False
-    assert default_bootstrapper.load_processing_job_config() is None
+    assert default_bootstrapper.load_processing_job_config() == {}
     patched_exists.assert_called_once_with(Bootstrapper.PROCESSING_JOB_CONFIG_PATH)
 
 
@@ -267,10 +267,7 @@ def test_load_processing_job_config_fallback(patched_exists, default_bootstrappe
 def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrapper) -> None:
     raw_config = [
         {"InstanceType": "foo.xlarge", "foo": "bar"},
-        {
-            "InstanceType": "bar.xlarge",
-            "bar": "foo",
-        },
+        {"InstanceType": "bar.xlarge", "bar": "foo",},
     ]
     exp_config = {"foo.xlarge": {"foo": "bar"}, "bar.xlarge": {"bar": "foo"}}
 
@@ -285,7 +282,7 @@ def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrap
 @patch("os.path.exists")
 def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrapper) -> None:
     patched_exists.return_value = False
-    assert default_bootstrapper.load_instance_type_info() is None
+    assert default_bootstrapper.load_instance_type_info() == {}
     patched_exists.assert_called_once_with(Bootstrapper.INSTANCE_TYPE_INFO_PATH)
 
 

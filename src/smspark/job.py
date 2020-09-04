@@ -102,8 +102,9 @@ class ProcessingJobManager(object):
 
         if self._is_primary_host:
             self.logger.info("start log event log publisher")
-            spark_log_publisher = self._start_spark_event_log_publisher(spark_event_logs_s3_uri,
-                                                                        local_spark_event_logs_dir)
+            spark_log_publisher = self._start_spark_event_log_publisher(
+                spark_event_logs_s3_uri, local_spark_event_logs_dir
+            )
 
             self.logger.info(f"Waiting for hosts to bootstrap: {self.hosts}")
 
