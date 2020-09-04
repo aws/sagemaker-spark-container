@@ -50,18 +50,16 @@ setup(
     ],
     extras_require={
         "test": [
-            "safety",
-            "black",
-            "tox",
-            "mypy",
-            "flake8",
-            "flake8-docstrings",
-            "pytest",
-            "pytest-cov",
-            "pytest-xdist",
-            "docker",
-            "sagemaker-python-sdk-spark",  # For SageMaker integration tests
-            "docker-compose",  # For local integration tests
+            "safety==1.9.0",
+            "black==19.10b0",
+            "mypy==0.782",
+            "flake8==3.8.3",
+            "flake8-docstrings==1.5.0",
+            "pytest==5.4.3",
+            "pytest-cov==2.10.0",
+            "pytest-xdist==1.32.0",
+            "docker==4.2.2",
+            "docker-compose==1.26.2",  # For local integration tests
         ]
     },
     entry_points={
