@@ -7,6 +7,7 @@ EXIT_CODE_SUCCESS = 0
 EXIT_CODE_ALGORITHM_ERROR = 1
 DEFAULT_INPUT_ERROR_MSG = "error preparing for spark submit"
 
+
 class BaseError(Exception):
     """Abstract base for all errors that may cause the container to exit unsuccessfully.
 

@@ -46,6 +46,7 @@ setup(
         "watchdog==0.10.3",  # watching for filesystem events
         "waitress==1.4.4",  # WSGI python server implementation
         "requests==2.24.0", # for HTTP requests
+        "rsa==4.3",
     ],
     extras_require={
         "test": [

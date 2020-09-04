@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Union, Tuple
 
 import psutil
 import requests
@@ -248,22 +248,22 @@ class Bootstrapper:
         else:
             logging.info("No file at {} exists, skipping user configuration".format(str(path)))
 
-    def load_processing_job_config(self) -> Optional[dict]:
+    def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):
             logging.warning(f"Path does not exist: {self.PROCESSING_JOB_CONFIG_PATH}")
-            return None
+            return {}
         with open(self.PROCESSING_JOB_CONFIG_PATH, "r") as f:
             return json.loads(f.read())
 
-    def load_instance_type_info(self) -> Optional[dict]:
+    def load_instance_type_info(self) -> Dict[str, Any]:
         if not os.path.exists(self.INSTANCE_TYPE_INFO_PATH):
             logging.warning(f"Path does not exist: {self.INSTANCE_TYPE_INFO_PATH}")
-            return None
+            return {}
         with open(self.INSTANCE_TYPE_INFO_PATH, "r") as f:
             instance_type_info_list = json.loads(f.read())
             return {instance["InstanceType"]: instance for instance in instance_type_info_list}
 
-    def set_yarn_spark_resource_config(self):
+    def set_yarn_spark_resource_config(self) -> None:
         processing_job_config = self.load_processing_job_config()
         instance_type_info = self.load_instance_type_info()
 
@@ -299,8 +299,8 @@ class Bootstrapper:
         logging.info("Configuration at {} is: \n{}".format(spark_config.path, spark_config_string))
 
     def get_yarn_spark_resource_config(
-        self, instance_count, instance_mem_mb, instance_cores
-    ) -> (Configuration, Configuration):
+        self, instance_count: int, instance_mem_mb: int, instance_cores: int
+    ) -> Tuple[Configuration, Configuration]:
         executor_cores = instance_cores
         executor_count_per_instance = int(instance_cores / executor_cores)
         executor_count_total = instance_count * executor_count_per_instance

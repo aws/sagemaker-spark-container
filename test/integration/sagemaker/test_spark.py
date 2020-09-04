@@ -88,7 +88,7 @@ def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri, sagemaker_sessi
         instance_count=1,
         instance_type="ml.c5.xlarge",
         max_runtime_in_seconds=1200,
-        sagemaker_session=sagemaker_session
+        sagemaker_session=sagemaker_session,
     )
 
     try:
