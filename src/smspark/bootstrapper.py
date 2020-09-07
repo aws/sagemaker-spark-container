@@ -121,6 +121,9 @@ class Bootstrapper:
         with open(core_site_file_path, "w") as core_file:
             core_file.write(file_data)
 
+        # Set special regional configs (e.g. S3 endpoint)
+        self.set_regional_configs()
+
         # Configure hostname for resource manager and node manager
         with open(yarn_site_file_path, "r") as yarn_file:
             file_data = yarn_file.read()
@@ -140,6 +143,7 @@ class Bootstrapper:
         with open(spark_conf_file_path, "w") as spark_file:
             spark_file.write(file_data)
 
+        # Calculate and set Spark and Yarn resource allocation configs
         self.set_yarn_spark_resource_config()
 
         logging.info("Finished Yarn configuration files setup.")
@@ -247,6 +251,27 @@ class Bootstrapper:
                     )
         else:
             logging.info("No file at {} exists, skipping user configuration".format(str(path)))
+
+    def set_regional_configs(self) -> None:
+        regional_configs_list = self.get_regional_configs()
+        for regional_config in regional_configs_list:
+            logging.info("Writing regional config to {}".format(regional_config.path))
+            regional_config_string = regional_config.write_config()
+            logging.info("Configuration at {} is: \n{}".format(regional_config.path, regional_config_string))
+
+    def get_regional_configs(self) -> List[Configuration]:
+        aws_region = os.getenv("AWS_REGION")
+        if aws_region is None:
+            logging.warning("Unable to detect AWS region from environment variable AWS_REGION")
+            return []
+        elif aws_region in ["cn-northwest-1", "cn-north-1"]:
+            aws_domain = "amazonaws.com.cn"
+            s3_endpoint = f"s3.{aws_region}.{aws_domain}"
+        else:
+            # no special regional configs needed
+            return []
+
+        return [Configuration(Classification="core-site", Properties={"fs.s3a.endpoint": s3_endpoint},)]
 
     def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):

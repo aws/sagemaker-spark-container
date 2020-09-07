@@ -201,6 +201,49 @@ def test_spark_standalone_primary(patched_popen, default_bootstrapper) -> None:
     patched_popen.assert_called_once_with("/usr/lib/spark/sbin/start-master.sh", shell=True)
 
 
+@patch("smspark.config.Configuration")
+def test_set_regional_configs(patched_config, default_bootstrapper: Bootstrapper) -> None:
+    default_bootstrapper.get_regional_configs = MagicMock(return_value=[patched_config])
+    default_bootstrapper.set_regional_configs()
+    default_bootstrapper.get_regional_configs.assert_called_once()
+    patched_config.write_config.assert_called_once()
+
+
+@patch("smspark.config.Configuration")
+def test_set_regional_configs_empty(patched_config, default_bootstrapper: Bootstrapper) -> None:
+    default_bootstrapper.get_regional_configs = MagicMock(return_value=[])
+    default_bootstrapper.set_regional_configs()
+    default_bootstrapper.get_regional_configs.assert_called_once()
+    patched_config.write_config.assert_not_called()
+
+
+@patch("os.getenv")
+def test_get_regional_configs_cn(patched_getenv, default_bootstrapper: Bootstrapper) -> None:
+    patched_getenv.return_value = "cn-northwest-1"
+    regional_configs_list = default_bootstrapper.get_regional_configs()
+    assert len(regional_configs_list) == 1
+    assert regional_configs_list[0] == Configuration(
+        Classification="core-site", Properties={"fs.s3a.endpoint": "s3.cn-northwest-1.amazonaws.com.cn"}
+    )
+    patched_getenv.assert_called_once_with("AWS_REGION")
+
+
+@patch("os.getenv")
+def test_get_regional_configs_us(patched_getenv, default_bootstrapper: Bootstrapper) -> None:
+    patched_getenv.return_value = "us-west-2"
+    regional_configs_list = default_bootstrapper.get_regional_configs()
+    assert len(regional_configs_list) == 0
+    patched_getenv.assert_called_once_with("AWS_REGION")
+
+
+@patch("os.getenv")
+def test_get_regional_configs_missing_region(patched_getenv, default_bootstrapper: Bootstrapper) -> None:
+    patched_getenv.return_value = None
+    regional_configs_list = default_bootstrapper.get_regional_configs()
+    assert len(regional_configs_list) == 0
+    patched_getenv.assert_called_once_with("AWS_REGION")
+
+
 @patch("os.path.exists")
 def test_load_processing_job_config(patched_exists, default_bootstrapper: Bootstrapper) -> None:
     exp_config = {"ProcessingResources": {"ClusterConfig": {"InstanceType": "foo.xbar", "InstanceCount": 123}}}
