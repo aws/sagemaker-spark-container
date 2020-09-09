@@ -29,13 +29,15 @@ def start_history_server(event_logs_s3_uri: str) -> None:
     bootstrapper.copy_aws_jars()
     log.info("copying cluster config")
     bootstrapper.copy_cluster_config()
+    log.info("setting regional configs")
+    bootstrapper.set_regional_configs()
     log.info("copying history server config")
     config_history_server(event_logs_s3_uri)
     log.info("bootstrap master node")
     bootstrapper.start_spark_standalone_primary()
 
     try:
-        subprocess.check_output("sbin/start-history-server.sh", stderr=subprocess.PIPE)
+        subprocess.run("sbin/start-history-server.sh", check=True)
     except subprocess.CalledProcessError as e:
         raise AlgorithmError(message=e.stderr.decode(sys.getfilesystemencoding()), caused_by=e, exit_code=e.returncode)
     except Exception as e:

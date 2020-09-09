@@ -467,6 +467,9 @@ class _SparkProcessorBase(ScriptProcessor):
         else:
             history_server_env_variables.update(self._config_aws_credentials())
 
+        region = self.sagemaker_session.boto_region_name
+        history_server_env_variables["AWS_REGION"] = region
+
         return history_server_env_variables
 
     def _is_notebook_instance(self):
