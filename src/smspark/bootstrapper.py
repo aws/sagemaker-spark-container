@@ -267,11 +267,14 @@ class Bootstrapper:
         elif aws_region in ["cn-northwest-1", "cn-north-1"]:
             aws_domain = "amazonaws.com.cn"
             s3_endpoint = f"s3.{aws_region}.{aws_domain}"
+        elif aws_region in ["us-gov-west-1", "us-gov-east-1"]:
+            aws_domain = "amazonaws.com"
+            s3_endpoint = f"s3.{aws_region}.{aws_domain}"
         else:
             # no special regional configs needed
             return []
 
-        return [Configuration(Classification="core-site", Properties={"fs.s3a.endpoint": s3_endpoint},)]
+        return [Configuration(Classification="core-site", Properties={"fs.s3a.endpoint": s3_endpoint})]
 
     def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):

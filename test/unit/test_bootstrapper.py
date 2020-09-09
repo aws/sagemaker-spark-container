@@ -229,6 +229,17 @@ def test_get_regional_configs_cn(patched_getenv, default_bootstrapper: Bootstrap
 
 
 @patch("os.getenv")
+def test_get_regional_configs_gov(patched_getenv, default_bootstrapper: Bootstrapper) -> None:
+    patched_getenv.return_value = "us-gov-west-1"
+    regional_configs_list = default_bootstrapper.get_regional_configs()
+    assert len(regional_configs_list) == 1
+    assert regional_configs_list[0] == Configuration(
+        Classification="core-site", Properties={"fs.s3a.endpoint": "s3.us-gov-west-1.amazonaws.com"}
+    )
+    patched_getenv.assert_called_once_with("AWS_REGION")
+
+
+@patch("os.getenv")
 def test_get_regional_configs_us(patched_getenv, default_bootstrapper: Bootstrapper) -> None:
     patched_getenv.return_value = "us-west-2"
     regional_configs_list = default_bootstrapper.get_regional_configs()
