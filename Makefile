@@ -45,7 +45,11 @@ build-container-library:
 	python setup.py bdist_wheel;
 	cp dist/*.whl ${BUILD_CONTEXT}
 
-install-container-library:
+init:
+	pip install pipenv --upgrade
+	pipenv install
+
+install-container-library: init build-container-library
 	pip install --upgrade dist/smspark-0.1-py3-none-any.whl
 	safety check  # https://github.com/pyupio/safety
 

@@ -18,6 +18,10 @@ from setuptools import find_packages, setup
 with open("VERSION", "r") as version_file:
     version = version_file.read()
 
+install_reqs = list(open('requirements.txt').read().strip().split('\n'))
+test_install_reqs = list(open('test_requirements.txt').read().strip().split('\n'))
+
+
 setup(
     name="smspark",
     description="Library that enables running Spark Processing jobs on Amazon SageMaker",
@@ -39,28 +43,10 @@ setup(
     ],
     setup_requires=["setuptools", "wheel"],
     # Be frugal when adding dependencies. Prefer Python's standard library.
-    install_requires=[
-        "tenacity==5.1.4",  # retrying utils
-        "psutil==5.7.0",  # inspecting number of cores
-        "click==7.1.2",  # parsing command-line options
-        "watchdog==0.10.3",  # watching for filesystem events
-        "waitress==1.4.4",  # WSGI python server implementation
-        "requests==2.24.0", # for HTTP requests
-        "rsa==4.3",
-    ],
+    install_requires = install_reqs,
+
     extras_require={
-        "test": [
-            "safety==1.9.0",
-            "black==19.10b0",
-            "mypy==0.782",
-            "flake8==3.8.3",
-            "flake8-docstrings==1.5.0",
-            "pytest==5.4.3",
-            "pytest-cov==2.10.0",
-            "pytest-xdist==1.32.0",
-            "docker==4.2.2",
-            "docker-compose==1.26.2",  # For local integration tests
-        ]
+        "test": test_install_reqs,
     },
     entry_points={
         "console_scripts": [
