@@ -17,9 +17,7 @@ CONFIG_NOTEBOOK_PROXY_BASE = "spark.ui.proxyBase=/proxy/15050"
 # TODO (amoeller@): Every file has the same log config, need common place for
 # consistent logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
-    datefmt="%m-%d %H:%M",
+    level=logging.INFO, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s", datefmt="%m-%d %H:%M",
 )
 log = logging.getLogger("sagemaker-spark")
 
@@ -45,8 +43,7 @@ def start_history_server(event_logs_s3_uri: str) -> None:
     except Exception as e:
         log.error("Exception during processing: " + str(e) + "\n" + traceback.format_exc())
         raise AlgorithmError(
-            message="error occurred during start-history-server execution. Please see logs for details.",
-            caused_by=e,
+            message="error occurred during start-history-server execution. Please see logs for details.", caused_by=e,
         )
 
 

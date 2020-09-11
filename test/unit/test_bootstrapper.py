@@ -22,9 +22,7 @@ def test_recursive_deserialize_user_configuration(default_bootstrapper):
 
     expected = [
         Configuration(
-            "core-site",
-            {"prop": "value"},
-            Configurations=[Configuration("export", {"inner-prop": "inner-value"})],
+            "core-site", {"prop": "value"}, Configurations=[Configuration("export", {"inner-prop": "inner-value"})],
         )
     ]
     output = default_bootstrapper.deserialize_user_configuration(test_case)
@@ -68,10 +66,7 @@ def test_env_classification(default_bootstrapper):
         "Configurations": [
             {
                 "Classification": "export",
-                "Properties": {
-                    "HADOOP_DATANODE_HEAPSIZE": "2048",
-                    "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
-                },
+                "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
             }
         ],
     }
@@ -81,10 +76,7 @@ def test_env_classification(default_bootstrapper):
         "hadoop-env",
         {},
         Configurations=[
-            Configuration(
-                "export",
-                {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},
-            )
+            Configuration("export", {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19"},)
         ],
     )
 
@@ -98,10 +90,7 @@ def test_copy_aws_jars(patched_copyfile, patched_glob, default_bootstrapper) -> 
 
     expected = [
         call("/aws-sdk.jar", "/usr/lib/spark/jars/aws-sdk.jar"),
-        call(
-            "/usr/lib/hadoop/hadoop-aws-2.8.5-amzn-5.jar",
-            "/usr/lib/spark/jars/hadoop-aws-2.8.5-amzn-5.jar",
-        ),
+        call("/usr/lib/hadoop/hadoop-aws-2.8.5-amzn-5.jar", "/usr/lib/spark/jars/hadoop-aws-2.8.5-amzn-5.jar",),
         call("/usr/lib/hadoop/jets3t-0.9.0.jar", "/usr/lib/spark/jars/jets3t-0.9.0.jar"),
         call("/hmclient/lib/client.jar", "/usr/lib/spark/jars/client.jar"),
     ]
@@ -167,14 +156,8 @@ def test_start_hadoop_daemons_on_primary(patched_popen, patched_call, default_bo
     default_bootstrapper.start_hadoop_daemons()
 
     expected_subprocess_calls = [
-        call(
-            "rm -rf /opt/amazon/hadoop/hdfs/namenode && mkdir -p /opt/amazon/hadoop/hdfs/namenode",
-            shell=True,
-        ),
-        call(
-            "rm -rf /opt/amazon/hadoop/hdfs/datanode && mkdir -p /opt/amazon/hadoop/hdfs/datanode",
-            shell=True,
-        ),
+        call("rm -rf /opt/amazon/hadoop/hdfs/namenode && mkdir -p /opt/amazon/hadoop/hdfs/namenode", shell=True,),
+        call("rm -rf /opt/amazon/hadoop/hdfs/datanode && mkdir -p /opt/amazon/hadoop/hdfs/datanode", shell=True,),
         call("hdfs namenode -format -force", shell=True),
     ]
 
@@ -197,10 +180,7 @@ def test_start_hadoop_daemons_on_worker(patched_popen, patched_call) -> None:
     worker_bootstrapper.start_hadoop_daemons()
 
     expected_subprocess_calls = [
-        call(
-            "rm -rf /opt/amazon/hadoop/hdfs/datanode && mkdir -p /opt/amazon/hadoop/hdfs/datanode",
-            shell=True,
-        ),
+        call("rm -rf /opt/amazon/hadoop/hdfs/datanode && mkdir -p /opt/amazon/hadoop/hdfs/datanode", shell=True,),
     ]
 
     patched_call.call_args_list = expected_subprocess_calls
@@ -298,10 +278,7 @@ def test_load_processing_job_config_fallback(patched_exists, default_bootstrappe
 def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrapper) -> None:
     raw_config = [
         {"InstanceType": "foo.xlarge", "foo": "bar"},
-        {
-            "InstanceType": "bar.xlarge",
-            "bar": "foo",
-        },
+        {"InstanceType": "bar.xlarge", "bar": "foo",},
     ]
     exp_config = {"foo.xlarge": {"foo": "bar"}, "bar.xlarge": {"bar": "foo"}}
 

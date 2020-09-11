@@ -57,13 +57,11 @@ class Bootstrapper:
         hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-5.jar"
         jets3t_jar = "jets3t-0.9.0.jar"
         shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar),
-            os.path.join(jar_dest, hadoop_aws_jar),
+            os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(jar_dest, hadoop_aws_jar),
         )
         # this jar required for using s3a client
         shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH + "/lib", jets3t_jar),
-            os.path.join(jar_dest, jets3t_jar),
+            os.path.join(Bootstrapper.HADOOP_PATH + "/lib", jets3t_jar), os.path.join(jar_dest, jets3t_jar),
         )
         # copy hmclient (glue data catalog hive metastore client) jars to classpath:
         # https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore
@@ -78,20 +76,16 @@ class Bootstrapper:
             shutil.copyfile(src, dst)
 
         copy_config(
-            "/opt/hadoop-config/hdfs-site.xml",
-            Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml",
+            "/opt/hadoop-config/hdfs-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/core-site.xml",
-            Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml",
+            "/opt/hadoop-config/core-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/yarn-site.xml",
-            Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml",
+            "/opt/hadoop-config/yarn-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/spark-defaults.conf",
-            Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf",
+            "/opt/hadoop-config/spark-defaults.conf", Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf",
         )
         copy_config("/opt/hadoop-config/spark-env.sh", Bootstrapper.SPARK_PATH + "/conf/spark-env.sh")
 
@@ -223,8 +217,7 @@ class Bootstrapper:
             )
         else:
             return Configuration(
-                Classification=configuration_dict["Classification"],
-                Properties=configuration_dict["Properties"],
+                Classification=configuration_dict["Classification"], Properties=configuration_dict["Properties"],
             )
 
     def write_user_configuration(self) -> None:
@@ -241,8 +234,7 @@ class Bootstrapper:
                 user_configuration_list_or_dict = json.load(config)
                 logging.info(
                     "User configuration list or dict: {} , type {}".format(
-                        user_configuration_list_or_dict,
-                        type(user_configuration_list_or_dict),
+                        user_configuration_list_or_dict, type(user_configuration_list_or_dict),
                     )
                 )
                 user_confs = self.deserialize_user_configuration(user_configuration_list_or_dict)

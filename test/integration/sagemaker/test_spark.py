@@ -27,18 +27,12 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {
-                        "HADOOP_DATANODE_HEAPSIZE": "2048",
-                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
-                    },
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
         },
-        {
-            "Classification": "core-site",
-            "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"},
-        },
+        {"Classification": "core-site", "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"},},
         {"Classification": "hadoop-log4j", "Properties": {"key": "value"}},
         {
             "Classification": "hive-env",
@@ -46,10 +40,7 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {
-                        "HADOOP_DATANODE_HEAPSIZE": "2048",
-                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
-                    },
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
@@ -64,10 +55,7 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {
-                        "HADOOP_DATANODE_HEAPSIZE": "2048",
-                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
-                    },
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],
@@ -82,10 +70,7 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {
-                        "HADOOP_DATANODE_HEAPSIZE": "2048",
-                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
-                    },
+                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
                     "Configurations": [],
                 }
             ],

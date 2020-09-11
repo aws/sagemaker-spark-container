@@ -8,9 +8,7 @@ from threading import Thread
 from typing import Optional, Sequence
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
-    datefmt="%m-%d %H:%M",
+    level=logging.INFO, format="%(asctime)s %(name)-12s %(levelname)-8s %(message)s", datefmt="%m-%d %H:%M",
 )
 log = logging.getLogger("sagemaker-spark-event-logs-publisher")
 

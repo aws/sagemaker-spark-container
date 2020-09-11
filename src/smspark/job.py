@@ -132,8 +132,7 @@ class ProcessingJobManager(object):
             except Exception as e:
                 self.logger.error("Exception during processing: " + str(e) + "\n" + traceback.format_exc())
                 raise AlgorithmError(
-                    message="error occurred during spark-submit execution. Please see logs for details.",
-                    caused_by=e,
+                    message="error occurred during spark-submit execution. Please see logs for details.", caused_by=e,
                 )
 
             finally:

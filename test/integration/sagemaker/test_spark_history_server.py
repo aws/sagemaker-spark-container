@@ -70,11 +70,7 @@ def test_integ_history_server_with_expected_failure(mock_print, tag, role, image
 def _request_with_retry(url, max_retries=10):
     http = urllib3.PoolManager(
         retries=Retry(
-            max_retries,
-            redirect=max_retries,
-            status=max_retries,
-            status_forcelist=[502, 404],
-            backoff_factor=0.2,
+            max_retries, redirect=max_retries, status=max_retries, status_forcelist=[502, 404], backoff_factor=0.2,
         )
     )
     try:

@@ -15,6 +15,5 @@ class Waiter:
             time.sleep(period)
             if time.time() > deadline:
                 raise AlgorithmError(
-                    "Timed out waiting for function {}".format(predicate_fn.__name__),
-                    caused_by=TimeoutError(),
+                    "Timed out waiting for function {}".format(predicate_fn.__name__), caused_by=TimeoutError(),
                 )

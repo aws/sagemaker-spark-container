@@ -117,11 +117,7 @@ def get_test_cases() -> List[SubmitTest]:
         test_cases = test_cases + files_test_cases
 
     test_cases = [
-        SubmitTest(
-            name="missing APP arg should fail",
-            args="",
-            expected_cmd=click.exceptions.MissingParameter,
-        ),
+        SubmitTest(name="missing APP arg should fail", args="", expected_cmd=click.exceptions.MissingParameter,),
         SubmitTest(
             name="invalid spark options should fail",
             args="--invalid-spark-option opt arg.py",
