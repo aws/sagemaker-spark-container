@@ -3,15 +3,19 @@ import json
 import logging
 import socket
 import subprocess
+import time
 import traceback
 from typing import Any, Dict, Mapping, Sequence
 
+from requests.exceptions import ConnectionError
 from smspark.bootstrapper import Bootstrapper
-from smspark.defaults import default_processing_job_config, default_resource_config
+from smspark.defaults import (default_processing_job_config,
+                              default_resource_config)
 from smspark.errors import AlgorithmError
 from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
-from smspark.status import Status, StatusApp, StatusClient, StatusMessage, StatusServer
+from smspark.status import (Status, StatusApp, StatusClient, StatusMessage,
+                            StatusServer)
 from smspark.waiter import Waiter
 from tenacity import retry, stop_after_delay
 
@@ -109,7 +113,14 @@ class ProcessingJobManager(object):
             self.logger.info(f"Waiting for hosts to bootstrap: {self.hosts}")
 
             def all_hosts_have_bootstrapped() -> bool:
-                host_statuses: Mapping[str, StatusMessage] = self.status_client.get_status(self.hosts)
+                try:
+                    host_statuses: Mapping[str, StatusMessage] = self.status_client.get_status(self.hosts)
+
+                except ConnectionError as e:
+                    self.logger.info(
+                        f"Got ConnectionError when polling hosts for status. Host may not have come up: {str(e)}.\nTraceback: {traceback.format_exc()}"
+                    )
+                    return False
                 self.logger.info(f"Received host statuses: {host_statuses.items()}")
                 has_bootstrapped = [message.status == Status.WAITING for message in host_statuses.values()]
                 return all(has_bootstrapped)

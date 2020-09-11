@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Sequence, Union, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import psutil
 import requests
@@ -184,7 +184,9 @@ class Bootstrapper:
             except Exception:
                 return False
 
+        self.logger.info("waiting for cluster to be up")
         self.waiter.wait_for(predicate_fn=cluster_is_up, timeout=60.0, period=1.0)
+        self.logger.info("cluster is up")
 
     def start_spark_standalone_primary(self) -> None:
         """Start only spark standalone's primary node for history server, since distributing workload to workers is not needed for history server.
