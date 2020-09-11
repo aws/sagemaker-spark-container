@@ -179,7 +179,7 @@ def test_sagemaker_pyspark_sse_s3(tag, role, image_uri, sagemaker_session, regio
         s3_client.put_object(Body=body, Bucket=bucket, Key=input_data_key, ServerSideEncryption="AES256")
 
     spark.run(
-        submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration={
