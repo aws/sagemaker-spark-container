@@ -9,13 +9,11 @@ from typing import Any, Dict, Mapping, Sequence
 
 from requests.exceptions import ConnectionError
 from smspark.bootstrapper import Bootstrapper
-from smspark.defaults import (default_processing_job_config,
-                              default_resource_config)
+from smspark.defaults import default_processing_job_config, default_resource_config
 from smspark.errors import AlgorithmError
 from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
-from smspark.status import (Status, StatusApp, StatusClient, StatusMessage,
-                            StatusServer)
+from smspark.status import Status, StatusApp, StatusClient, StatusMessage, StatusServer
 from smspark.waiter import Waiter
 from tenacity import retry, stop_after_delay
 
