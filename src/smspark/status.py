@@ -53,20 +53,17 @@ class StatusClient:
             retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
             s.mount("http://", HTTPAdapter(max_retries=retries))
             url = "http://{}:{}".format(host, StatusServer.port)
-            try:
-                resp = s.get(url, timeout=1.0)
-                if resp.ok:
-                    status_message = StatusMessage(**resp.json())
-                    return status_message
-                else:
-                    raise AlgorithmError(
-                        message="Could not get status for host {} status code: {} response: {}".format(
-                            host, resp.status_code, resp.text
-                        ),
-                        caused_by=HTTPError(),
-                    )
-            except Exception as e:
-                raise AlgorithmError(message="Exception while getting status for host {}".format(host), caused_by=e)
+            resp = s.get(url, timeout=1.0)
+            if resp.ok:
+                status_message = StatusMessage(**resp.json())
+                return status_message
+            else:
+                raise AlgorithmError(
+                    message="Could not get status for host {} status code: {} response: {}".format(
+                        host, resp.status_code, resp.text
+                    ),
+                    caused_by=HTTPError(),
+                )
 
         tasks = [asyncio.create_task(get_host_status(host)) for host in hosts]
         return await asyncio.gather(*tasks)
