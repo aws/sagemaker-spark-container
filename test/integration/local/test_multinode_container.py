@@ -28,7 +28,11 @@ def test_pyspark_multinode(input_data: str, output_data: str, verbose_opt: str) 
 
     print(docker_compose_cmd)
     docker_compose_proc = subprocess.run(
-        docker_compose_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, encoding="utf-8",
+        docker_compose_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        encoding="utf-8",
     )
 
     stdout = docker_compose_proc.stdout
@@ -77,7 +81,11 @@ def test_scala_spark_multinode(input_data: str, output_data: str, verbose_opt: s
     print(docker_compose_cmd)
 
     docker_compose_proc = subprocess.run(
-        docker_compose_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, encoding="utf-8",
+        docker_compose_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        encoding="utf-8",
     )
 
     stdout = docker_compose_proc.stdout
@@ -122,7 +130,11 @@ def test_java_spark_multinode(input_data: str, output_data: str, verbose_opt: st
 
     print(docker_compose_cmd)
     docker_compose_proc = subprocess.run(
-        docker_compose_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True, encoding="utf-8",
+        docker_compose_cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        shell=True,
+        encoding="utf-8",
     )
 
     stdout = docker_compose_proc.stdout

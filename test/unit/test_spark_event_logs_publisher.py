@@ -41,7 +41,10 @@ def test_run_with_event_log_dir(mock_open_file, mock_os_path_exists, mock_os_lis
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
 
     mock_open_file().write.assert_has_calls(
-        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format(EVENT_LOG_DIR) + "\n"),]
+        [
+            call(CONFIG_ENABLE_EVENT_LOG + "\n"),
+            call(CONFIG_EVENT_LOG_DIR_FORMAT.format(EVENT_LOG_DIR) + "\n"),
+        ]
     )
 
     src_file = EVENT_LOG_DIR + EVENT_FILE_NAME + EVENT_FILE_SUFFIX
@@ -59,5 +62,8 @@ def test_run_with_spark_events_s3_uri(mock_open_file):
     mock_open_file.assert_called_with(SPARK_DEFAULTS_CONFIG_PATH, "a")
 
     mock_open_file().write.assert_has_calls(
-        [call(CONFIG_ENABLE_EVENT_LOG + "\n"), call(CONFIG_EVENT_LOG_DIR_FORMAT.format("s3a://bucket/folder") + "\n"),]
+        [
+            call(CONFIG_ENABLE_EVENT_LOG + "\n"),
+            call(CONFIG_EVENT_LOG_DIR_FORMAT.format("s3a://bucket/folder") + "\n"),
+        ]
     )

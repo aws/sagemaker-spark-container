@@ -177,7 +177,7 @@ class _SparkProcessorBase(ScriptProcessor):
             account_id = _SparkProcessorBase._region_account_map[region]
 
             image_uri = _SparkProcessorBase._image_uri_format.format(
-                account_id, region, "sagemaker-spark", tag
+                account_id, region, "sagemaker-spark-processing", tag
             )
 
         env = env or {}

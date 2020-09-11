@@ -64,9 +64,7 @@ def test_integ_history_server_with_expected_failure(mock_print, tag, role, image
     spark.start_history_server(spark_event_logs_s3_uri="invalids3uri")
     response = _request_with_retry(HISTORY_SERVER_ENDPOINT, max_retries=5)
     assert response is None
-    mock_print.assert_called_with(
-        "History server failed to start. Please run 'docker logs history_server' to see logs"
-    )
+    mock_print.assert_called_with("History server failed to start. Please run 'docker logs history_server' to see logs")
 
 
 def _request_with_retry(url, max_retries=10):
