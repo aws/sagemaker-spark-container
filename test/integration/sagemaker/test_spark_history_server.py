@@ -50,7 +50,7 @@ def test_history_server(tag, role, image_uri, sagemaker_session):
 
 
 @patch("sagemaker.spark.processing.print")
-def test_integ_history_server_with_expected_failure(mock_print, tag, role, image_uri):
+def test_integ_history_server_with_expected_failure(mock_print, tag, role, image_uri, sagemaker_session):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
         framework_version=tag,
@@ -59,6 +59,7 @@ def test_integ_history_server_with_expected_failure(mock_print, tag, role, image
         instance_count=1,
         instance_type="ml.c5.xlarge",
         max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
     )
 
     spark.start_history_server(spark_event_logs_s3_uri="invalids3uri")
