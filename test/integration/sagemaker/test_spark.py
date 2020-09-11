@@ -105,7 +105,7 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagema
         )
 
     spark.run(
-        submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
@@ -224,7 +224,7 @@ def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sage
 
     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
     spark.run(
-        submit_app_jar="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
+        submit_app="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
         submit_jars=[
             "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
@@ -269,7 +269,7 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagem
 
     java_project_dir = "test/resources/code/java/hello-java-spark"
     spark.run(
-        submit_app_jar="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
+        submit_app="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp",
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,

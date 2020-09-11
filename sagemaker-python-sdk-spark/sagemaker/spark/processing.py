@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -10,7 +10,8 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-"""This module contains code related to Spark Processors, which are used
+"""This module is the entry to run spark preprocessing script
+This module contains code related to Spark Processors, which are used
 for Processing jobs. These jobs let customers perform data pre-processing,
 post-processing, feature engineering, data validation, and model evaluation
 on SageMaker using Spark and PySpark.
@@ -26,16 +27,18 @@ import time
 import urllib.request
 from io import BytesIO
 from urllib.parse import urlparse
+from enum import Enum
 
 from sagemaker.processing import ProcessingInput, ProcessingOutput, ScriptProcessor
+from sagemaker.local.image import _ecr_login_if_needed, _pull_image
 from sagemaker.s3 import S3Uploader
 from sagemaker.session import Session
-from sagemaker.local.image import _ecr_login_if_needed
-from sagemaker.local.image import _pull_image
 
 
 class _SparkProcessorBase(ScriptProcessor):
-    """Handles Amazon SageMaker processing tasks for jobs using Spark. Base class for either PySpark or SparkJars."""
+    """Handles Amazon SageMaker processing tasks for jobs using Spark.
+    Base class for either PySpark or SparkJars.
+    """
 
     _region_account_map = {
         "me-south-1": "750251592176",
@@ -59,14 +62,14 @@ class _SparkProcessorBase(ScriptProcessor):
         "cn-northwest-1": "844356804704",
         "eu-south-1": "753923664805",
         "af-south-1": "309385258863",
-        "us-gov-west-1": "271483468897",
+        "us-gov-west-1": "271483468897"
     }
 
     _default_command = "smspark-submit"
     _image_uri_format = "{}.dkr.ecr.{}.amazonaws.com/{}:{}"
-    _CONF_CONTAINER_BASE_PATH = "/opt/ml/processing/input/"
-    _CONF_CONTAINER_INPUT_NAME = "conf"
-    _CONF_FILE_NAME = "configuration.json"
+    _conf_container_base_path = "/opt/ml/processing/input/"
+    _conf_container_input_name = "conf"
+    _conf_file_name = "configuration.json"
     _valid_configuration_keys = ["Classification", "Properties", "Configurations"]
     _valid_configuration_classifications = [
         "core-site",
@@ -86,15 +89,18 @@ class _SparkProcessorBase(ScriptProcessor):
         "export",
     ]
 
-    _SUBMIT_JARS_INPUT_CHANNEL_NAME = "jars"
-    _SUBMIT_FILES_INPUT_CHANNEL_NAME = "files"
-    _SUBMIT_PY_FILES_INPUT_CHANNEL_NAME = "py-files"
-    _SUBMIT_DEPS_ERROR_MESSAGE = "Please specify a list of one or more S3 URIs, local file paths, and/or local directory paths"
+    _submit_jars_input_channel_name = "jars"
+    _submit_files_input_channel_name = "files"
+    _submit_py_files_input_channel_name = "py-files"
+    _submit_deps_error_message = (
+        "Please specify a list of one or more S3 URIs, "
+        "local file paths, and/or local directory paths"
+    )
 
     # history server vars
-    _HISTORY_SERVER_TIMEOUT = 40
-    _HISTORY_SERVER_URL_SUFFIX = "/proxy/15050"
-    _SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH = "/opt/ml/processing/spark-events/"
+    _history_server_port = "15050"
+    _history_server_url_suffix = f"/proxy/{_history_server_port}"
+    _spark_event_log_default_local_path = "/opt/ml/processing/spark-events/"
 
     def __init__(
         self,
@@ -102,8 +108,9 @@ class _SparkProcessorBase(ScriptProcessor):
         instance_type,
         instance_count,
         framework_version=None,
+        py_version=None,
+        container_version=None,
         image_uri=None,
-        command=None,
         volume_size_in_gb=30,
         volume_kms_key=None,
         output_kms_key=None,
@@ -114,11 +121,13 @@ class _SparkProcessorBase(ScriptProcessor):
         tags=None,
         network_config=None,
     ):
-        """Initialize a ``_SparkProcessorBase`` instance. The _SparkProcessorBase
-        handles Amazon SageMaker processing tasks for jobs using SageMaker Spark.
-
+        """Initialize a ``_SparkProcessorBase`` instance.
+        The _SparkProcessorBase handles Amazon SageMaker processing tasks for
+        jobs using SageMaker Spark.
         Args:
             framework_version (str): The version of SageMaker PySpark.
+            py_version (str): The version of python.
+            container_version (str): The version of spark container.
             role (str): An AWS IAM role name or ARN. The Amazon SageMaker training jobs
                 and APIs that create Amazon SageMaker endpoints use this role
                 to access training data and model artifacts. After the endpoint
@@ -128,9 +137,6 @@ class _SparkProcessorBase(ScriptProcessor):
                 processing, for example, 'ml.c4.xlarge'.
             instance_count (int): The number of instances to run
                 the Processing job with. Defaults to 1.
-            command ([str]): The command to run, along with any command-line flags.
-                Example: ["python3", "-v"]. If not provided, ["python3"] or ["python2"]
-                will be chosen based on the py_version parameter.
             volume_size_in_gb (int): Size in GB of the EBS volume to
                 use for storing data during processing (default: 30).
             volume_kms_key (str): A KMS key for the processing
@@ -143,9 +149,9 @@ class _SparkProcessorBase(ScriptProcessor):
                 the processor generates a default job name, based on the
                 training image name and current timestamp.
             sagemaker_session (sagemaker.session.Session): Session object which
-                manages interactions with Amazon SageMaker APIs and any other
-                AWS services needed. If not specified, the processor creates one
-                using the default AWS configuration chain.
+                manages interactions with Amazon
+                SageMaker APIs and any other AWS services needed. If not specified,
+                the processor creates one using the default AWS configuration chain.
             env (dict): Environment variables to be passed to the processing job.
             tags ([dict]): List of tags to be passed to the processing job.
             network_config (sagemaker.network.NetworkConfig): A NetworkConfig
@@ -158,16 +164,24 @@ class _SparkProcessorBase(ScriptProcessor):
         region = session.boto_region_name
 
         if not image_uri:
+            if (py_version is None) != (container_version is None):
+                raise ValueError(
+                    "Both or Neither of py_version and container_version should be set"
+                )
+
+            if py_version and container_version:
+                tag = f"{framework_version}-cpu-{py_version}-v{container_version}"
+            else:
+                tag = f"{framework_version}-cpu"
+
             account_id = _SparkProcessorBase._region_account_map[region]
+
             image_uri = _SparkProcessorBase._image_uri_format.format(
-                account_id, region, "sagemaker-spark", framework_version
+                account_id, region, "sagemaker-spark", tag
             )
 
-        if not env:
-            env = {}
-
-        if not command:
-            command = [_SparkProcessorBase._default_command]
+        env = env or {}
+        command = [_SparkProcessorBase._default_command]
 
         super(_SparkProcessorBase, self).__init__(
             role=role,
@@ -225,6 +239,7 @@ class _SparkProcessorBase(ScriptProcessor):
                 be published to.
         """
         self._current_job_name = self._generate_current_job_name(job_name=job_name)
+
         if spark_event_logs_s3_uri:
             self._validate_s3_uri(spark_event_logs_s3_uri)
 
@@ -232,12 +247,12 @@ class _SparkProcessorBase(ScriptProcessor):
             self.command.extend(
                 [
                     "--local-spark-event-logs-dir",
-                    _SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH,
+                    _SparkProcessorBase._spark_event_log_default_local_path,
                 ]
             )
 
             output = ProcessingOutput(
-                source=_SparkProcessorBase._SPARK_EVENT_LOG_DEFAULT_LOCAL_PATH,
+                source=_SparkProcessorBase._spark_event_log_default_local_path,
                 destination=spark_event_logs_s3_uri,
                 s3_upload_mode="Continuous",
             )
@@ -246,21 +261,26 @@ class _SparkProcessorBase(ScriptProcessor):
                 outputs.append(output)
             else:
                 outputs = [output]
-
         if configuration:
             self._validate_configuration(configuration)
-            if not inputs:
-                inputs = []
+            inputs = inputs or []
             inputs.append(self._stage_configuration(configuration))
 
         super().run(
-            submit_app, inputs, outputs, arguments, wait, logs, job_name, experiment_config,
+            submit_app,
+            inputs,
+            outputs,
+            arguments,
+            wait,
+            logs,
+            job_name,
+            experiment_config,
         )
 
-    # TODO (guoqiao@): support multiple history servers on notebook instance
     def start_history_server(self, spark_event_logs_s3_uri=None):
-        """
-        :param spark_event_logs_s3_uri (str): optional parameter to set s3 uri and run history server
+        """start spark history server
+        Args:
+            spark_event_logs_s3_uri (str): s3 uri where spark events are stored
         """
         if _ecr_login_if_needed(self.sagemaker_session.boto_session, self.image_uri):
             print("Pulling spark history server image...")
@@ -268,23 +288,25 @@ class _SparkProcessorBase(ScriptProcessor):
         history_server_env_variables = self._prepare_history_server_env_variables(
             spark_event_logs_s3_uri
         )
-        self.history_server = _HistoryServer(history_server_env_variables, self.image_uri)
-        process = self.history_server.run()
+        self.history_server = _HistoryServer(
+            history_server_env_variables, self.image_uri, self._get_network_config()
+        )
+        self.history_server.run()
         # print history url when it's ready
-        self._check_history_server(process)
+        self._check_history_server()
 
     def terminate_history_server(self):
+        """terminate spark history server"""
         if self.history_server:
             print("History server is running, terminating history server")
             self.history_server.down()
             self.history_server = None
 
+
     def _validate_configuration(self, configuration):
         """Validate the user-provided Hadoop/Spark/Hive configuration.
-
-        This ensures that the list or dictionary the user provides will serialize to JSON matching the
-        schema of EMR's application configuration:
-
+        This ensures that the list or dictionary the user provides will serialize to
+        JSON matching the schema of EMR's application configuration:
         https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html
         """
         emr_configure_apps_url = (
@@ -294,29 +316,21 @@ class _SparkProcessorBase(ScriptProcessor):
             keys = configuration.keys()
             if "Classification" not in keys or "Properties" not in keys:
                 raise ValueError(
-                    "Missing one or more required keys in configuration dictionary {}. Please see {} for more information",
-                    configuration,
-                    emr_configure_apps_url,
+                    f"Missing one or more required keys in configuration dictionary "
+                    f"{configuration} Please see {emr_configure_apps_url} for more information"
                 )
 
             for key in keys:
-                if key not in _SparkProcessorBase._valid_configuration_keys:
+                if key not in self._valid_configuration_keys:
                     raise ValueError(
-                        "Invalid key: {}. Must be one of {}. Please see {} for more information.".format(
-                            key,
-                            _SparkProcessorBase._valid_configuration_keys,
-                            emr_configure_apps_url,
-                        )
+                        f"Invalid key: {key}. Must be one of {self._valid_configuration_keys}. "
+                        f"Please see {emr_configure_apps_url} for more information."
                     )
                 if key == "Classification":
-                    if (
-                        configuration[key]
-                        not in _SparkProcessorBase._valid_configuration_classifications
-                    ):
+                    if configuration[key] not in self._valid_configuration_classifications:
                         raise ValueError(
-                            "Invalid classification: {}. Must be one of {}".format(
-                                key, _SparkProcessorBase._valid_configuration_classifications
-                            )
+                            f"Invalid classification: {key}. Must be one of "
+                            f"{self._valid_configuration_classifications}"
                         )
 
         if isinstance(configuration, list):
@@ -325,16 +339,13 @@ class _SparkProcessorBase(ScriptProcessor):
 
     def _stage_configuration(self, configuration):
         """Serialize and upload the user-provided EMR application configuration to S3
-
         This method prepares an input channel
         """
 
         serialized_configuration = BytesIO(json.dumps(configuration).encode("utf-8"))
-        s3_uri = "s3://{}/{}/input/{}/{}".format(
-            self.sagemaker_session.default_bucket(),
-            self._current_job_name,
-            _SparkProcessorBase._CONF_CONTAINER_INPUT_NAME,
-            _SparkProcessorBase._CONF_FILE_NAME,
+        s3_uri = (
+            f"s3://{self.sagemaker_session.default_bucket()}/{self._current_job_name}/"
+            f"input/{self._conf_container_input_name}/{self._conf_file_name}"
         )
 
         S3Uploader.upload_string_as_file_body(
@@ -345,39 +356,38 @@ class _SparkProcessorBase(ScriptProcessor):
 
         conf_input = ProcessingInput(
             source=s3_uri,
-            destination="{}{}".format(
-                _SparkProcessorBase._CONF_CONTAINER_BASE_PATH,
-                _SparkProcessorBase._CONF_CONTAINER_INPUT_NAME,
-            ),
-            input_name=_SparkProcessorBase._CONF_CONTAINER_INPUT_NAME,
+            destination=f"{self._conf_container_base_path}{self._conf_container_input_name}",
+            input_name=_SparkProcessorBase._conf_container_input_name,
         )
         return conf_input
 
     def _stage_submit_deps(self, submit_deps, input_channel_name):
-        """Prepares a list of paths to jars, py-files, or files dependencies to provide as `spark-submit` options
-
+        """Prepares a list of paths to jars, py-files, or files dependencies to provide as
+        `spark-submit` options
         The submit_deps list may include a combination of S3 URIs and local paths.
         Any S3 URIs are appended to the `spark-submit` option value without modification.
-        Any local file paths are copied to a temp directory, uploaded to a default S3 URI, and included
-            as a ProcessingInput channel to provide as local files to the SageMaker Spark container.
-
+        Any local file paths are copied to a temp directory, uploaded to a default S3 URI,
+        and included as a ProcessingInput channel to provide as local files to the SageMaker
+        Spark container.
         :param submit_deps (list[str]): list of one or more dependency paths to include
-        :param input_channel_name (str): the `spark-submit` option name associated with the input channel
-        :return (Optional[ProcessingInput], str): Tuple of (left) optional ProcessingInput for the input channel,
-                    and (right) comma-delimited value for `spark-submit` option
+        :param input_channel_name (str): the `spark-submit` option name associated with
+                    the input channel
+        :return (Optional[ProcessingInput], str): Tuple of (left) optional ProcessingInput
+                    for the input channel, and (right) comma-delimited value for
+                    `spark-submit` option
         """
         if not submit_deps:
             raise ValueError(
-                "submit_deps value may not be empty. {}".format(
-                    _SparkProcessorBase._SUBMIT_DEPS_ERROR_MESSAGE
-                )
+                f"submit_deps value may not be empty. {self._submit_deps_error_message}"
             )
         if not input_channel_name:
             raise ValueError("input_channel_name value may not be empty.")
 
-        input_channel_s3_uri = "s3://{}/{}/input/{}".format(
-            self.sagemaker_session.default_bucket(), self._current_job_name, input_channel_name,
+        input_channel_s3_uri = (
+            f"s3://{self.sagemaker_session.default_bucket()}"
+            f"/{self._current_job_name}/input/{input_channel_name}"
         )
+
         use_input_channel = False
         spark_opt_s3_uris = []
 
@@ -391,30 +401,20 @@ class _SparkProcessorBase(ScriptProcessor):
                 elif not dep_url.scheme or dep_url.scheme == "file":
                     if not os.path.isfile(dep_path):
                         raise ValueError(
-                            "submit_deps path {} is not a valid local file. "
-                            "{}".format(dep_path, _SparkProcessorBase._SUBMIT_DEPS_ERROR_MESSAGE)
+                            f"submit_deps path {dep_path} is not a valid local file. "
+                            f"{self._submit_deps_error_message}"
                         )
-                    print(
-                        "Copying dependency from local path {} to tmpdir {}".format(
-                            dep_path, tmpdir
-                        )
-                    )
+                    print(f"Copying dependency from local path {dep_path} to tmpdir {tmpdir}")
                     shutil.copy(dep_path, tmpdir)
                 else:
                     raise ValueError(
-                        "submit_deps path {} references unsupported filesystem scheme: {} "
-                        "{}".format(
-                            dep_path, dep_url.scheme, _SparkProcessorBase._SUBMIT_DEPS_ERROR_MESSAGE
-                        )
+                        f"submit_deps path {dep_path} references unsupported filesystem "
+                        f"scheme: {dep_url.scheme} {self._submit_deps_error_message}"
                     )
 
             # If any local files were found and copied, upload the temp directory to S3
             if os.listdir(tmpdir):
-                print(
-                    "Uploading dependencies from tmpdir {} to S3 {}".format(
-                        tmpdir, input_channel_s3_uri
-                    )
-                )
+                print(f"Uploading dependencies from tmpdir {tmpdir} to S3 {input_channel_s3_uri}")
                 S3Uploader.upload(
                     local_path=tmpdir,
                     desired_s3_uri=input_channel_s3_uri,
@@ -422,14 +422,13 @@ class _SparkProcessorBase(ScriptProcessor):
                 )
                 use_input_channel = True
 
-        # If any local files were uploaded, construct a ProcessingInput to provide them to the Spark container
-        # and form the spark-submit option from a combination of S3 URIs and container's local input path
+        # If any local files were uploaded, construct a ProcessingInput to provide
+        # them to the Spark container  and form the spark-submit option from a
+        # combination of S3 URIs and container's local input path
         if use_input_channel:
             input_channel = ProcessingInput(
                 source=input_channel_s3_uri,
-                destination="{}{}".format(
-                    _SparkProcessorBase._CONF_CONTAINER_BASE_PATH, input_channel_name
-                ),
+                destination=f"{self._conf_container_base_path}{input_channel_name}",
                 input_name=input_channel_name,
             )
             spark_opt = ",".join(spark_opt_s3_uris + [input_channel.destination])
@@ -440,32 +439,38 @@ class _SparkProcessorBase(ScriptProcessor):
 
         return input_channel, spark_opt
 
+    def _get_network_config(self):
+        """Run container with different network config based on different env"""
+        if self._is_notebook_instance():
+            return "--network host"
+
+        return f"-p 80:80 -p {self._history_server_port}:{self._history_server_port}"
+
     def _prepare_history_server_env_variables(self, spark_event_logs_s3_uri):
+        """Get all parameters required to run history server"""
         # prepare env varibles
         history_server_env_variables = {}
 
         if spark_event_logs_s3_uri:
             history_server_env_variables[
-                _HistoryServer.ARG_EVENT_LOGS_S3_URI
+                _HistoryServer.arg_event_logs_s3_uri
             ] = spark_event_logs_s3_uri
         # this variable will be previously set by run() method
         elif self._spark_event_logs_s3_uri is not None:
             history_server_env_variables[
-                _HistoryServer.ARG_EVENT_LOGS_S3_URI
+                _HistoryServer.arg_event_logs_s3_uri
             ] = self._spark_event_logs_s3_uri
         else:
             raise ValueError(
-                "SPARK_EVENT_LOGS_S3_URI not present. You can specify spark_event_logs_s3_uri either in"
-                + "run() or start_history_server()"
+                "SPARK_EVENT_LOGS_S3_URI not present. You can specify spark_event_logs_s3_uri "
+                "either in run() or start_history_server()"
             )
 
+        history_server_env_variables.update(self._config_aws_credentials())
         if self._is_notebook_instance():
             history_server_env_variables[
-                _HistoryServer.ARG_REMOTE_DOMAIN_NAME
-            ] = self._get_instance_domain()
-        # if not notebook instance, customer need to set their own credentials
-        else:
-            history_server_env_variables.update(self._config_aws_credentials())
+                _HistoryServer.arg_remote_domain_name
+            ] = self._get_notebook_instance_domain()
 
         region = self.sagemaker_session.boto_region_name
         history_server_env_variables["AWS_REGION"] = region
@@ -473,56 +478,64 @@ class _SparkProcessorBase(ScriptProcessor):
         return history_server_env_variables
 
     def _is_notebook_instance(self):
+        """Predict if notebook instance"""
         return os.path.isfile("/opt/ml/metadata/resource-metadata.json")
 
-    def _get_instance_domain(self):
-        if self._is_notebook_instance():
-            region = self.sagemaker_session.boto_region_name
-            with open("/opt/ml/metadata/resource-metadata.json") as file:
-                data = json.load(file)
-                notebook_name = data["ResourceName"]
+    def _get_notebook_instance_domain(self):
+        """Get the instance's domain"""
+        region = self.sagemaker_session.boto_region_name
+        with open("/opt/ml/metadata/resource-metadata.json") as file:
+            data = json.load(file)
+            notebook_name = data["ResourceName"]
 
-            return "https://{}.notebook.{}.sagemaker.aws".format(notebook_name, region)
+        return f"https://{notebook_name}.notebook.{region}.sagemaker.aws"
 
-    def _check_history_server(self, process):
+    def _check_history_server(self, ping_timeout=40):
+        """Print message indicating the status of history server"""
         # ping port 15050 to check history server is up
-        timeout = time.time() + self._HISTORY_SERVER_TIMEOUT
+        timeout = time.time() + ping_timeout
 
         while True:
             if self._is_history_server_started():
                 if self._is_notebook_instance():
                     print(
                         "History server is up on "
-                        + self._get_instance_domain()
-                        + self._HISTORY_SERVER_URL_SUFFIX
+                        + self._get_notebook_instance_domain()
+                        + self._history_server_url_suffix
                     )
                 else:
-                    print("History server is up on localhost port 15050")
+                    print(
+                        "History server is up on http://0.0.0.0" + self._history_server_url_suffix
+                    )
                 break
             if time.time() > timeout:
-                print("History server failed to start")
-                print(process.stderr.read().decode("UTF-8"))
+                print(
+                    "History server failed to start. Please run 'docker logs history_server' "
+                    "to see logs"
+                )
                 break
 
             time.sleep(1)
 
     def _is_history_server_started(self):
+        """Check if history server is started"""
         try:
-            response = urllib.request.urlopen("http://localhost:15050")
+            response = urllib.request.urlopen(f"http://localhost:{self._history_server_port}")
             return response.status == 200
-        except:
+        except Exception:  # pylint: disable=W0703
             return False
 
     # TODO (guoqioa@): method only checks urlparse scheme, need to perform deep s3 validation
     def _validate_s3_uri(self, spark_output_s3_path):
+        """Validate s3 uri"""
         if urlparse(spark_output_s3_path).scheme != "s3":
             raise ValueError(
-                "Invalid s3 path: {}. Please enter something like s3://{bucket-name}/{folder-name}".format(
-                    spark_output_s3_path
-                )
+                f"Invalid s3 path: {spark_output_s3_path}. Please enter something like "
+                "s3://bucket-name/folder-name"
             )
 
     def _config_aws_credentials(self):
+        """config aws credentials"""
         try:
             creds = self.sagemaker_session.boto_session.get_credentials()
             access_key = creds.access_key
@@ -534,9 +547,37 @@ class _SparkProcessorBase(ScriptProcessor):
                 "AWS_SECRET_ACCESS_KEY": str(secret_key),
                 "AWS_SESSION_TOKEN": str(token),
             }
-        except Exception as e:
+        except Exception as e:  # pylint: disable=W0703
             print("Could not get AWS credentials: %s", e)
             return {}
+
+    def _handle_script_dependencies(self, inputs, submit_files, file_type):
+        """Handle script dependencies
+        The method extends inputs and command based on input files and file_type
+        """
+
+        if not submit_files:
+            return inputs
+
+        input_channel_name_dict = {
+            FileType.PYTHON: self._submit_py_files_input_channel_name,
+            FileType.JAR: self._submit_jars_input_channel_name,
+            FileType.FILE: self._submit_files_input_channel_name,
+        }
+
+        files_input, files_opt = self._stage_submit_deps(
+            submit_files, input_channel_name_dict[file_type]
+        )
+
+        inputs = inputs if inputs else []
+
+        if files_input:
+            inputs.append(files_input)
+
+        if files_opt:
+            self.command.extend([f"--{input_channel_name_dict[file_type]}", files_opt])
+
+        return inputs
 
 
 class PySparkProcessor(_SparkProcessorBase):
@@ -548,8 +589,9 @@ class PySparkProcessor(_SparkProcessorBase):
         instance_type,
         instance_count,
         framework_version=None,
+        py_version=None,
+        container_version=None,
         image_uri=None,
-        command=None,
         volume_size_in_gb=30,
         volume_kms_key=None,
         output_kms_key=None,
@@ -562,9 +604,10 @@ class PySparkProcessor(_SparkProcessorBase):
     ):
         """Initialize an ``PySparkProcessor`` instance. The PySparkProcessor
         handles Amazon SageMaker processing tasks for jobs using SageMaker PySpark.
-
         Args:
             framework_version (str): The version of SageMaker PySpark.
+            py_version (str): The version of python.
+            container_version (str): The version of spark container.
             role (str): An AWS IAM role name or ARN. The Amazon SageMaker training jobs
                 and APIs that create Amazon SageMaker endpoints use this role
                 to access training data and model artifacts. After the endpoint
@@ -574,9 +617,6 @@ class PySparkProcessor(_SparkProcessorBase):
                 processing, for example, 'ml.c4.xlarge'.
             instance_count (int): The number of instances to run
                 the Processing job with. Defaults to 1.
-            command ([str]): The command to run, along with any command-line flags.
-                Example: ["python3", "-v"]. If not provided, ["python3"] or ["python2"]
-                will be chosen based on the py_version parameter.
             volume_size_in_gb (int): Size in GB of the EBS volume to
                 use for storing data during processing (default: 30).
             volume_kms_key (str): A KMS key for the processing
@@ -604,8 +644,9 @@ class PySparkProcessor(_SparkProcessorBase):
             instance_count=instance_count,
             instance_type=instance_type,
             framework_version=framework_version,
+            py_version=py_version,
+            container_version=container_version,
             image_uri=image_uri,
-            command=command,
             volume_size_in_gb=volume_size_in_gb,
             volume_kms_key=volume_kms_key,
             output_kms_key=output_kms_key,
@@ -619,10 +660,10 @@ class PySparkProcessor(_SparkProcessorBase):
 
     def run(
         self,
-        submit_app_py,
-        submit_py_files=[],
-        submit_jars=[],
-        submit_files=[],
+        submit_app,
+        submit_py_files=None,
+        submit_jars=None,
+        submit_files=None,
         inputs=None,
         outputs=None,
         arguments=None,
@@ -635,10 +676,14 @@ class PySparkProcessor(_SparkProcessorBase):
     ):
         """Runs a processing job.
         Args:
-            submit_app_py (str): Path (local or S3) to Python file to submit to Spark as the primary application
-            submit_py_files (list[str]): List of paths (local or S3) to provide for `spark-submit --py-files` option
-            submit_jars (list[str]): List of paths (local or S3) to provide for `spark-submit --jars` option
-            submit_files (list[str]): List of paths (local or S3) to provide for `spark-submit --files` option
+            submit_app (str): Path (local or S3) to Python file to submit to Spark
+                as the primary application
+            submit_py_files (list[str]): List of paths (local or S3) to provide for
+                `spark-submit --py-files` option
+            submit_jars (list[str]): List of paths (local or S3) to provide for
+                `spark-submit --jars` option
+            submit_files (list[str]): List of paths (local or S3) to provide for
+                `spark-submit --files` option
             inputs (list[:class:`~sagemaker.processing.ProcessingInput`]): Input files for
                 the processing job. These must be provided as
                 :class:`~sagemaker.processing.ProcessingInput` objects (default: None).
@@ -663,53 +708,21 @@ class PySparkProcessor(_SparkProcessorBase):
         """
         self._current_job_name = self._generate_current_job_name(job_name=job_name)
 
-        if not submit_app_py:
-            raise ValueError("submit_app_py is required")
+        if not submit_app:
+            raise ValueError("submit_app is required")
 
-        if submit_py_files:
-            py_files_input, py_files_opt = self._stage_submit_deps(
-                submit_py_files, _SparkProcessorBase._SUBMIT_PY_FILES_INPUT_CHANNEL_NAME
-            )
-            if py_files_input:
-                inputs = inputs if inputs else []
-                inputs.append(py_files_input)
-            if py_files_opt:
-                self.command.extend(
-                    [f"--{_SparkProcessorBase._SUBMIT_PY_FILES_INPUT_CHANNEL_NAME}", py_files_opt]
-                )
-
-        if submit_jars:
-            jars_input, jars_opt = self._stage_submit_deps(
-                submit_jars, _SparkProcessorBase._SUBMIT_JARS_INPUT_CHANNEL_NAME
-            )
-            if jars_input:
-                inputs = inputs if inputs else []
-                inputs.append(jars_input)
-            if jars_opt:
-                self.command.extend(
-                    [f"--{_SparkProcessorBase._SUBMIT_JARS_INPUT_CHANNEL_NAME}", jars_opt]
-                )
-
-        if submit_files:
-            files_input, files_opt = self._stage_submit_deps(
-                submit_files, _SparkProcessorBase._SUBMIT_FILES_INPUT_CHANNEL_NAME
-            )
-            if files_input:
-                inputs = inputs if inputs else []
-                inputs.append(files_input)
-            if files_opt:
-                self.command.extend(
-                    [f"--{_SparkProcessorBase._SUBMIT_FILES_INPUT_CHANNEL_NAME}", files_opt]
-                )
+        inputs = self._handle_script_dependencies(inputs, submit_py_files, FileType.PYTHON)
+        inputs = self._handle_script_dependencies(inputs, submit_jars, FileType.JAR)
+        inputs = self._handle_script_dependencies(inputs, submit_files, FileType.FILE)
 
         super().run(
-            submit_app=submit_app_py,
+            submit_app=submit_app,
             inputs=inputs,
             outputs=outputs,
             arguments=arguments,
             wait=wait,
             logs=logs,
-            job_name=job_name,
+            job_name=self._current_job_name,
             experiment_config=experiment_config,
             configuration=configuration,
             spark_event_logs_s3_uri=spark_event_logs_s3_uri,
@@ -725,8 +738,9 @@ class SparkJarProcessor(_SparkProcessorBase):
         instance_type,
         instance_count,
         framework_version=None,
+        py_version=None,
+        container_version=None,
         image_uri=None,
-        command=None,
         volume_size_in_gb=30,
         volume_kms_key=None,
         output_kms_key=None,
@@ -739,9 +753,10 @@ class SparkJarProcessor(_SparkProcessorBase):
     ):
         """Initialize a ``SparkJarProcessor`` instance. The SparkProcessor
         handles Amazon SageMaker processing tasks for jobs using SageMaker Spark.
-
         Args:
             framework_version (str): The version of SageMaker PySpark.
+            py_version (str): The version of python.
+            container_version (str): The version of spark container.
             role (str): An AWS IAM role name or ARN. The Amazon SageMaker training jobs
                 and APIs that create Amazon SageMaker endpoints use this role
                 to access training data and model artifacts. After the endpoint
@@ -751,9 +766,6 @@ class SparkJarProcessor(_SparkProcessorBase):
                 processing, for example, 'ml.c4.xlarge'.
             instance_count (int): The number of instances to run
                 the Processing job with. Defaults to 1.
-            command ([str]): The command to run, along with any command-line flags.
-                Example: ["python3", "-v"]. If not provided, ["python3"] or ["python2"]
-                will be chosen based on the py_version parameter.
             volume_size_in_gb (int): Size in GB of the EBS volume to
                 use for storing data during processing (default: 30).
             volume_kms_key (str): A KMS key for the processing
@@ -781,8 +793,9 @@ class SparkJarProcessor(_SparkProcessorBase):
             instance_count=instance_count,
             instance_type=instance_type,
             framework_version=framework_version,
+            py_version=py_version,
+            container_version=container_version,
             image_uri=image_uri,
-            command=command,
             volume_size_in_gb=volume_size_in_gb,
             volume_kms_key=volume_kms_key,
             output_kms_key=output_kms_key,
@@ -796,10 +809,10 @@ class SparkJarProcessor(_SparkProcessorBase):
 
     def run(
         self,
-        submit_app_jar,
+        submit_app,
         submit_class,
-        submit_jars=[],
-        submit_files=[],
+        submit_jars=None,
+        submit_files=None,
         inputs=None,
         outputs=None,
         arguments=None,
@@ -812,10 +825,14 @@ class SparkJarProcessor(_SparkProcessorBase):
     ):
         """Runs a processing job.
         Args:
-            submit_app_jar (str): Path (local or S3) to Jar file to submit to Spark as the primary application
-            submit_class (str): Java class reference to submit to Spark as the primary application
-            submit_jars (list[str]): List of paths (local or S3) to provide for `spark-submit --jars` option
-            submit_files (list[str]): List of paths (local or S3) to provide for `spark-submit --files` option
+            submit_app (str): Path (local or S3) to Jar file to submit to Spark as
+                the primary application
+            submit_class (str): Java class reference to submit to Spark as the primary
+                application
+            submit_jars (list[str]): List of paths (local or S3) to provide for
+                `spark-submit --jars` option
+            submit_files (list[str]): List of paths (local or S3) to provide for
+                `spark-submit --files` option
             inputs (list[:class:`~sagemaker.processing.ProcessingInput`]): Input files for
                 the processing job. These must be provided as
                 :class:`~sagemaker.processing.ProcessingInput` objects (default: None).
@@ -840,40 +857,19 @@ class SparkJarProcessor(_SparkProcessorBase):
         """
         self._current_job_name = self._generate_current_job_name(job_name=job_name)
 
-        if not submit_app_jar:
-            raise ValueError("submit_app_jar is required")
+        if not submit_app:
+            raise ValueError("submit_app is required")
 
         if submit_class:
             self.command.extend(["--class", submit_class])
         else:
             raise ValueError("submit_class is required")
 
-        if submit_jars:
-            jars_input, jars_opt = self._stage_submit_deps(
-                submit_jars, _SparkProcessorBase._SUBMIT_JARS_INPUT_CHANNEL_NAME
-            )
-            if jars_input:
-                inputs = inputs if inputs else []
-                inputs.append(jars_input)
-            if jars_opt:
-                self.command.extend(
-                    [f"--{_SparkProcessorBase._SUBMIT_JARS_INPUT_CHANNEL_NAME}", jars_opt]
-                )
-
-        if submit_files:
-            files_input, files_opt = self._stage_submit_deps(
-                submit_files, _SparkProcessorBase._SUBMIT_FILES_INPUT_CHANNEL_NAME
-            )
-            if files_input:
-                inputs = inputs if inputs else []
-                inputs.append(files_input)
-            if files_opt:
-                self.command.extend(
-                    [f"--{_SparkProcessorBase._SUBMIT_FILES_INPUT_CHANNEL_NAME}", files_opt]
-                )
+        inputs = self._handle_script_dependencies(inputs, submit_jars, FileType.JAR)
+        inputs = self._handle_script_dependencies(inputs, submit_files, FileType.FILE)
 
         super().run(
-            submit_app_jar,
+            submit_app,
             inputs=inputs,
             outputs=outputs,
             arguments=arguments,
@@ -887,48 +883,63 @@ class SparkJarProcessor(_SparkProcessorBase):
 
 
 class _HistoryServer:
-    _CONTAINER_NAME = "history_server"
-    _ENTRY_POINT = "smspark-history-server"
-    ARG_EVENT_LOGS_S3_URI = "event_logs_s3_uri"
-    ARG_REMOTE_DOMAIN_NAME = "remote_domain_name"
+    """History server class that is responsible for starting history server"""
 
-    _HISTORY_SERVER_ARGS_FORMAT_MAP = {
-        ARG_EVENT_LOGS_S3_URI: "--event-logs-s3-uri {} ",
-        ARG_REMOTE_DOMAIN_NAME: "--remote-domain-name {} ",
+    _container_name = "history_server"
+    _entry_point = "smspark-history-server"
+    arg_event_logs_s3_uri = "event_logs_s3_uri"
+    arg_remote_domain_name = "remote_domain_name"
+
+    _history_server_args_format_map = {
+        arg_event_logs_s3_uri: "--event-logs-s3-uri {} ",
+        arg_remote_domain_name: "--remote-domain-name {} ",
     }
 
-    def __init__(self, cli_args, image_uri):
+    def __init__(self, cli_args, image_uri, network_config):
         self.cli_args = cli_args
         self.image_uri = image_uri
+        self.network_config = network_config
         self.run_history_server_command = self._get_run_history_server_cmd()
 
     def run(self):
+        """run history server"""
         self.down()
         print("Starting history server...")
-        process = subprocess.Popen(self.run_history_server_command, shell=True)
-        return process
+        subprocess.Popen(
+            self.run_history_server_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
 
     def down(self):
-        subprocess.call("docker stop " + _HistoryServer._CONTAINER_NAME, shell=True)
-        subprocess.call("docker rm " + _HistoryServer._CONTAINER_NAME, shell=True)
+        """stop and remove the container"""
+        subprocess.call(["docker", "stop", self._container_name])
+        subprocess.call(["docker", "rm", self._container_name])
         print("History server terminated")
 
-    # This method belongs to _HistoryServer because _CONTAINER_NAME(app name) belongs to _HistoryServer
-    # In the future, dynamically creating new app name, available port should also belong to _HistoryServer
-    # rather than PySparkProcessor
+    # This method belongs to _HistoryServer because _CONTAINER_NAME(app name) belongs
+    # to _HistoryServer. In the future, dynamically creating new app name, available
+    # port should also belong to _HistoryServer rather than PySparkProcessor
     def _get_run_history_server_cmd(self):
+        """Get history server command"""
         env_options = ""
         ser_cli_args = ""
         for key, value in self.cli_args.items():
-            if key in self._HISTORY_SERVER_ARGS_FORMAT_MAP:
-                ser_cli_args += self._HISTORY_SERVER_ARGS_FORMAT_MAP[key].format(value)
+            if key in self._history_server_args_format_map:
+                ser_cli_args += self._history_server_args_format_map[key].format(value)
             else:
-                env_options += "--env {}={} ".format(key, value)
-        cmd = "docker run {} --name {} --network host --entrypoint {} {} {}".format(
-            env_options,
-            _HistoryServer._CONTAINER_NAME,
-            _HistoryServer._ENTRY_POINT,
-            self.image_uri,
-            ser_cli_args,
+                env_options += f"--env {key}={value} "
+
+        cmd = (
+            f"docker run {env_options.strip()} --name {self._container_name} "
+            f"{self.network_config} --entrypoint {self._entry_point} {self.image_uri} "
+            f"{ser_cli_args.strip()}"
         )
+
         return cmd
+
+
+class FileType(Enum):
+    """Enum of file type"""
+
+    JAR = 1
+    PYTHON = 2
+    FILE = 3
