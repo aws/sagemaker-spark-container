@@ -21,7 +21,9 @@ class ProcessingJobManager(object):
     """Manages the lifecycle of a Spark job."""
 
     def __init__(
-        self, resource_config: Dict[str, Any] = None, processing_job_config: Dict[str, Any] = None,  # type: ignore
+        self,
+        resource_config: Dict[str, Any] = None,  # type: ignore
+        processing_job_config: Dict[str, Any] = None,  # type: ignore
     ) -> None:
         """Initialize a ProcessingJobManager, loading configs if not provided."""
         logging.basicConfig(level=logging.INFO)
@@ -143,6 +145,7 @@ class ProcessingJobManager(object):
 
             finally:
                 spark_log_publisher.down()
+                spark_log_publisher.join(timeout=20)
 
         else:
             # workers wait until the primary is up, then wait until it's down.
