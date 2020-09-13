@@ -1,6 +1,7 @@
 """Entry-point for command-line commands."""
 import logging
 import pathlib
+import shlex
 import sys
 from typing import Any, Dict, Sequence
 from urllib.parse import urlparse
@@ -218,5 +219,5 @@ def _construct_spark_submit_command(spark_opts: Dict[str, Any], app_and_app_argu
     cmd = ["spark-submit", "--master", "yarn", "--deploy-mode", "client"]
     cmd.extend(spark_options_list)
     cmd.extend(app_and_app_arguments)
-    cmd_string = " ".join(c for c in cmd)
+    cmd_string = " ".join(shlex.quote(c) for c in cmd)
     return cmd_string
