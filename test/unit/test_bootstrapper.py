@@ -83,22 +83,7 @@ def test_env_classification(default_bootstrapper):
     assert output == expected
 
 
-@patch("glob.glob", side_effect=[["/aws-sdk.jar"], ["/hmclient/lib/client.jar"]])
-@patch("shutil.copyfile", side_effect=None)
-def test_copy_aws_jars(patched_copyfile, patched_glob, default_bootstrapper) -> None:
-    default_bootstrapper.copy_aws_jars()
-
-    expected = [
-        call("/aws-sdk.jar", "/usr/lib/spark/jars/aws-sdk.jar"),
-        call("/usr/lib/hadoop/hadoop-aws-2.8.5-amzn-5.jar", "/usr/lib/spark/jars/hadoop-aws-2.8.5-amzn-5.jar",),
-        call("/usr/lib/hadoop/jets3t-0.9.0.jar", "/usr/lib/spark/jars/jets3t-0.9.0.jar"),
-        call("/hmclient/lib/client.jar", "/usr/lib/spark/jars/client.jar"),
-    ]
-    patched_copyfile.call_args_list == expected
-
-
 def test_bootstrap_smspark_submit(default_bootstrapper) -> None:
-    default_bootstrapper.copy_aws_jars = MagicMock()
     default_bootstrapper.copy_cluster_config = MagicMock()
     default_bootstrapper.write_runtime_cluster_config = MagicMock()
     default_bootstrapper.write_user_configuration = MagicMock()
@@ -107,7 +92,6 @@ def test_bootstrap_smspark_submit(default_bootstrapper) -> None:
 
     default_bootstrapper.bootstrap_smspark_submit()
 
-    default_bootstrapper.copy_aws_jars.assert_called_once()
     default_bootstrapper.copy_cluster_config.assert_called_once()
     default_bootstrapper.write_runtime_cluster_config.assert_called_once()
     default_bootstrapper.write_user_configuration.assert_called_once()
@@ -116,13 +100,11 @@ def test_bootstrap_smspark_submit(default_bootstrapper) -> None:
 
 
 def test_bootstrap_history_server(default_bootstrapper) -> None:
-    default_bootstrapper.copy_aws_jars = MagicMock()
     default_bootstrapper.copy_cluster_config = MagicMock()
     default_bootstrapper.start_spark_standalone_primary = MagicMock()
 
     default_bootstrapper.bootstrap_history_server()
 
-    default_bootstrapper.copy_aws_jars.assert_called_once()
     default_bootstrapper.copy_cluster_config.assert_called_once()
     default_bootstrapper.start_spark_standalone_primary.assert_called_once()
 

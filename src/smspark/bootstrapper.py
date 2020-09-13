@@ -37,7 +37,6 @@ class Bootstrapper:
         self.waiter = Waiter()
 
     def bootstrap_smspark_submit(self) -> None:
-        self.copy_aws_jars()
         self.copy_cluster_config()
         self.write_runtime_cluster_config()
         self.write_user_configuration()
@@ -45,28 +44,8 @@ class Bootstrapper:
         self.wait_for_hadoop()
 
     def bootstrap_history_server(self) -> None:
-        self.copy_aws_jars()
         self.copy_cluster_config()
         self.start_spark_standalone_primary()
-
-    def copy_aws_jars(self) -> None:
-        self.logger.info("copying aws jars")
-        jar_dest = Bootstrapper.SPARK_PATH + "/jars"
-        for f in glob.glob("/usr/share/aws/aws-java-sdk/*.jar"):
-            shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
-        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-5.jar"
-        jets3t_jar = "jets3t-0.9.0.jar"
-        shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(jar_dest, hadoop_aws_jar),
-        )
-        # this jar required for using s3a client
-        shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH + "/lib", jets3t_jar), os.path.join(jar_dest, jets3t_jar),
-        )
-        # copy hmclient (glue data catalog hive metastore client) jars to classpath:
-        # https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore
-        for f in glob.glob("/usr/share/aws/hmclient/lib/*.jar"):
-            shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
 
     def copy_cluster_config(self) -> None:
         self.logger.info("copying cluster config")

@@ -25,8 +25,6 @@ log = logging.getLogger("sagemaker-spark")
 def start_history_server(event_logs_s3_uri: str) -> None:
     """Bootstrap the history server instance and starts the Spark history server instance."""
     bootstrapper = Bootstrapper()
-    log.info("copying aws jars")
-    bootstrapper.copy_aws_jars()
     log.info("copying cluster config")
     bootstrapper.copy_cluster_config()
     log.info("setting regional configs")

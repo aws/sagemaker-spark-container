@@ -33,12 +33,6 @@ endif
 all: build test
 
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
-download-emr-packages:
-	if [[ ! -s ${BUILD_CONTEXT}/emr-spark-packages.tar ]]; then \
-		./scripts/spark-emr-install.sh --build-context ${BUILD_CONTEXT} \
-	else \
-		echo "Skipping EMR package download."; \
-	fi
 
 # Builds and moves container python library into the Docker build context
 build-container-library:
@@ -58,7 +52,7 @@ build-static-config:
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
 # Builds docker image.
-build: download-emr-packages build-container-library build-static-config
+build: build-container-library build-static-config
 	./scripts/build.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
@@ -128,11 +122,6 @@ clean-test-java:
 
 clean-tests: clean-test-scala clean-test-java
 
-# Removes downloaded EMR packages.
-clean-all: clean clean-tests
-	rm ${BUILD_CONTEXT}/emr-spark-packages.tar || true
-	rm -rf scripts/emr-spark-packages || true
-
 release:
 	./scripts/publish.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
@@ -142,4 +131,4 @@ whitelist:
 
 
 # Targets that don't create a file with the same name as the target.
-.PHONY: all download-emr-packages build test test-all install-sdk clean clean-all release whitelist build-container-library
+.PHONY: all build test test-all install-sdk clean clean-all release whitelist build-container-library

@@ -42,7 +42,6 @@ def test_start_history_server(mock_subprocess_run, mock_bootstrapper, mock_confi
     start_history_server(SPARK_DEFAULTS_CONFIG_PATH)
     bootstrapper.start_spark_standalone_primary.assert_called_once()
     bootstrapper.copy_cluster_config.assert_called_once()
-    bootstrapper.copy_aws_jars.assert_called_once()
     bootstrapper.set_regional_configs.assert_called_once()
     mock_config_history_server.assert_called_once()
     mock_subprocess_run.assert_called_once_with("sbin/start-history-server.sh", check=True)
