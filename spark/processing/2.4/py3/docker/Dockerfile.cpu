@@ -3,7 +3,7 @@ ARG REGION
 ENV AWS_REGION ${REGION}
 RUN yum clean all
 RUN yum update -y
-RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3 python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget
+RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3 python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget liblapack* libblas* libopencv* libopenblas*
 
 # install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
 RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm

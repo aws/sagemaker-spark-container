@@ -3,10 +3,11 @@ import time
 
 # Import local module to test spark-submit--py-files dependencies
 import hello_py_spark_udfs as udfs
+from pyspark.ml import \
+    Pipeline  # importing to test mllib DLLs like liblapack.so
 from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql.functions import udf
 from pyspark.sql.types import IntegerType
-import time
 
 if __name__ == "__main__":
     print("Hello World, this is PySpark!")
