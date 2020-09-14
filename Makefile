@@ -29,19 +29,17 @@ IMAGE_URI := $(SPARK_ACCOUNT_ID).dkr.ecr.$(REGION).$(AWS_DOMAIN)/$(DEST_REPO):$(
 all: build test
 
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
-download-emr-packages:
-	if [[ ! -s ${BUILD_CONTEXT}/emr-spark-packages.tar ]]; then \
-		./scripts/spark-emr-install.sh --build-context ${BUILD_CONTEXT} \
-	else \
-		echo "Skipping EMR package download."; \
-	fi
 
 # Builds and moves container python library into the Docker build context
 build-container-library:
 	python setup.py bdist_wheel;
 	cp dist/*.whl ${BUILD_CONTEXT}
 
-install-container-library:
+init:
+	pip install pipenv --upgrade
+	pipenv install
+
+install-container-library: init build-container-library
 	pip install --upgrade dist/smspark-0.1-py3-none-any.whl
 	safety check  # https://github.com/pyupio/safety
 
@@ -50,7 +48,7 @@ build-static-config:
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
 # Builds docker image.
-build: download-emr-packages build-container-library build-static-config
+build: build-container-library build-static-config
 	./scripts/build.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
@@ -82,13 +80,21 @@ test-local: install-sdk build-tests
 # Only runs sagemaker tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
 test-sagemaker: install-sdk build-tests
-	# https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
-	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES python -m pytest --workers auto -s -vv test/integration/sagemaker --durations=0 \
-        --repo=$(DEST_REPO) --tag=$(VERSION) \
-        --role $(ROLE) \
-        --image_uri $(IMAGE_URI) \
-        --region ${REGION} \
-        --domain ${AWS_DOMAIN}
+	# Separate `pytest` invocation without parallelization:
+	# History server tests can't run in parallel since they use the same container name.
+	pytest -s -vv test/integration/history \
+	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--role $(ROLE) \
+	--image_uri $(IMAGE_URI) \
+	--region ${REGION} \
+	--domain ${AWS_DOMAIN}
+	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker \
+	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--role $(ROLE) \
+	--image_uri $(IMAGE_URI) \
+	--region ${REGION} \
+	--domain ${AWS_DOMAIN}
 
 # Runs local tests and sagemaker tests.
 test-all: test-local test-sagemaker
@@ -120,11 +126,6 @@ clean-test-java:
 
 clean-tests: clean-test-scala clean-test-java
 
-# Removes downloaded EMR packages.
-clean-all: clean clean-tests
-	rm ${BUILD_CONTEXT}/emr-spark-packages.tar || true
-	rm -rf scripts/emr-spark-packages || true
-
 release:
 	./scripts/publish.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
@@ -134,4 +135,4 @@ whitelist:
 
 
 # Targets that don't create a file with the same name as the target.
-.PHONY: all download-emr-packages build test test-all install-sdk clean clean-all release whitelist build-container-library
+.PHONY: all build test test-all install-sdk clean clean-all release whitelist build-container-library

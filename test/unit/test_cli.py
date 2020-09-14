@@ -135,6 +135,16 @@ def get_test_cases() -> List[SubmitTest]:
         ),
     ] + test_cases
 
+    # Quote tests:
+
+    test_cases.append(
+        SubmitTest(
+            name="quotes are handled correctly",
+            args="--jars {jar_file} myscript.py --query-bbox 'BBOX(geometry,0.1,-0.2,3.3,4.5)' --query-start-date '2020-05-01 00:00:00' --query-end-date '2020-05-31 23:59:59' --data-location-uri s3://123456789012-us-west-2/path --bucket-region us-west-2 --output-folder-path /opt/ml/processing/output/out --output-stage gamma --storage-bucket-uri s3://123456789012-us-west-2/",
+            expected_cmd="spark-submit --master yarn --deploy-mode client --jars {jar_file} myscript.py --query-bbox 'BBOX(geometry,0.1,-0.2,3.3,4.5)' --query-start-date '2020-05-01 00:00:00' --query-end-date '2020-05-31 23:59:59' --data-location-uri s3://123456789012-us-west-2/path --bucket-region us-west-2 --output-folder-path /opt/ml/processing/output/out --output-stage gamma --storage-bucket-uri s3://123456789012-us-west-2/",
+        )
+    )
+
     return test_cases
 
 

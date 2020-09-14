@@ -79,32 +79,6 @@ def configuration() -> list:
     return configuration
 
 
-def test_sagemaker_pyspark_algorithm_error(tag, role, image_uri, sagemaker_session):
-    spark = PySparkProcessor(
-        base_job_name="sm-spark-py-customer-error",
-        framework_version=tag,
-        image_uri=image_uri,
-        role=role,
-        instance_count=1,
-        instance_type="ml.c5.xlarge",
-        max_runtime_in_seconds=1200,
-        sagemaker_session=sagemaker_session
-    )
-
-    try:
-        spark.run(
-            submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
-            arguments=["invalid_arg"],
-            wait=True,
-            logs=False,
-        )
-    except Exception:
-        pass  # this job is expected to fail
-    processing_job = spark.latest_job
-
-    assert "Algorithm Error: (caused by CalledProcessError)" in processing_job.describe()["ExitMessage"]
-
-
 def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
     """Test that basic multinode case works on 32KB of data"""
     spark = PySparkProcessor(
@@ -131,7 +105,7 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagema
         )
 
     spark.run(
-        submit_app_py="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
@@ -179,6 +153,53 @@ def test_sagemaker_pyspark_multinode(tag, role, image_uri, configuration, sagema
     assert len(output_contents) != 0
 
 
+# TODO: similar integ test case for SSE-KMS. This would require test infrastructure bootstrapping a KMS key.
+# Currently, Spark jobs can read data encrypted with SSE-KMS (assuming the execution role has permission),
+# however our Hadoop version (2.8.5) does not support writing data with SSE-KMS (enabled in version 3.0.0).
+def test_sagemaker_pyspark_sse_s3(tag, role, image_uri, sagemaker_session, region, sagemaker_client):
+    """Test that Spark container can read and write S3 data encrypted with SSE-S3 (default AES256 encryption)"""
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-py",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+    bucket = sagemaker_session.default_bucket()
+    timestamp = datetime.now().isoformat()
+    input_data_key = f"spark/input/sales/{timestamp}/data.jsonl"
+    input_data_uri = f"s3://{bucket}/{input_data_key}"
+    output_data_uri = f"s3://{bucket}/spark/output/sales/{timestamp}"
+    s3_client = sagemaker_session.boto_session.client("s3", region_name=region)
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        s3_client.put_object(Body=body, Bucket=bucket, Key=input_data_key, ServerSideEncryption="AES256")
+
+    spark.run(
+        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration={
+            "Classification": "core-site",
+            "Properties": {"fs.s3a.server-side-encryption-algorithm": "AES256"},
+        },
+    )
+    processing_job = spark.latest_job
+
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
+    assert len(output_contents) != 0
+
+
 def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
     """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
     spark = SparkJarProcessor(
@@ -203,7 +224,7 @@ def test_sagemaker_scala_jar_multinode(tag, role, image_uri, configuration, sage
 
     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
     spark.run(
-        submit_app_jar="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
+        submit_app="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
         submit_jars=[
             "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
@@ -248,7 +269,7 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagem
 
     java_project_dir = "test/resources/code/java/hello-java-spark"
     spark.run(
-        submit_app_jar="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
+        submit_app="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp",
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
