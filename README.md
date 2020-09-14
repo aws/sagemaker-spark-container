@@ -4,7 +4,7 @@
 Apache Spark™ is a unified analytics engine for large-scale data processing. It provides high-level APIs in Scala, Java, Python, and R, and an optimized engine that supports general computation graphs for data analysis. It also supports a rich set of higher-level tools including Spark SQL for SQL and DataFrames, MLlib for machine learning, GraphX for graph processing, and Structured Streaming for stream processing.
 
 ## SageMaker Spark Container
-The SageMaker Spark Container is a set of Docker images used to run batch data processing workloads on Amazon SageMaker using the Apache Spark framework. The 
+The SageMaker Spark Container is a Docker image used to run batch data processing workloads on Amazon SageMaker using the Apache Spark framework. The 
 container images in this repository are used to build the pre-built container images that are used when running Spark jobs on Amazon SageMaker using the SageMaker Python SDK. The pre-built images are available in the Amazon Elastic Container Registry (Amazon ECR), and this repository serves as a reference for those wishing to build their own customized Spark containers for use in Amazon SageMaker.
 
 For the list of available Spark images, see [Available SageMaker Spark Images](available_images.md).
