@@ -1,5 +1,6 @@
 FROM amazonlinux:2
-
+ARG REGION
+ENV AWS_REGION ${REGION}
 RUN yum clean all
 RUN yum update -y
 RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3 python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget
@@ -10,7 +11,6 @@ RUN yum install -y epel-release-latest-7.noarch.rpm
 RUN yum install -y nginx
 
 RUN rm -rf /var/cache/yum
-RUN pip3 install py4j psutil==5.6.5 numpy==1.17.4
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -24,14 +24,48 @@ ENV HADOOP_HOME /usr/lib/hadoop
 ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
 ENV SPARK_HOME /usr/lib/spark
 
-# Docker ADD automatically untars archives into a directory:
-# https://docs.docker.com/engine/reference/builder/#add
-# "If <src> is a local tar archive in a recognized compression format (identity, gzip, bzip2 or xz) then it is unpacked
-# as a directory."
-# Note that the ~2GB ADD layer remains in the Docker image, even after files are removed in the RUN layer
-ADD emr-spark-packages.tar /tmp/emr-spark-packages.tar
-RUN find /tmp/emr-spark-packages.tar/emr-spark-packages | xargs yum install -y && \
-    rm -rf /tmp/emr-spark-packages*
+COPY yum/emr-apps.repo /etc/yum.repos.d/emr-apps.repo
+
+# Install hadoop / spark dependencies from EMR's yum repository for Spark optimizations.
+# replace placeholder with region in repository URL
+RUN sed -i "s/REGION/${AWS_REGION}/g" /etc/yum.repos.d/emr-apps.repo
+
+# These packages are a subset of what EMR installs in a cluster with the
+# "hadoop", "spark", and "hive" applications.
+# They include EMR-optimized libraries and extras.
+RUN yum install -y aws-hm-client \
+    aws-java-sdk \
+    aws-sagemaker-spark-sdk \
+    emr-goodies \
+    emr-scripts \
+    emr-s3-select \
+    hadoop \
+    hadoop-client \
+    hadoop-hdfs \
+    hadoop-hdfs-datanode \
+    hadoop-hdfs-namenode \
+    hadoop-httpfs \
+    hadoop-kms \
+    hadoop-lzo \
+    hadoop-yarn \
+    hadoop-yarn-nodemanager \
+    hadoop-yarn-proxyserver \
+    hadoop-yarn-resourcemanager \
+    hadoop-yarn-timelineserver \
+    hive \
+    hive-hcatalog \
+    hive-hcatalog-server \
+    hive-jdbc \
+    hive-server2 \
+    python37-numpy \
+    python37-sagemaker_pyspark \
+    s3-dist-cp \
+    spark-core \
+    spark-datanucleus \
+    spark-external \
+    spark-history-server \
+    spark-python
+
 
 # Point Spark at proper python binary
 ENV PYSPARK_PYTHON=/usr/bin/python3

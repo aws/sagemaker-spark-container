@@ -1,8 +1,8 @@
 """Utility functions for configuring and running the Spark history server."""
 import logging
 import subprocess
-import traceback
 import sys
+import traceback
 from typing import Optional
 
 from smspark.bootstrapper import Bootstrapper
@@ -29,23 +29,22 @@ def start_history_server(event_logs_s3_uri: str) -> None:
     bootstrapper.copy_aws_jars()
     log.info("copying cluster config")
     bootstrapper.copy_cluster_config()
+    log.info("setting regional configs")
+    bootstrapper.set_regional_configs()
     log.info("copying history server config")
     config_history_server(event_logs_s3_uri)
     log.info("bootstrap master node")
     bootstrapper.start_spark_standalone_primary()
 
     try:
-        subprocess.check_output("sbin/start-history-server.sh", stderr=subprocess.PIPE)
+        subprocess.run("sbin/start-history-server.sh", check=True)
     except subprocess.CalledProcessError as e:
-        raise AlgorithmError(
-            message=e.stderr.decode(sys.getfilesystemencoding()), caused_by=e, exit_code=e.returncode
-        )
+        raise AlgorithmError(message=e.stderr.decode(sys.getfilesystemencoding()), caused_by=e, exit_code=e.returncode)
     except Exception as e:
         log.error("Exception during processing: " + str(e) + "\n" + traceback.format_exc())
         raise AlgorithmError(
             message="error occurred during start-history-server execution. Please see logs for details.", caused_by=e,
         )
-
 
 
 def config_history_server(event_logs_s3_uri: str) -> None:
@@ -64,8 +63,7 @@ def _config_history_log_dir(event_logs_s3_uri: Optional[str]) -> None:
     else:
         log.info("event_logs_s3_uri does not exist, exiting")
         raise InputError(
-            ValueError("spark event logs s3 uri was not specified"),
-            message="Failed to configure history server"
+            ValueError("spark event logs s3 uri was not specified"), message="Failed to configure history server"
         )
 
 

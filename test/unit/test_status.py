@@ -70,7 +70,7 @@ def test_status_map_propagate_errors(mock_get) -> None:
 
     status_map = StatusClient()
 
-    with pytest.raises(AlgorithmError):
+    with pytest.raises(ValueError):
         status_map.get_status(["algo-1", "algo-2"])
 
 

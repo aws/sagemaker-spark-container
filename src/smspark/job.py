@@ -6,6 +6,7 @@ import subprocess
 import traceback
 from typing import Any, Dict, Mapping, Sequence
 
+from requests.exceptions import ConnectionError
 from smspark.bootstrapper import Bootstrapper
 from smspark.defaults import default_processing_job_config, default_resource_config
 from smspark.errors import AlgorithmError
@@ -20,7 +21,9 @@ class ProcessingJobManager(object):
     """Manages the lifecycle of a Spark job."""
 
     def __init__(
-        self, resource_config: Dict[str, Any] = None, processing_job_config: Dict[str, Any] = None,  # type: ignore
+        self,
+        resource_config: Dict[str, Any] = None,  # type: ignore
+        processing_job_config: Dict[str, Any] = None,  # type: ignore
     ) -> None:
         """Initialize a ProcessingJobManager, loading configs if not provided."""
         logging.basicConfig(level=logging.INFO)
@@ -102,13 +105,21 @@ class ProcessingJobManager(object):
 
         if self._is_primary_host:
             self.logger.info("start log event log publisher")
-            spark_log_publisher = self._start_spark_event_log_publisher(spark_event_logs_s3_uri,
-                                                                        local_spark_event_logs_dir)
+            spark_log_publisher = self._start_spark_event_log_publisher(
+                spark_event_logs_s3_uri, local_spark_event_logs_dir
+            )
 
             self.logger.info(f"Waiting for hosts to bootstrap: {self.hosts}")
 
             def all_hosts_have_bootstrapped() -> bool:
-                host_statuses: Mapping[str, StatusMessage] = self.status_client.get_status(self.hosts)
+                try:
+                    host_statuses: Mapping[str, StatusMessage] = self.status_client.get_status(self.hosts)
+
+                except ConnectionError as e:
+                    self.logger.info(
+                        f"Got ConnectionError when polling hosts for status. Host may not have come up: {str(e)}.\nTraceback: {traceback.format_exc()}"
+                    )
+                    return False
                 self.logger.info(f"Received host statuses: {host_statuses.items()}")
                 has_bootstrapped = [message.status == Status.WAITING for message in host_statuses.values()]
                 return all(has_bootstrapped)
@@ -134,6 +145,7 @@ class ProcessingJobManager(object):
 
             finally:
                 spark_log_publisher.down()
+                spark_log_publisher.join(timeout=20)
 
         else:
             # workers wait until the primary is up, then wait until it's down.

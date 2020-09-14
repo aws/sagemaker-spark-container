@@ -7,7 +7,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import psutil
 import requests
@@ -54,7 +54,7 @@ class Bootstrapper:
         jar_dest = Bootstrapper.SPARK_PATH + "/jars"
         for f in glob.glob("/usr/share/aws/aws-java-sdk/*.jar"):
             shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
-        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-5.jar"
+        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-6.jar"
         jets3t_jar = "jets3t-0.9.0.jar"
         shutil.copyfile(
             os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(jar_dest, hadoop_aws_jar),
@@ -121,6 +121,9 @@ class Bootstrapper:
         with open(core_site_file_path, "w") as core_file:
             core_file.write(file_data)
 
+        # Set special regional configs (e.g. S3 endpoint)
+        self.set_regional_configs()
+
         # Configure hostname for resource manager and node manager
         with open(yarn_site_file_path, "r") as yarn_file:
             file_data = yarn_file.read()
@@ -140,6 +143,7 @@ class Bootstrapper:
         with open(spark_conf_file_path, "w") as spark_file:
             spark_file.write(file_data)
 
+        # Calculate and set Spark and Yarn resource allocation configs
         self.set_yarn_spark_resource_config()
 
         logging.info("Finished Yarn configuration files setup.")
@@ -180,7 +184,9 @@ class Bootstrapper:
             except Exception:
                 return False
 
+        self.logger.info("waiting for cluster to be up")
         self.waiter.wait_for(predicate_fn=cluster_is_up, timeout=60.0, period=1.0)
+        self.logger.info("cluster is up")
 
     def start_spark_standalone_primary(self) -> None:
         """Start only spark standalone's primary node for history server, since distributing workload to workers is not needed for history server.
@@ -248,22 +254,46 @@ class Bootstrapper:
         else:
             logging.info("No file at {} exists, skipping user configuration".format(str(path)))
 
-    def load_processing_job_config(self) -> Optional[dict]:
+    def set_regional_configs(self) -> None:
+        regional_configs_list = self.get_regional_configs()
+        for regional_config in regional_configs_list:
+            logging.info("Writing regional config to {}".format(regional_config.path))
+            regional_config_string = regional_config.write_config()
+            logging.info("Configuration at {} is: \n{}".format(regional_config.path, regional_config_string))
+
+    def get_regional_configs(self) -> List[Configuration]:
+        aws_region = os.getenv("AWS_REGION")
+        if aws_region is None:
+            logging.warning("Unable to detect AWS region from environment variable AWS_REGION")
+            return []
+        elif aws_region in ["cn-northwest-1", "cn-north-1"]:
+            aws_domain = "amazonaws.com.cn"
+            s3_endpoint = f"s3.{aws_region}.{aws_domain}"
+        elif aws_region in ["us-gov-west-1", "us-gov-east-1"]:
+            aws_domain = "amazonaws.com"
+            s3_endpoint = f"s3.{aws_region}.{aws_domain}"
+        else:
+            # no special regional configs needed
+            return []
+
+        return [Configuration(Classification="core-site", Properties={"fs.s3a.endpoint": s3_endpoint})]
+
+    def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):
             logging.warning(f"Path does not exist: {self.PROCESSING_JOB_CONFIG_PATH}")
-            return None
+            return {}
         with open(self.PROCESSING_JOB_CONFIG_PATH, "r") as f:
             return json.loads(f.read())
 
-    def load_instance_type_info(self) -> Optional[dict]:
+    def load_instance_type_info(self) -> Dict[str, Any]:
         if not os.path.exists(self.INSTANCE_TYPE_INFO_PATH):
             logging.warning(f"Path does not exist: {self.INSTANCE_TYPE_INFO_PATH}")
-            return None
+            return {}
         with open(self.INSTANCE_TYPE_INFO_PATH, "r") as f:
             instance_type_info_list = json.loads(f.read())
             return {instance["InstanceType"]: instance for instance in instance_type_info_list}
 
-    def set_yarn_spark_resource_config(self):
+    def set_yarn_spark_resource_config(self) -> None:
         processing_job_config = self.load_processing_job_config()
         instance_type_info = self.load_instance_type_info()
 
@@ -299,8 +329,8 @@ class Bootstrapper:
         logging.info("Configuration at {} is: \n{}".format(spark_config.path, spark_config_string))
 
     def get_yarn_spark_resource_config(
-        self, instance_count, instance_mem_mb, instance_cores
-    ) -> (Configuration, Configuration):
+        self, instance_count: int, instance_mem_mb: int, instance_cores: int
+    ) -> Tuple[Configuration, Configuration]:
         executor_cores = instance_cores
         executor_count_per_instance = int(instance_cores / executor_cores)
         executor_count_total = instance_count * executor_count_per_instance
