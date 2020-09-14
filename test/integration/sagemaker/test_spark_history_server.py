@@ -74,7 +74,4 @@ def _request_with_retry(url, max_retries=10):
             max_retries, redirect=max_retries, status=max_retries, status_forcelist=[502, 404], backoff_factor=0.2,
         )
     )
-    try:
-        return http.request("GET", url)
-    except Exception:  # pylint: disable=W0703
-        return None
+    return http.request("GET", url)
