@@ -2,7 +2,7 @@
 
 The following table lists the ECR repositories that are managed by Amazon SageMaker for the prebuilt Spark containers. These repositories will be automatically used when creating jobs via the SageMaker Python SDK.
 
-To see the list of available image tags for a given Spark container release, check the release documentation in [SageMaker Spark Container Release](https://github.com/aws/sagemaker-spark-container/releases).
+To see the list of available image tags for a given Spark container release, check the release documentation in [SageMaker Spark Container Releases](https://github.com/aws/sagemaker-spark-container/releases).
 
 Images are available in the following regions:
 |Region |Code |Repository URL |
