@@ -33,19 +33,19 @@ def account_id(request, region, boto_session, domain) -> str:
 @pytest.fixture(scope="session")
 def region(request) -> str:
     """Return region, such as us-west-2, for use in tests."""
-    return request.config.getoption("--region")
+    return request.config.getoption("--region") or "us-west-2"
 
 
 @pytest.fixture(scope="session")
 def repo(request) -> str:
     """Return ECR repository to use in tests."""
-    return request.config.getoption("--repo") or "sagemaker-spark"
+    return request.config.getoption("--repo")
 
 
 @pytest.fixture(scope="session")
 def tag(request) -> str:
     """Return Docker image tag to use in tests."""
-    return request.config.getoption("--tag") or 0.1
+    return request.config.getoption("--tag")
 
 
 @pytest.fixture(scope="session")
@@ -57,7 +57,7 @@ def domain(request) -> str:
 @pytest.fixture(scope="session")
 def role(request) -> str:
     """Return the job execution role to use in a test"""
-    return request.config.getoption("--role") or "arn:aws:iam::552588484154:role/SageMakerSparkContainerCodebuildRole"
+    return request.config.getoption("--role")
 
 
 @pytest.fixture(scope="session")
