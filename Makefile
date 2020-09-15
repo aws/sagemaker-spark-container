@@ -101,10 +101,7 @@ test-all: test-local test-sagemaker
 
 # Builds and installs sagemaker-python-sdk-spark library, since it's used in sagemaker tests.
 install-sdk:
-	cd sagemaker-python-sdk-spark; make
-
-clean-sdk:
-	cd sagemaker-python-sdk-spark; make clean
+	pip install --upgrade sagemaker>=2.9.0
 
 # Makes sure docker containers are cleaned
 clean:
