@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<!-- Site specific YARN configuration properties -->
+ <configuration>
+     <property>
+         <name>yarn.resourcemanager.hostname</name>
+         <value>rm_hostname</value>
+         <description>The hostname of the RM.</description>
+     </property>
+     <property>
+         <name>yarn.nodemanager.hostname</name>
+         <value>nm_hostname</value>
+         <description>The hostname of the NM.</description>
+     </property>
+     <property>
+         <name>yarn.nodemanager.webapp.address</name>
+         <value>nm_webapp_address</value>
+     </property>
+     <property>
+         <name>yarn.nodemanager.vmem-pmem-ratio</name>
+         <value>5</value>
+         <description>Ratio between virtual memory to physical memory.</description>
+     </property>
+     <property>
+         <name>yarn.resourcemanager.am.max-attempts</name>
+         <value>1</value>
+         <description>The maximum number of application attempts.</description>
+     </property>
+     <property>
+         <name>yarn.nodemanager.env-whitelist</name>
+         <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,YARN_HOME,AWS_CONTAINER_CREDENTIALS_RELATIVE_URI</value>
+         <description>Environment variable whitelist</description>
+     </property>
+
+ </configuration>
