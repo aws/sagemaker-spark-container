@@ -84,6 +84,8 @@ test-sagemaker: install-sdk build-tests
 	# History server tests can't run in parallel since they use the same container name.
 	pytest -s -vv test/integration/history \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--spark-version=$(SPARK_VERSION)
+	--framework_version=$(FRAMEWORK_VERSION) \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
 	--region ${REGION} \
@@ -91,6 +93,20 @@ test-sagemaker: install-sdk build-tests
 	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
 	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--spark-version=$(SPARK_VERSION)
+	--framework_version=$(FRAMEWORK_VERSION) \
+	--role $(ROLE) \
+	--image_uri $(IMAGE_URI) \
+	--region ${REGION} \
+	--domain ${AWS_DOMAI Run default tag integration testN}
+
+#
+# This is included in a separate target because it will be run only in prod stage
+test-tag:
+	pytest -s -vv test/integration/tag \
+	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--spark-version=$(SPARK_VERSION)
+	--framework_version=$(FRAMEWORK_VERSION) \
 	--role $(ROLE) \
 	--image_uri $(IMAGE_URI) \
 	--region ${REGION} \
