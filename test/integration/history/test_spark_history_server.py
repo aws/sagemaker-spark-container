@@ -10,8 +10,12 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from unittest.mock import patch
+import logging
+import os
+import subprocess
+import time
 
+import boto3
 import requests.packages.urllib3 as urllib3
 from requests.packages.urllib3.util.retry import Retry
 from sagemaker.s3 import S3Uploader
@@ -21,7 +25,7 @@ HISTORY_SERVER_ENDPOINT = "http://0.0.0.0/proxy/15050"
 SPARK_APPLICATION_URL_SUFFIX = "/history/application_1594922484246_0001/1/jobs/"
 
 
-def test_history_server(tag, role, image_uri, sagemaker_session):
+def test_history_server(tag, role, image_uri, sagemaker_session, region):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
         framework_version=tag,
@@ -35,15 +39,17 @@ def test_history_server(tag, role, image_uri, sagemaker_session):
     bucket = sagemaker_session.default_bucket()
     spark_event_logs_key_prefix = "spark/spark-history-fs"
     spark_event_logs_s3_uri = "s3://{}/{}".format(bucket, spark_event_logs_key_prefix)
+    spark_event_log_local_path = "test/resources/data/files/sample_spark_event_logs"
+    file_name = "sample_spark_event_logs"
+    file_size = os.path.getsize(spark_event_log_local_path)
 
     with open("test/resources/data/files/sample_spark_event_logs") as data:
         body = data.read()
         S3Uploader.upload_string_as_file_body(
-            body=body,
-            desired_s3_uri=spark_event_logs_s3_uri + "/sample_spark_event_logs",
-            sagemaker_session=sagemaker_session,
+            body=body, desired_s3_uri=f"{spark_event_logs_s3_uri}/{file_name}", sagemaker_session=sagemaker_session,
         )
 
+    _wait_for_file_to_be_uploaded(region, bucket, spark_event_logs_key_prefix, file_name, file_size)
     spark.start_history_server(spark_event_logs_s3_uri=spark_event_logs_s3_uri)
 
     try:
@@ -52,6 +58,9 @@ def test_history_server(tag, role, image_uri, sagemaker_session):
 
         # spark has redirect behavior, this request verify that page navigation works with redirect
         response = _request_with_retry(f"{HISTORY_SERVER_ENDPOINT}{SPARK_APPLICATION_URL_SUFFIX}")
+        if response.status != 200:
+            print(subprocess.run(["docker", "logs", "history_server"]))
+
         assert response.status == 200
 
         html_content = response.data.decode("utf-8")
@@ -61,8 +70,7 @@ def test_history_server(tag, role, image_uri, sagemaker_session):
         spark.terminate_history_server()
 
 
-@patch("sagemaker.spark.processing.print")
-def test_history_server_with_expected_failure(mock_print, tag, role, image_uri, sagemaker_session):
+def test_history_server_with_expected_failure(tag, role, image_uri, sagemaker_session, caplog):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
         framework_version=tag,
@@ -74,10 +82,11 @@ def test_history_server_with_expected_failure(mock_print, tag, role, image_uri, 
         sagemaker_session=sagemaker_session,
     )
 
+    caplog.set_level(logging.ERROR)
     spark.start_history_server(spark_event_logs_s3_uri="invalids3uri")
     response = _request_with_retry(HISTORY_SERVER_ENDPOINT, max_retries=5)
     assert response is None
-    mock_print.assert_called_with("History server failed to start. Please run 'docker logs history_server' to see logs")
+    assert "History server failed to start. Please run 'docker logs history_server' to see logs" in caplog.text
 
 
 def _request_with_retry(url, max_retries=10):
@@ -90,3 +99,22 @@ def _request_with_retry(url, max_retries=10):
         return http.request("GET", url)
     except Exception:  # pylint: disable=W0703
         return None
+
+
+# due to s3 eventual consistency, s3 file may not be uploaded when we kick off history server
+def _wait_for_file_to_be_uploaded(region, bucket, prefix, file_name, file_size, timeout=20):
+    s3_client = boto3.client("s3", region_name=region)
+
+    max_time = time.time() + timeout
+    while True:
+        response = s3_client.list_objects(Bucket=bucket, Prefix=prefix)
+        if "Contents" in response:
+            for file in response["Contents"]:
+                if file["Key"] == f"{prefix}/{file_name}" and file["Size"] == file_size:
+                    print(f"{file_name} was fully uploaded.")
+                    return
+
+        if time.time() > max_time:
+            raise TimeoutError("Timeout waiting for s3 upload to be consistent")
+
+        time.sleep(1)
