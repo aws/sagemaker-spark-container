@@ -19,6 +19,7 @@ from unittest.mock import patch
 import click
 import pytest
 from click.testing import CliRunner
+
 from smspark.cli import submit, submit_main
 from smspark.errors import InputError
 from smspark.job import ProcessingJobManager

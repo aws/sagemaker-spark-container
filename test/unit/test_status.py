@@ -15,6 +15,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from requests import Session
+
 from smspark.errors import AlgorithmError
 from smspark.status import Status, StatusApp, StatusClient, StatusServer, _Clock
 

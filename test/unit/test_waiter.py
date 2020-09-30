@@ -15,6 +15,7 @@ from typing import Callable
 from unittest.mock import patch
 
 import pytest
+
 from smspark.errors import AlgorithmError
 from smspark.waiter import Waiter
 
