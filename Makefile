@@ -101,7 +101,7 @@ test-sagemaker: install-sdk build-tests
 	--domain ${AWS_DOMAIN}
 
 # This is included in a separate target because it will be run only in prod stage
-test-tag:
+test-prod:
 	pytest -s -vv test/integration/tag \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION)
