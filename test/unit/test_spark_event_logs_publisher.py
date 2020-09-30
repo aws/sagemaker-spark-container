@@ -15,6 +15,7 @@ import time
 from unittest.mock import call, mock_open, patch
 
 import pytest
+
 from smspark.spark_event_logs_publisher import (
     CONFIG_ENABLE_EVENT_LOG,
     CONFIG_EVENT_LOG_DIR_FORMAT,

@@ -16,6 +16,7 @@ from shutil import copyfile, rmtree
 from unittest.mock import MagicMock, call, mock_open, patch
 
 import pytest
+
 from smspark.bootstrapper import Bootstrapper
 from smspark.errors import InputError
 from smspark.history_server_utils import (

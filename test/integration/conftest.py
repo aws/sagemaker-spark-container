@@ -23,6 +23,8 @@ def pytest_addoption(parser) -> str:
     parser.addoption("--region", default="us-west-2")
     parser.addoption("--repo")
     parser.addoption("--tag")
+    parser.addoption("--spark-version")
+    parser.addoption("--framework-version")
     parser.addoption("--domain", default="amazonaws.com")
 
 
@@ -58,6 +60,18 @@ def repo(request) -> str:
 def tag(request) -> str:
     """Return Docker image tag to use in tests."""
     return request.config.getoption("--tag")
+
+
+@pytest.fixture(scope="session")
+def spark_version(request) -> str:
+    """Return Docker image framework_version to use in tests."""
+    return request.config.getoption("--spark-version")
+
+
+@pytest.fixture(scope="session")
+def framework_version(request) -> str:
+    """Return Docker image framework_version to use in tests."""
+    return request.config.getoption("--framework-version")
 
 
 @pytest.fixture(scope="session")

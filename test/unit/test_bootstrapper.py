@@ -14,6 +14,7 @@ import json
 from unittest.mock import MagicMock, Mock, PropertyMock, call, mock_open, patch
 
 import pytest
+
 from smspark.bootstrapper import Bootstrapper
 from smspark.config import Configuration
 from smspark.defaults import default_resource_config
