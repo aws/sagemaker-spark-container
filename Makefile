@@ -7,10 +7,10 @@ SHELL          := /bin/sh
 
 # Set variables if testing locally
 ifeq ($(IS_RELEASE_BUILD),)
-    SPARK_VERSION := 2.4
+    SPARK_VERSION := 3.0
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py37
-    SM_VERSION := 0.1
+    SM_VERSION := 1.0
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
     AWS_PARTITION := aws
