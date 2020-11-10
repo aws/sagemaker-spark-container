@@ -23,28 +23,4 @@
          <value>org.apache.hadoop.fs.s3a.S3A</value>
          <description>s3a filesystem implementation</description>
      </property>
-<!--     <property>-->
-<!--         <name>fs.s3.impl</name>-->
-<!--         <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>-->
-<!--         <description>s3a filesystem implementation</description>-->
-<!--     </property>-->
-<!--     <property>-->
-<!--         <name>fs.AbstractFileSystem.s3a.imp</name>-->
-<!--         <value>org.apache.hadoop.fs.s3a.S3A</value>-->
-<!--         <description>s3a filesystem implementation</description>-->
-<!--     </property>-->
-<!--    <property>-->
-<!--         <name>fs.s3.customAWSCredentialsProvider</name>-->
-<!--         <value>com.amazonaws.auth.DefaultAWSCredentialsProviderChain</value>-->
-<!--         <description>AWS S3 credential provider</description>-->
-<!--     </property>-->
-<!--     <property>-->
-<!--         <name>fs.s3.impl</name>-->
-<!--         <value>com.amazon.ws.emr.hadoop.fs.EmrFileSystem</value>-->
-<!--         <description>s3a filesystem implementation</description>-->
-<!--     </property>-->
-<!--    <property>-->
-<!--      <name>fs.s3n.impl</name>-->
-<!--      <value>com.amazon.ws.emr.hadoop.fs.EmrFileSystem</value>-->
-<!--    </property>-->
  </configuration>
