@@ -86,6 +86,11 @@ COPY hadoop-config /opt/hadoop-config
 COPY nginx-config /opt/nginx-config
 COPY aws-config /opt/aws-config
 
+# Setup container bootstrapper
+COPY container-bootstrap-config /opt/container-bootstrap-config
+RUN chmod +x /opt/container-bootstrap-config/bootstrap.sh
+RUN /opt/container-bootstrap-config/bootstrap.sh
+
 # With this config, spark history server will not run as daemon, otherwise there
 # will be no server running and container will terminate immediately
 ENV SPARK_NO_DAEMONIZE TRUE

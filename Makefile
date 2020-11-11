@@ -96,6 +96,7 @@ test-sagemaker: install-sdk build-tests
 	--spark-version=$(SPARK_VERSION)
 	--framework_version=$(FRAMEWORK_VERSION) \
 	--role $(ROLE) \
+	--account-id ${AWS_ACCOUNT_ID} \
 	--image_uri $(IMAGE_URI) \
 	--region ${REGION} \
 	--domain ${AWS_DOMAIN}

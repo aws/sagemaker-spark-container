@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 # flake8: noqa
-import errno
 import glob
 import json
 import logging
@@ -20,7 +19,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import psutil
 import requests

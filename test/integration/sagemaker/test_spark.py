@@ -210,7 +210,7 @@ def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sa
     assert len(output_contents) != 0
 
 
-def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region, sagemaker_client, configuration):
+def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region, sagemaker_client, account_id):
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         image_uri=image_uri,
@@ -247,12 +247,11 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
         submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
-        # configuration=configuration
         configuration={
             "Classification": "core-site",
             "Properties": {
                 "fs.s3a.server-side-encryption-algorithm": "SSE-KMS",
-                "fs.s3a.server-side-encryption.key": f"arn:aws:kms:us-west-2:790336243319:key/{kms_key_id}",
+                "fs.s3a.server-side-encryption.key": f"arn:aws:kms:{region}:{account_id}:key/{kms_key_id}",
             },
         },
     )
