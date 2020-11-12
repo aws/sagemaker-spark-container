@@ -94,7 +94,7 @@ test-sagemaker: install-sdk build-tests
 	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
-	--framework-version=$(FRAMEWORK_VERSION)\
+	--framework-version=$(FRAMEWORK_VERSION) \
 	--role $(ROLE) \
 	--account-id ${INTEG_TEST_ACCOUNT} \
 	--image_uri $(IMAGE_URI) \
