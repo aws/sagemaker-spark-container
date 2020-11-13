@@ -44,7 +44,7 @@ setup(
     ],
     setup_requires=["setuptools", "wheel"],
     # Be frugal when adding dependencies. Prefer Python's standard library.
-    install_requires = install_reqs,
+    install_requires=install_reqs,
 
     extras_require={
         "test": test_install_reqs,
