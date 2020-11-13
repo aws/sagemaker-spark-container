@@ -19,12 +19,13 @@ import pathlib
 import shutil
 import socket
 import subprocess
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import psutil
 import requests
 from smspark.config import Configuration
 from smspark.defaults import default_resource_config
+from smspark.errors import AlgorithmError
 from smspark.waiter import Waiter
 
 
@@ -36,11 +37,18 @@ class Bootstrapper:
     HADOOP_CONFIG_PATH = "/opt/hadoop-config/"
     HADOOP_PATH = "/usr/lib/hadoop"
     SPARK_PATH = "/usr/lib/spark"
+
     HIVE_PATH = "/usr/lib/hive"
     PROCESSING_CONF_INPUT_PATH = "/opt/ml/processing/input/conf/configuration.json"
     PROCESSING_JOB_CONFIG_PATH = "/opt/ml/config/processingjobconfig.json"
     INSTANCE_TYPE_INFO_PATH = "/opt/aws-config/ec2-instance-type-info.json"
     EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
+    JAR_DEST = SPARK_PATH + "/jars"
+    # jets3t-0.9.0.jar is used by hadoop 2.8.5(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common)
+    # and 2.10.0(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/2.10.0). However, it's not
+    # needed in 3.2.1 (https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/3.2.1)
+    # TODO: use a map with spark version as the key to maintain the optional jars
+    OPTIONAL_JARS = {"jets3t-0.9.0.jar": HADOOP_PATH + "/lib"}
 
     def __init__(self, resource_config: Dict[str, Any] = default_resource_config):
         logging.basicConfig(level=logging.INFO)
@@ -63,28 +71,43 @@ class Bootstrapper:
 
     def copy_aws_jars(self) -> None:
         self.logger.info("copying aws jars")
-        jar_dest = Bootstrapper.SPARK_PATH + "/jars"
         for f in glob.glob("/usr/share/aws/aws-java-sdk/*.jar"):
-            shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
-        hadoop_aws_jar = "hadoop-aws-2.8.5-amzn-6.jar"
-        jets3t_jar = "jets3t-0.9.0.jar"
+            shutil.copyfile(f, os.path.join(self.JAR_DEST, os.path.basename(f)))
+        hadoop_aws_jar = self._get_hadoop_jar()
         shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(jar_dest, hadoop_aws_jar),
+            os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(self.JAR_DEST, hadoop_aws_jar)
         )
-        # this jar required for using s3a client
-        shutil.copyfile(
-            os.path.join(Bootstrapper.HADOOP_PATH + "/lib", jets3t_jar), os.path.join(jar_dest, jets3t_jar),
-        )
+
+        self._copy_optional_jars()
         # copy hmclient (glue data catalog hive metastore client) jars to classpath:
         # https://github.com/awslabs/aws-glue-data-catalog-client-for-apache-hive-metastore
         for f in glob.glob("/usr/share/aws/hmclient/lib/*.jar"):
-            shutil.copyfile(f, os.path.join(jar_dest, os.path.basename(f)))
+            shutil.copyfile(f, os.path.join(self.JAR_DEST, os.path.basename(f)))
+
+    # TODO: use glob.glob
+    def _get_hadoop_jar(self) -> str:
+        for file_name in os.listdir(Bootstrapper.HADOOP_PATH):
+            if file_name.startswith("hadoop-aws") and file_name.endswith(".jar"):
+                self.logger.info(f"Found hadoop jar {file_name}")
+                return file_name
+
+        raise AlgorithmError("Error finding hadoop jar", caused_by=FileNotFoundError())
+
+    def _copy_optional_jars(self) -> None:
+        for jar, jar_path in self.OPTIONAL_JARS.items():
+            if os.path.isfile(os.path.join(jar_path, jar)):
+                self.logger.info(f"Copying optional jar {jar} from {jar_path} to {self.JAR_DEST}")
+                shutil.copyfile(
+                    os.path.join(jar_path, jar), os.path.join(self.JAR_DEST, jar),
+                )
+            else:
+                self.logger.info(f"Optional jar {jar} in {jar_path} does not exist")
 
     def copy_cluster_config(self) -> None:
         self.logger.info("copying cluster config")
 
         def copy_config(src: str, dst: str) -> None:
-            self.logger.info("copying {} to {}".format(src, dst))
+            self.logger.info(f"copying {src} to {dst}")
             shutil.copyfile(src, dst)
 
         copy_config(
@@ -395,7 +418,7 @@ class Bootstrapper:
             {
                 "spark.driver.memory": f"{driver_mem_mb}m",
                 "spark.driver.memoryOverhead": f"{driver_mem_ovr_mb}m",
-                "spark.driver.defaultJavaOptions": f"{driver_java_opts}m",
+                "spark.driver.defaultJavaOptions": f"{driver_java_opts}",
                 "spark.executor.memory": f"{executor_mem_mb}m",
                 "spark.executor.memoryOverhead": f"{executor_mem_ovr_mb}m",
                 "spark.executor.cores": f"{executor_cores}",
