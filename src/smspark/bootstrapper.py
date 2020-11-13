@@ -44,6 +44,11 @@ class Bootstrapper:
     INSTANCE_TYPE_INFO_PATH = "/opt/aws-config/ec2-instance-type-info.json"
     EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
     JAR_DEST = SPARK_PATH + "/jars"
+
+    # jets3t-0.9.0.jar is used by hadoop 2.8.5(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common)
+    # and 2.10.0(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/2.10.0). However, it's not
+    # needed in 3.2.1 (https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/3.2.1)
+    # TODO: use a map with spark version as the key to maintain the optional jars
     OPTIONAL_JARS = {"jets3t-0.9.0.jar": HADOOP_PATH + "/lib"}
 
     def __init__(self, resource_config: Dict[str, Any] = default_resource_config):
@@ -80,6 +85,7 @@ class Bootstrapper:
         for f in glob.glob("/usr/share/aws/hmclient/lib/*.jar"):
             shutil.copyfile(f, os.path.join(self.JAR_DEST, os.path.basename(f)))
 
+    # TODO: use glob.glob
     def _get_hadoop_jar(self) -> str:
         for file_name in os.listdir(Bootstrapper.HADOOP_PATH):
             if file_name.startswith("hadoop-aws") and file_name.endswith(".jar"):
