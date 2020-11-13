@@ -221,6 +221,8 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
         sagemaker_session=sagemaker_session,
     )
 
+    # This test expected AWS managed s3 kms key to be present. The key will be in
+    # KMS > AWS managed keys > aws/s3
     kms_key_id = None
     kms_client = sagemaker_session.boto_session.client("kms", region_name=region)
     for alias in kms_client.list_aliases()["Aliases"]:
@@ -262,9 +264,10 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
         # poll every 15 seconds. timeout after 15 minutes.
         WaiterConfig={"Delay": 15, "MaxAttempts": 60},
     )
-    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
-    assert len(output_contents) != 0
-    for s3_object in s3_client.list_objects(Bucket=bucket, Prefix=output_data_uri_prefix)["Contents"]:
+
+    s3_objects = s3_client.list_objects(Bucket=bucket, Prefix=output_data_uri_prefix)["Contents"]
+    assert len(s3_objects) != 0
+    for s3_object in s3_objects:
         object_metadata = s3_client.get_object(Bucket=bucket, Key=s3_object["Key"])
         assert object_metadata["ServerSideEncryption"] == "aws:kms"
         assert object_metadata["SSEKMSKeyId"] == f"arn:aws:kms:{region}:{account_id}:key/{kms_key_id}"
