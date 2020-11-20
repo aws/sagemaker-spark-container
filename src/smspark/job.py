@@ -32,6 +32,9 @@ from tenacity import retry, stop_after_delay
 class ProcessingJobManager(object):
     """Manages the lifecycle of a Spark job."""
 
+    _bootstrapping_timeout = 600.0  # all hosts should report as ready within this timeout.
+    _wait_for_primary_timeout = 600.0  # then, all workers ask the primary if it's up within this timeout.
+
     def __init__(
         self,
         resource_config: Dict[str, Any] = None,  # type: ignore
@@ -136,7 +139,11 @@ class ProcessingJobManager(object):
                 has_bootstrapped = [message.status == Status.WAITING for message in host_statuses.values()]
                 return all(has_bootstrapped)
 
-            self.waiter.wait_for(predicate_fn=all_hosts_have_bootstrapped, timeout=180.0, period=5.0)
+            self.waiter.wait_for(
+                predicate_fn=all_hosts_have_bootstrapped,
+                timeout=ProcessingJobManager._bootstrapping_timeout,
+                period=5.0,
+            )
 
             try:
                 subprocess.run(spark_submit_cmd, check=True, shell=True)
@@ -172,7 +179,7 @@ class ProcessingJobManager(object):
                 return not primary_is_up()
 
             self.logger.info("waiting for the primary to come up")
-            self.waiter.wait_for(primary_is_up, timeout=60.0, period=1.0)
+            self.waiter.wait_for(primary_is_up, timeout=ProcessingJobManager._wait_for_primary_timeout, period=1.0)
             self.logger.info("waiting for the primary to go down")
             self.waiter.wait_for(primary_is_down, timeout=float("inf"), period=5.0)
             self.logger.info("primary is down, worker now exiting")
