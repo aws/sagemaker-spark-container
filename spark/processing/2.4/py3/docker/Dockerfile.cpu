@@ -1,4 +1,4 @@
-FROM amazonlinux:2
+FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
 ARG REGION
 ENV AWS_REGION ${REGION}
 RUN yum clean all
