@@ -276,7 +276,7 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
     for s3_object in s3_objects:
         object_metadata = s3_client.get_object(Bucket=bucket, Key=s3_object["Key"])
         assert object_metadata["ServerSideEncryption"] == "aws:kms"
-        assert object_metadata["SSEKMSKeyId"] == f"arn:aws:kms:{region}:{account_id}:key/{kms_key_id}"
+        assert object_metadata["SSEKMSKeyId"] == f"arn:{aws_partition}:kms:{region}:{account_id}:key/{kms_key_id}"
 
 
 def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker_session, sagemaker_client):
