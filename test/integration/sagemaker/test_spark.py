@@ -210,6 +210,75 @@ def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sa
     assert len(output_contents) != 0
 
 
+def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region, sagemaker_client, account_id):
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-py",
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+
+    # This test expected AWS managed s3 kms key to be present. The key will be in
+    # KMS > AWS managed keys > aws/s3
+    kms_key_id = None
+    kms_client = sagemaker_session.boto_session.client("kms", region_name=region)
+    for alias in kms_client.list_aliases()["Aliases"]:
+        if "s3" in alias["AliasName"]:
+            kms_key_id = alias["TargetKeyId"]
+
+    if not kms_key_id:
+        raise ValueError("AWS managed s3 kms key(alias: aws/s3) does not exist")
+
+    # TODO: PDT is the only case requires different partition at this time,
+    # in the future we need to change it to fixture
+    aws_partition = "aws"
+    if region == "us-gov-west-1":
+        aws_partition = "aws-us-gov"
+
+    bucket = sagemaker_session.default_bucket()
+    timestamp = datetime.now().isoformat()
+    input_data_key = f"spark/input/sales/{timestamp}/data.jsonl"
+    input_data_uri = f"s3://{bucket}/{input_data_key}"
+    output_data_uri_prefix = f"spark/output/sales/{timestamp}"
+    output_data_uri = f"s3://{bucket}/{output_data_uri_prefix}"
+    s3_client = sagemaker_session.boto_session.client("s3", region_name=region)
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        s3_client.put_object(
+            Body=body, Bucket=bucket, Key=input_data_key, ServerSideEncryption="aws:kms", SSEKMSKeyId=kms_key_id
+        )
+
+    spark.run(
+        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration={
+            "Classification": "core-site",
+            "Properties": {
+                "fs.s3a.server-side-encryption-algorithm": "SSE-KMS",
+                "fs.s3a.server-side-encryption.key": f"arn:{aws_partition}:kms:{region}:{account_id}:key/{kms_key_id}",
+            },
+        },
+    )
+    processing_job = spark.latest_job
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    s3_objects = s3_client.list_objects(Bucket=bucket, Prefix=output_data_uri_prefix)["Contents"]
+    assert len(s3_objects) != 0
+    for s3_object in s3_objects:
+        object_metadata = s3_client.get_object(Bucket=bucket, Key=s3_object["Key"])
+        assert object_metadata["ServerSideEncryption"] == "aws:kms"
+        assert object_metadata["SSEKMSKeyId"] == f"arn:{aws_partition}:kms:{region}:{account_id}:key/{kms_key_id}"
+
+
 def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker_session, sagemaker_client):
     """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
     spark = SparkJarProcessor(

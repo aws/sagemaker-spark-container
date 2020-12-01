@@ -97,9 +97,11 @@ def test_env_classification(default_bootstrapper):
     assert output == expected
 
 
+@patch("os.listdir", return_value=["hadoop-aws-2.8.5-amzn-5.jar"])
+@patch("os.path.isfile", return_value=True)
 @patch("glob.glob", side_effect=[["/aws-sdk.jar"], ["/hmclient/lib/client.jar"]])
 @patch("shutil.copyfile", side_effect=None)
-def test_copy_aws_jars(patched_copyfile, patched_glob, default_bootstrapper) -> None:
+def test_copy_aws_jars(patched_copyfile, patched_glob, patched_isfile, patched_listdir, default_bootstrapper) -> None:
     default_bootstrapper.copy_aws_jars()
 
     expected = [
@@ -422,7 +424,7 @@ def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> N
     exp_spark_config_props = {
         "spark.driver.memory": f"{exp_driver_mem_mb}m",
         "spark.driver.memoryOverhead": f"{exp_driver_mem_ovr_mb}m",
-        "spark.driver.defaultJavaOptions": f"{exp_driver_java_opts}m",
+        "spark.driver.defaultJavaOptions": f"{exp_driver_java_opts}",
         "spark.executor.memory": f"{exp_executor_mem_mb}m",
         "spark.executor.memoryOverhead": f"{exp_executor_mem_ovr_mb}m",
         "spark.executor.cores": f"{exp_executor_cores}",
