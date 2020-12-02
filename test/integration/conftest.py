@@ -51,6 +51,18 @@ def region(request) -> str:
 
 
 @pytest.fixture(scope="session")
+def partition(region) -> str:
+    """Return partition, such as aws, aws-cn, for use in tests."""
+    region_partition_amp = {
+        "us-gov-west-1": "aws-us-gov",
+        "cn-north-1": "aws-cn",
+        "cn-northwest-1": "aws-cn",
+    }
+
+    return region_partition_amp.get(region, "aws")
+
+
+@pytest.fixture(scope="session")
 def repo(request) -> str:
     """Return ECR repository to use in tests."""
     return request.config.getoption("--repo")
