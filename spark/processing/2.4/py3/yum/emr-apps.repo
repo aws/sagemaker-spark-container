@@ -1,7 +1,7 @@
 [emr-apps]
 name = EMR Application Repository
-gpgkey = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-5.30.1/82e3c3dd-2d53-4782-9e61-5f72ba3690c5/repoPublicKey.txt
+gpgkey = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-5.31.0/a75d77c7-f528-4266-b091-275dae889395/repoPublicKey.txt
 enabled = 1
-baseurl = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-5.30.1/82e3c3dd-2d53-4782-9e61-5f72ba3690c5
+baseurl = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-5.31.0/a75d77c7-f528-4266-b091-275dae889395
 priority = 5
 gpgcheck = 0

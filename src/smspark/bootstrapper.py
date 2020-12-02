@@ -44,6 +44,7 @@ class Bootstrapper:
     INSTANCE_TYPE_INFO_PATH = "/opt/aws-config/ec2-instance-type-info.json"
     EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
     JAR_DEST = SPARK_PATH + "/jars"
+
     # jets3t-0.9.0.jar is used by hadoop 2.8.5(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common)
     # and 2.10.0(https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/2.10.0). However, it's not
     # needed in 3.2.1 (https://mvnrepository.com/artifact/org.apache.hadoop/hadoop-common/3.2.1)
