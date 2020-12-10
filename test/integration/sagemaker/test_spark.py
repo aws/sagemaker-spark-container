@@ -210,7 +210,9 @@ def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sa
     assert len(output_contents) != 0
 
 
-def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region, sagemaker_client, account_id):
+def test_sagemaker_pyspark_sse_kms_s3(
+    role, image_uri, sagemaker_session, region, sagemaker_client, account_id, partition
+):
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         image_uri=image_uri,
@@ -231,12 +233,6 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
 
     if not kms_key_id:
         raise ValueError("AWS managed s3 kms key(alias: aws/s3) does not exist")
-
-    # TODO: PDT is the only case requires different partition at this time,
-    # in the future we need to change it to fixture
-    aws_partition = "aws"
-    if region == "us-gov-west-1":
-        aws_partition = "aws-us-gov"
 
     bucket = sagemaker_session.default_bucket()
     timestamp = datetime.now().isoformat()
@@ -259,7 +255,7 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
             "Classification": "core-site",
             "Properties": {
                 "fs.s3a.server-side-encryption-algorithm": "SSE-KMS",
-                "fs.s3a.server-side-encryption.key": f"arn:{aws_partition}:kms:{region}:{account_id}:key/{kms_key_id}",
+                "fs.s3a.server-side-encryption.key": f"arn:{partition}:kms:{region}:{account_id}:key/{kms_key_id}",
             },
         },
     )
@@ -276,7 +272,7 @@ def test_sagemaker_pyspark_sse_kms_s3(role, image_uri, sagemaker_session, region
     for s3_object in s3_objects:
         object_metadata = s3_client.get_object(Bucket=bucket, Key=s3_object["Key"])
         assert object_metadata["ServerSideEncryption"] == "aws:kms"
-        assert object_metadata["SSEKMSKeyId"] == f"arn:{aws_partition}:kms:{region}:{account_id}:key/{kms_key_id}"
+        assert object_metadata["SSEKMSKeyId"] == f"arn:{partition}:kms:{region}:{account_id}:key/{kms_key_id}"
 
 
 def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker_session, sagemaker_client):
