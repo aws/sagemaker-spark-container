@@ -17,6 +17,7 @@ Images are available in the following regions:
 |Asia Pacific (Mumbai) |ap-south-1 |105495057255.dkr.ecr.ap-south-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |Asia Pacific (Singapore) |ap-southeast-1 |759080221371.dkr.ecr.ap-southeast-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |Asia Pacific (Sydney) |ap-southeast-2 |440695851116.dkr.ecr.ap-southeast-2.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
+|Africa (Cape Town) |af-south-1 |309385258863.dkr.ecr.af-south-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |Middle East (Bahrain) |me-south-1 |750251592176.dkr.ecr.me-south-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |South America (Sao Paulo) |sa-east-1 |737130764395.dkr.ecr.sa-east-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |Canada (Central) |ca-central-1 |446299261295.dkr.ecr.ca-central-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
@@ -24,6 +25,7 @@ Images are available in the following regions:
 |EU (Stockholm) |eu-north-1 |330188676905.dkr.ecr.eu-north-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |EU (Ireland) |eu-west-1 |571004829621.dkr.ecr.eu-west-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |EU (London) |eu-west-2 |836651553127.dkr.ecr.eu-west-2.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
+|EU (Milano) |eu-south-1 |753923664805.dkr.ecr.eu-south-1.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |EU (Paris) |eu-west-3 |136845547031.dkr.ecr.eu-west-3.amazonaws.com/&lt;repository-name>:&lt;image-tag> |
 |China (Beijing) |cn-north-1 |671472414489.dkr.ecr.cn-north-1.amazonaws.com.cn/&lt;repository-name>:&lt;image-tag> |
 |China (Ningxia) |cn-northwest-1 |844356804704.dkr.ecr.cn-northwest-1.amazonaws.com.cn/&lt;repository-name>:&lt;image-tag>|

@@ -8,3 +8,4 @@ pytest-cov==2.10.0
 pytest-xdist==1.32.0
 docker==4.2.2
 docker-compose==1.26.2
+py==1.10.0
