@@ -1,4 +1,4 @@
-FROM amazonlinux:2
+FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
 ARG REGION
 ENV AWS_REGION ${REGION}
 RUN yum clean all
@@ -84,6 +84,11 @@ RUN /usr/bin/python3 -m pip install /opt/program/*.whl
 COPY hadoop-config /opt/hadoop-config
 COPY nginx-config /opt/nginx-config
 COPY aws-config /opt/aws-config
+
+# Setup container bootstrapper
+COPY container-bootstrap-config /opt/container-bootstrap-config
+RUN chmod +x /opt/container-bootstrap-config/bootstrap.sh
+RUN /opt/container-bootstrap-config/bootstrap.sh
 
 # With this config, spark history server will not run as daemon, otherwise there
 # will be no server running and container will terminate immediately
