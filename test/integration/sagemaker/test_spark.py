@@ -361,6 +361,48 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagem
     assert len(output_contents) != 0
 
 
+def test_sagemaker_java_jar_singlenode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
+    """Test SparkJarProcessor using Java application jar"""
+    spark = SparkJarProcessor(
+        base_job_name="sm-spark-java",
+        framework_version=tag,
+        image_uri=image_uri,
+        role=role,
+        instance_count=1,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+
+    bucket = spark.sagemaker_session.default_bucket()
+    with open("test/resources/data/files/data.jsonl") as data:
+        body = data.read()
+        input_data_uri = "s3://{}/spark/input/data.jsonl".format(bucket)
+        S3Uploader.upload_string_as_file_body(
+            body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
+        )
+    output_data_uri = "s3://{}/spark/output/sales/{}".format(bucket, datetime.now().isoformat())
+
+    java_project_dir = "test/resources/code/java/hello-java-spark"
+    spark.run(
+        submit_app="{}/target/hello-java-spark-1.0-SNAPSHOT.jar".format(java_project_dir),
+        submit_class="com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp",
+        arguments=["--input", input_data_uri, "--output", output_data_uri],
+        configuration=configuration,
+    )
+    processing_job = spark.latest_job
+
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    output_contents = S3Downloader.list(output_data_uri, sagemaker_session=sagemaker_session)
+    assert len(output_contents) != 0
+
+
 def processing_job_not_fail_or_complete(sagemaker_client, job_name):
     response = sagemaker_client.describe_processing_job(ProcessingJobName=job_name)
 

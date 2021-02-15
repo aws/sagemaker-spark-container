@@ -59,7 +59,6 @@ RUN yum install -y aws-hm-client \
     hive-jdbc \
     hive-server2 \
     python37-numpy \
-    python37-sagemaker_pyspark \
     s3-dist-cp \
     spark-core \
     spark-datanucleus \
@@ -82,9 +81,16 @@ ENV HDFS_SECONDARYNAMENODE_USER="root"
 # Set up bootstrapping program and Spark configuration
 COPY *.whl /opt/program/
 RUN /usr/bin/python3 -m pip install /opt/program/*.whl
+RUN /usr/bin/python3 -m pip install pipenv --upgrade
 COPY hadoop-config /opt/hadoop-config
 COPY nginx-config /opt/nginx-config
 COPY aws-config /opt/aws-config
+COPY Pipfile /opt
+COPY Pipfile.lock /opt
+ENV PIPENV_PIPFILE=/opt/Pipfile
+# Use --system flag, so it will install all packages into the system python,
+# and not into the virtualenv. Since docker containers do not need to have virtualenvs
+RUN pipenv install --system
 
 # Setup container bootstrapper
 COPY container-bootstrap-config /opt/container-bootstrap-config
