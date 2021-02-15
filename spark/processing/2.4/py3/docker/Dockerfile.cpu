@@ -58,7 +58,6 @@ RUN yum install -y aws-hm-client \
     hive-jdbc \
     hive-server2 \
     python37-numpy \
-    python37-sagemaker_pyspark \
     s3-dist-cp \
     spark-core \
     spark-datanucleus \

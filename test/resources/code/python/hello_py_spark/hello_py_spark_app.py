@@ -28,11 +28,14 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=False, type=str, help="path to output data")
     args = parser.parse_args()
     spark = SparkSession.builder.appName("SparkContainerTestApp").getOrCreate()
+    print("Created spark context")
     sqlContext = SQLContext(spark.sparkContext)
+    print("Created sql context")
 
     # Load test data set
     inputPath = args.input
     salesDF = spark.read.json(inputPath)
+    print("Loaded data")
     salesDF.printSchema()
 
     salesDF.createOrReplaceTempView("sales")
@@ -43,7 +46,7 @@ if __name__ == "__main__":
 
     # Calculate average sales by date
     averageSalesPerDay = salesDF.groupBy("date").avg().collect()
-    print(averageSalesPerDay)
+    print("Calculated data")
 
     outputPath = args.output
 
@@ -53,3 +56,4 @@ if __name__ == "__main__":
 
     # Save transformed data set to disk
     salesDF.select("date", "sale", double_udf_int("sale").alias("sale_double")).write.json(outputPath)
+    print("Saved data")

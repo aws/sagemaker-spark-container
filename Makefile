@@ -30,18 +30,18 @@ all: build test
 
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
 
-# Builds and moves container python library into the Docker build context
-build-container-library:
-	python setup.py bdist_wheel;
-	cp dist/*.whl ${BUILD_CONTEXT}
-
 init:
 	pip install pipenv --upgrade
 	pipenv install
+	cp {Pipfile,Pipfile.lock,setup.py} ${BUILD_CONTEXT}
 
-install-container-library: init build-container-library
-	pip install --upgrade dist/smspark-0.1-py3-none-any.whl
-	safety check  # https://github.com/pyupio/safety
+# Builds and moves container python library into the Docker build context
+build-container-library: init
+	python setup.py bdist_wheel;
+	cp dist/*.whl ${BUILD_CONTEXT}
+
+install-container-library: init
+	pipenv run safety check  # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
@@ -64,25 +64,25 @@ build-test-java:
 
 build-tests: build-test-scala build-test-java
 
-lint:
-	black --check ./src
-	black --check ./test
-	mypy --follow-imports=skip src/smspark   # see mypy.ini for configuration
-	flake8 src         # see .flake8 for configuration
+lint: init
+	pipenv run black --check ./src
+	pipenv run black --check ./test
+	pipenv run mypy --follow-imports=skip src/smspark   # see mypy.ini for configuration
+	pipenv run flake8 src         # see .flake8 for configuration
 
-test-unit: build-container-library install-container-library
-	python -m pytest -s -vv test/unit
+test-unit: install-container-library
+	pipenv run python -m pytest -s -vv test/unit
 
 # Only runs local tests.
-test-local: install-sdk build-tests
-	python -m pytest -s -vv test/integration/local --repo=$(DEST_REPO) --tag=$(VERSION) --role=$(ROLE) --durations=0
+test-local: install-container-library build-tests
+	pipenv run python -m pytest -s -vv test/integration/local --repo=$(DEST_REPO) --tag=$(VERSION) --role=$(ROLE) --durations=0
 
 # Only runs sagemaker tests
 # Use pytest-parallel to run tests in parallel - https://pypi.org/project/pytest-parallel/
-test-sagemaker: install-sdk build-tests
+test-sagemaker: build-tests
 	# Separate `pytest` invocation without parallelization:
 	# History server tests can't run in parallel since they use the same container name.
-	pytest -s -vv test/integration/history \
+	pipenv run pytest -s -vv test/integration/history \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
 	--framework-version=$(FRAMEWORK_VERSION) \
@@ -91,7 +91,7 @@ test-sagemaker: install-sdk build-tests
 	--region ${REGION} \
 	--domain ${AWS_DOMAIN}
 	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
-	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pytest --workers auto -s -vv test/integration/sagemaker \
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pipenv run pytest --workers auto -s -vv test/integration/sagemaker \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
 	--framework-version=$(FRAMEWORK_VERSION) \
@@ -103,7 +103,7 @@ test-sagemaker: install-sdk build-tests
 
 # This is included in a separate target because it will be run only in prod stage
 test-prod:
-	pytest -s -vv test/integration/tag \
+	pipenv run pytest -s -vv test/integration/tag \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
 	--framework-version=$(FRAMEWORK_VERSION) \
@@ -128,6 +128,7 @@ clean:
 	rm ${BUILD_CONTEXT}/*.whl || true
 	rm -rf dist || true
 	rm -rf build || true
+	rm =2.9.0
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
@@ -145,4 +146,4 @@ release:
 
 
 # Targets that don't create a file with the same name as the target.
-.PHONY: all build test test-all install-sdk clean clean-all release whitelist build-container-library
+.PHONY: all build test test-all clean clean-all release whitelist build-container-library
