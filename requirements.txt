@@ -7,4 +7,4 @@ requests==2.24.0
 rsa==4.3
 pyasn1==0.4.8
 boto3==1.14.58
-cryptography==3.3
+cryptography==3.3.2
