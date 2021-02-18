@@ -19,6 +19,23 @@ ENV PYTHONHASHSEED 0
 ENV PYTHONIOENCODING UTF-8
 ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 
+# Install python
+ARG PYTHON=python3
+ARG PIP=pip3
+ARG PYTHON_VERSION=3.7.10
+RUN yum install -y zlib-devel bzip2-devel openssl-devel ncurses-devel sqlite-devel readline-devel tk-devel gdbm-devel db4-devel libpcap-devel xz-devel expat-devel zlib zlib1g-dev libffi-devel
+RUN wget -q https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz \
+ && tar -xzf Python-$PYTHON_VERSION.tgz \
+ && cd Python-$PYTHON_VERSION \
+ && ./configure --enable-shared --prefix=/usr/local LDFLAGS="-Wl,-rpath /usr/local/lib" \
+ && make -j $(nproc) && make install \
+ && cd .. && rm -rf ../Python-$PYTHON_VERSION* \
+ && ln -s /usr/local/bin/pip3 /usr/bin/pip \
+ && ln -sf /usr/local/bin/$PYTHON /usr/bin/python3 \
+ && ${PIP} --no-cache-dir install --upgrade \
+    pip \
+    setuptools
+
 # Install EMR Spark/Hadoop
 ENV HADOOP_HOME /usr/lib/hadoop
 ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
