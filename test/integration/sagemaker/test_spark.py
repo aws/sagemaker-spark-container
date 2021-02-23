@@ -298,10 +298,10 @@ def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker
 
     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
     spark.run(
-        submit_app="{}/target/scala-2.12/hello-scala-spark_2.12-1.0.jar".format(scala_project_dir),
+        submit_app="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
         submit_jars=[
-            "{}/lib_managed/jars/org.json4s/json4s-native_2.12/json4s-native_2.12-3.6.9.jar".format(scala_project_dir)
+            "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
         ],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
