@@ -75,12 +75,12 @@ def test_pyspark_multinode(input_data: str, output_data: str, verbose_opt: str) 
 def test_scala_spark_multinode(input_data: str, output_data: str, verbose_opt: str) -> None:
     input = "--input {}".format(input_data)
     output = "--output {}".format(output_data)
-    host_jars_dir = "./test/resources/code/scala/hello-scala-spark/lib_managed/jars/org.json4s/json4s-native_2.12"
+    host_jars_dir = "./test/resources/code/scala/hello-scala-spark/lib_managed/jars/org.json4s/json4s-native_2.11"
     container_jars_dir = "/opt/ml/processing/input/jars"
     jars_mount = f"{host_jars_dir}:{container_jars_dir}"
     jars_arg = f"--jars {container_jars_dir}"
     class_arg = "--class com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp"
-    app_jar = "/opt/ml/processing/input/code/scala/hello-scala-spark/target/scala-2.12/hello-scala-spark_2.12-1.0.jar"
+    app_jar = "/opt/ml/processing/input/code/scala/hello-scala-spark/target/scala-2.11/hello-scala-spark_2.11-1.0.jar"
     docker_compose_cmd = (
         f"JARS_MOUNT={jars_mount} "
         f"CMD='{jars_arg} {class_arg} {verbose_opt} {app_jar} {input} {output}' "
