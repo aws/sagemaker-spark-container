@@ -56,3 +56,8 @@ aws-config/
 
 # FIXME: remove this once we're consuming EMR packages through build
 emr-spark-packages
+
+# Pipe and .whl files used to build the container
+spark/processing/*/*/Pipfile*
+spark/processing/*/*/smspark*
+spark/processing/*/*/setup.py

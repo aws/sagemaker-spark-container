@@ -18,10 +18,6 @@ from setuptools import find_packages, setup
 with open("VERSION", "r") as version_file:
     version = version_file.read()
 
-install_reqs = list(open('requirements.txt').read().strip().split('\n'))
-test_install_reqs = list(open('test_requirements.txt').read().strip().split('\n'))
-
-
 setup(
     name="smspark",
     description="Library that enables running Spark Processing jobs on Amazon SageMaker",
@@ -43,12 +39,6 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     setup_requires=["setuptools", "wheel"],
-    # Be frugal when adding dependencies. Prefer Python's standard library.
-    install_requires=install_reqs,
-
-    extras_require={
-        "test": test_install_reqs,
-    },
     entry_points={
         "console_scripts": [
             "smspark-submit=smspark.cli:submit_main",

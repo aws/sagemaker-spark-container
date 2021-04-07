@@ -91,13 +91,20 @@ def configuration() -> list:
     return configuration
 
 
-def test_sagemaker_pyspark_multinode(role, image_uri, configuration, sagemaker_session, region, sagemaker_client):
+@pytest.mark.parametrize(
+    "config", [{"instance_count": 1}, {"instance_count": 2}],
+)
+def test_sagemaker_pyspark_multinode(
+    role, image_uri, configuration, sagemaker_session, region, sagemaker_client, config
+):
+    instance_count = config["instance_count"]
+    print(f"Creating job with {instance_count} instance count")
     """Test that basic multinode case works on 32KB of data"""
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         image_uri=image_uri,
         role=role,
-        instance_count=2,
+        instance_count=instance_count,
         instance_type="ml.c5.xlarge",
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
