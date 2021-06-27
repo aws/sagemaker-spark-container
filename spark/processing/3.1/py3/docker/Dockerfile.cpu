@@ -1,0 +1,109 @@
+FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
+ARG REGION
+ENV AWS_REGION ${REGION}
+RUN yum clean all
+RUN yum update -y
+RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3 python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget liblapack* libblas* libopencv* libopenblas*
+
+# install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
+RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y epel-release-latest-7.noarch.rpm
+RUN yum install -y nginx
+
+RUN rm -rf /var/cache/yum
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+# http://blog.stuart.axelbrooke.com/python-3-on-spark-return-of-the-pythonhashseed
+ENV PYTHONHASHSEED 0
+ENV PYTHONIOENCODING UTF-8
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+
+# Install EMR Spark/Hadoop
+ENV HADOOP_HOME /usr/lib/hadoop
+ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
+ENV SPARK_HOME /usr/lib/spark
+
+COPY yum/emr-apps.repo /etc/yum.repos.d/emr-apps.repo
+
+# Install hadoop / spark dependencies from EMR's yum repository for Spark optimizations.
+# replace placeholder with region in repository URL
+RUN sed -i "s/REGION/${AWS_REGION}/g" /etc/yum.repos.d/emr-apps.repo
+RUN adduser -N hadoop
+
+# These packages are a subset of what EMR installs in a cluster with the
+# "hadoop", "spark", and "hive" applications.
+# They include EMR-optimized libraries and extras.
+RUN yum install -y aws-hm-client \
+    aws-java-sdk \
+    aws-sagemaker-spark-sdk \
+    emr-goodies \
+    emr-ruby \
+    emr-scripts \
+    emr-s3-select \
+    emrfs \
+    hadoop \
+    hadoop-client \
+    hadoop-hdfs \
+    hadoop-hdfs-datanode \
+    hadoop-hdfs-namenode \
+    hadoop-httpfs \
+    hadoop-kms \
+    hadoop-lzo \
+    hadoop-yarn \
+    hadoop-yarn-nodemanager \
+    hadoop-yarn-proxyserver \
+    hadoop-yarn-resourcemanager \
+    hadoop-yarn-timelineserver \
+    hive \
+    hive-hcatalog \
+    hive-hcatalog-server \
+    hive-jdbc \
+    hive-server2 \
+    python37-numpy \
+    s3-dist-cp \
+    spark-core \
+    spark-datanucleus \
+    spark-external \
+    spark-history-server \
+    spark-python
+
+
+# Point Spark at proper python binary
+ENV PYSPARK_PYTHON=/usr/bin/python3
+
+# Setup Spark/Yarn/HDFS user as root
+ENV PATH="/usr/bin:/opt/program:${PATH}"
+ENV YARN_RESOURCEMANAGER_USER="root"
+ENV YARN_NODEMANAGER_USER="root"
+ENV HDFS_NAMENODE_USER="root"
+ENV HDFS_DATANODE_USER="root"
+ENV HDFS_SECONDARYNAMENODE_USER="root"
+
+# Set up bootstrapping program and Spark configuration
+COPY *.whl /opt/program/
+RUN /usr/bin/python3 -m pip install pipenv --upgrade
+COPY hadoop-config /opt/hadoop-config
+COPY nginx-config /opt/nginx-config
+COPY aws-config /opt/aws-config
+COPY Pipfile /opt/program/
+COPY Pipfile.lock /opt/program/
+COPY setup.py /opt/program/
+ENV PIPENV_PIPFILE=/opt/program/Pipfile
+# Use --system flag, so it will install all packages into the system python,
+# and not into the virtualenv. Since docker containers do not need to have virtualenvs
+RUN pipenv install --system
+RUN /usr/bin/python3 -m pip install /opt/program/*.whl
+
+# Setup container bootstrapper
+COPY container-bootstrap-config /opt/container-bootstrap-config
+RUN chmod +x /opt/container-bootstrap-config/bootstrap.sh
+RUN /opt/container-bootstrap-config/bootstrap.sh
+
+# With this config, spark history server will not run as daemon, otherwise there
+# will be no server running and container will terminate immediately
+ENV SPARK_NO_DAEMONIZE TRUE
+
+WORKDIR $SPARK_HOME
+
+ENTRYPOINT ["smspark-submit"]

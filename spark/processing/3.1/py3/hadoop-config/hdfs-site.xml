@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+ <!-- Put site-specific property overrides in this file. -->
+
+ <configuration>
+    <property>
+        <name>dfs.datanode.data.dir</name>
+        <value>file:///opt/amazon/hadoop/hdfs/datanode</value>
+        <description>Comma separated list of paths on the local filesystem of a DataNode where it should store its\
+  blocks.</description>
+    </property>
+
+    <property>
+        <name>dfs.namenode.name.dir</name>
+        <value>file:///opt/amazon/hadoop/hdfs/namenode</value>
+        <description>Path on the local filesystem where the NameNode stores the namespace and transaction logs per\
+ sistently.</description>
+    </property>
+
+	<!-- Fix for "Failed to replace a bad datanode on the existing pipeline due to no more good datanodes being available to try"
+		 From https://community.cloudera.com/t5/Support-Questions/Failed-to-replace-a-bad-datanode-on-the-existing-pipeline/td-p/207711
+		 This issue can be caused by Continuous network issues causing or repeated packet drops. This specially happens when data is
+		 being written to any one of the DataNode which is in process of pipelining the data to next datanode and due to any communicaiton
+		 issue it may lead to pipeline failure. We are only see this issue in small regions. -->
+	<property>
+		<name>dfs.client.block.write.replace-datanode-on-failure.enable</name>
+		<value>true</value>
+		<description>
+			If there is a datanode/network failure in the write pipeline,
+			DFSClient will try to remove the failed datanode from the pipeline
+			and then continue writing with the remaining datanodes. As a result,
+			the number of datanodes in the pipeline is decreased. The feature is
+			to add new datanodes to the pipeline.
+
+			This is a site-wide property to enable/disable the feature.
+
+			When the cluster size is extremely small, e.g. 3 nodes or less, cluster
+			administrators may want to set the policy to NEVER in the default
+			configuration file or disable this feature. Otherwise, users may
+			experience an unusually high rate of pipeline failures since it is
+			impossible to find new datanodes for replacement.
+
+			See also dfs.client.block.write.replace-datanode-on-failure.policy
+		</description>
+	</property>
+
+	<property>
+		<name>dfs.client.block.write.replace-datanode-on-failure.policy</name>
+		<value>ALWAYS</value>
+		<description>
+			This property is used only if the value of
+			dfs.client.block.write.replace-datanode-on-failure.enable is true.
+
+			ALWAYS: always add a new datanode when an existing datanode is
+			removed.
+
+			NEVER: never add a new datanode.
+
+			DEFAULT:
+			Let r be the replication number.
+			Let n be the number of existing datanodes.
+			Add a new datanode only if r is greater than or equal to 3 and either
+			(1) floor(r/2) is greater than or equal to n; or
+			(2) r is greater than n and the block is hflushed/appended.
+		</description>
+	 </property>
+ </configuration>

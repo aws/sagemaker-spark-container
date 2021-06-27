@@ -32,6 +32,7 @@ all: build test
 
 init:
 	pip install pipenv --upgrade
+	pipenv run pip install --upgrade pip
 	pipenv install
 	cp {Pipfile,Pipfile.lock,setup.py} ${BUILD_CONTEXT}
 
@@ -82,7 +83,7 @@ test-local: install-container-library build-tests
 test-sagemaker: build-tests
 	# Separate `pytest` invocation without parallelization:
 	# History server tests can't run in parallel since they use the same container name.
-	pipenv run pytest -s -vv test/integration/history \
+	pipenv run pytest --reruns 3 -s -vv test/integration/history \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
 	--framework-version=$(FRAMEWORK_VERSION) \
@@ -91,7 +92,7 @@ test-sagemaker: build-tests
 	--region ${REGION} \
 	--domain ${AWS_DOMAIN}
 	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
-	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pipenv run pytest --workers auto -s -vv test/integration/sagemaker \
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pipenv run pytest --workers auto --reruns 3 -s -vv test/integration/sagemaker \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
 	--spark-version=$(SPARK_VERSION) \
 	--framework-version=$(FRAMEWORK_VERSION) \
