@@ -31,6 +31,7 @@ sagemaker = "==2.30.0"
 smspark = {editable = true, path = "."}
 importlib-metadata = "==3.7.3"
 pytest-parallel = "==0.1.0"
+pytest-rerunfailures = "10.0"
 
 [requires]
 python_version = "3.7"
