@@ -63,7 +63,7 @@ build-test-scala:
 build-test-java:
 	cd test/resources/code/java/hello-java-spark; mvn package
 
-build-tests: build-test-scala build-test-java
+build-tests: init build-test-scala build-test-java
 
 lint: init
 	pipenv run black --check ./src
