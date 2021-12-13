@@ -80,6 +80,8 @@ ENV HDFS_NAMENODE_USER="root"
 ENV HDFS_DATANODE_USER="root"
 ENV HDFS_SECONDARYNAMENODE_USER="root"
 
+RUN zip -q -d /lib/hive/lib/log4j-core-2.10.0.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
+
 # Set up bootstrapping program and Spark configuration
 COPY *.whl /opt/program/
 RUN /usr/bin/python3 -m pip install pipenv --upgrade
