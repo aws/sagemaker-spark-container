@@ -1,7 +1,7 @@
 ---
 new_images:
-  - spark: "3.1.1"
+  - spark: "2.4.6"
     use-case: "processing"
     processors: ["cpu"]
     python: ["py37"]
-    sm_version: "1.1"
+    sm_version: "1.4"
