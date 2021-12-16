@@ -78,6 +78,7 @@ ENV HDFS_DATANODE_USER="root"
 ENV HDFS_SECONDARYNAMENODE_USER="root"
 
 RUN zip -q -d /lib/hive/lib/log4j-core-2.6.2.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
+RUN zip -q -d /usr/lib/hive/jdbc/hive-jdbc-2.3.7-amzn-1-standalone.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
 
 # Set up bootstrapping program and Spark configuration
 COPY *.whl /opt/program/
