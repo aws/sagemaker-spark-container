@@ -367,6 +367,7 @@ class Bootstrapper:
     def get_yarn_spark_resource_config(
         self, instance_count: int, instance_mem_mb: int, instance_cores: int
     ) -> Tuple[Configuration, Configuration]:
+        aws_region = os.getenv("AWS_REGION")
         executor_cores = instance_cores
         executor_count_per_instance = int(instance_cores / executor_cores)
         executor_count_total = instance_count * executor_count_per_instance
@@ -426,6 +427,8 @@ class Bootstrapper:
                 "spark.executor.defaultJavaOptions": f"{executor_java_opts}",
                 "spark.executor.instances": f"{executor_count_total}",
                 "spark.default.parallelism": f"{default_parallelism}",
+                "spark.yarn.appMasterEnv.AWS_REGION": f"{aws_region}",
+                "spark.executorEnv.AWS_REGION": f"{aws_region}"
             },
         )
 
