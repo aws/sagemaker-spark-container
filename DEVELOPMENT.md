@@ -39,7 +39,10 @@ You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 -- [AmazonS3FullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonS3FullAccess) <br>
 -- [AmazonEC2ContainerRegistryFullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess) <br>
 
-5. [Create](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html) an ECR repository with the name "sagemaker-spark" in the us-west-2 region
+5. [Create](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html) an ECR repository with the name `sagemaker-spark` in the `us-west-2` region
+```
+aws ecr create-repository --repository-name sagemaker-spark --region us-west-2
+```
 
 6. Setup required environment variables for the container build:
 ```
@@ -107,17 +110,17 @@ To run tests against Amazon SageMaker using your newly built container image, fi
 
 1. Bootstrap docker credentials for your repository
 ```
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com
+aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com
 ```
 
 2. Tag the latest Spark image
 ```
-docker tag $SPARK_REPOSITORY_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
+docker tag ${SPARK_REPOSITORY}:${VERSION} ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/${SPARK_REPOSITORY}:${VERSION}
 ```
 
 3. Push the latest Spark image to your ECR repository
 ```
-docker push $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-west-2.amazonaws.com/${SPARK_REPOSITORY}:${VERSION}
 ```
 
 5. Run the SageMaker tests
