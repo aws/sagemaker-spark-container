@@ -428,7 +428,7 @@ class Bootstrapper:
                 "spark.executor.instances": f"{executor_count_total}",
                 "spark.default.parallelism": f"{default_parallelism}",
                 "spark.yarn.appMasterEnv.AWS_REGION": f"{aws_region}",
-                "spark.executorEnv.AWS_REGION": f"{aws_region}"
+                "spark.executorEnv.AWS_REGION": f"{aws_region}",
             },
         )
 

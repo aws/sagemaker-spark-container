@@ -27,7 +27,7 @@
      </property>
      <property>
          <name>yarn.nodemanager.env-whitelist</name>
-         <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,YARN_HOME,AWS_CONTAINER_CREDENTIALS_RELATIVE_URI</value>
+         <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,YARN_HOME,AWS_CONTAINER_CREDENTIALS_RELATIVE_URI,AWS_REGION</value>
          <description>Environment variable whitelist</description>
      </property>
 
