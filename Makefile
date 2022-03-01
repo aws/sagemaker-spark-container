@@ -34,12 +34,14 @@ init:
 	pip install pipenv --upgrade
 	pipenv run pip install --upgrade pip
 	pipenv install
-	cp {Pipfile,Pipfile.lock,setup.py} ${BUILD_CONTEXT}
+	cp Pipfile ${BUILD_CONTEXT}
+	cp Pipfile.lock ${BUILD_CONTEXT}
+	cp setup.py ${BUILD_CONTEXT}
 
 # Builds and moves container python library into the Docker build context
 build-container-library: init
 	python setup.py bdist_wheel;
-	cp dist/*.whl ${BUILD_CONTEXT}
+	cp -- dist/*.whl ${BUILD_CONTEXT}
 
 install-container-library: init
 	pipenv run safety check  # https://github.com/pyupio/safety
