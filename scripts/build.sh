@@ -22,7 +22,7 @@ source scripts/shared.sh
 
 parse_std_args "$@"
 
-aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 137112412989.dkr.ecr.us-west-2.amazonaws.com
+#aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 137112412989.dkr.ecr.us-west-2.amazonaws.com
 
 echo "building image ${version} ... "
 docker build \
@@ -32,4 +32,4 @@ docker build \
     -t sagemaker-spark:latest \
     ${build_context}
 
-docker logout https://137112412989.dkr.ecr.us-west-2.amazonaws.com
+#docker logout https://137112412989.dkr.ecr.us-west-2.amazonaws.com
