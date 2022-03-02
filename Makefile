@@ -7,7 +7,7 @@ SHELL          := /bin/sh
 
 # Set variables if testing locally
 ifeq ($(IS_RELEASE_BUILD),)
-    SPARK_VERSION := 3.0
+    SPARK_VERSION := 3.1
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py37
     SM_VERSION := 1.0
