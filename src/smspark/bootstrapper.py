@@ -19,7 +19,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
-import constants
+from smspark import constants
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import psutil
