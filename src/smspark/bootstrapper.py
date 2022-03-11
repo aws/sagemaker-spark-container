@@ -374,7 +374,7 @@ class Bootstrapper:
         executor_count_total = instance_count * executor_count_per_instance
         default_parallelism = instance_count * instance_cores * 2
 
-        driver_mem_mb = instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO
+        driver_mem_mb = int(instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO)
         driver_mem_overhead_mb = int(driver_mem_mb * constants.DRIVER_MEM_OVERHEAD_PCT)
         executor_mem_mb = int(((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO)
                                / executor_count_per_instance) * (1 - constants.EXECUTOR_MEM_OVERHEAD_PCT))
