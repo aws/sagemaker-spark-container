@@ -62,7 +62,7 @@ class ProcessingJobManager(object):
                 self._processing_job_config = json.load(f)
         except Exception:
             self.logger.warning(
-                "Could not read resource config file at {}. Using default resourceconfig.".format(resource_config_path)
+                "Could not read processing job config file at {}. Using default processingjobconfig.".format(processing_job_config_path)
             )
             self._processing_job_config = default_processing_job_config
 
