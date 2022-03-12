@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import json
+import os
 from unittest.mock import MagicMock, Mock, PropertyMock, call, mock_open, patch
 
 import pytest
@@ -371,6 +372,7 @@ def test_set_yarn_spark_resource_config_fallback(
     patched_spark_config.write_config.assert_called_once()
 
 
+@patch.dict(os.environ, {"AWS_REGION": "us-west-2"})
 def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> None:
     # Using a cluster with one single m5.xlarge instance, calculate Yarn and Spark configs, and double check the math
     instance_mem_mb = 16384
@@ -431,6 +433,8 @@ def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> N
         "spark.executor.defaultJavaOptions": f"{exp_executor_java_opts}",
         "spark.executor.instances": f"{exp_executor_count_total}",
         "spark.default.parallelism": f"{exp_default_parallelism}",
+        "spark.executorEnv.AWS_REGION": "us-west-2",
+        "spark.yarn.appMasterEnv.AWS_REGION": "us-west-2",
     }
 
     assert spark_config.Classification == "spark-defaults"
