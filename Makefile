@@ -44,7 +44,7 @@ build-container-library: init
 	cp -- dist/*.whl ${BUILD_CONTEXT}
 
 install-container-library: init
-	pipenv run safety check  # https://github.com/pyupio/safety
+	pipenv run safety check -i 44717 -i 44716 -i 44715 -i 43975  # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
