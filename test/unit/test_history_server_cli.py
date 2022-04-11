@@ -61,7 +61,10 @@ def test_run_history_server(mock_start_history_server, mock_start_nginx):
 
 @patch("smspark.cli.ProcessingJobManager")
 @pytest.mark.parametrize("test_case", test_cases, ids=[submit_test.name for submit_test in test_cases])
-def test_submit(patched_processing_job_manager: ProcessingJobManager, test_case: SubmitTest,) -> None:
+def test_submit(
+    patched_processing_job_manager: ProcessingJobManager,
+    test_case: SubmitTest,
+) -> None:
     runner = CliRunner()
 
     result = runner.invoke(submit, test_case.args, standalone_mode=False)

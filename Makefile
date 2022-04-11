@@ -7,9 +7,9 @@ SHELL          := /bin/sh
 
 # Set variables if testing locally
 ifeq ($(IS_RELEASE_BUILD),)
-    SPARK_VERSION := 3.0
+    SPARK_VERSION := 3.1
     PROCESSOR := cpu
-    FRAMEWORK_VERSION := py37
+    FRAMEWORK_VERSION := py39
     SM_VERSION := 1.0
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
@@ -32,7 +32,9 @@ all: build test
 
 init:
 	pip install pipenv --upgrade
-	pipenv run pip install --upgrade pip
+	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
+	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
+	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
 	pipenv install
 	cp Pipfile ${BUILD_CONTEXT}
 	cp Pipfile.lock ${BUILD_CONTEXT}
@@ -44,7 +46,8 @@ build-container-library: init
 	cp -- dist/*.whl ${BUILD_CONTEXT}
 
 install-container-library: init
-	pipenv run safety check  # https://github.com/pyupio/safety
+	# temporarily bypass urllib3 because circular dependency will be introduced if bumped up urllib3 version
+	pipenv run safety check -i 43975 # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
@@ -120,6 +123,9 @@ test-all: test-local test-sagemaker
 
 # Builds and installs sagemaker-python-sdk-spark library, since it's used in sagemaker tests.
 install-sdk:
+	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
+	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
+	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
 	pip install --upgrade sagemaker>=2.9.0
 
 # Makes sure docker containers are cleaned
@@ -131,7 +137,9 @@ clean:
 	rm ${BUILD_CONTEXT}/*.whl || true
 	rm -rf dist || true
 	rm -rf build || true
-	rm =2.9.0
+	rm Pipfile
+	rm Pipfile.lock
+	rm setup.py
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
