@@ -28,7 +28,9 @@ def test_spark_app_error(tag, role, image_uri, sagemaker_session):
 
     try:
         spark.run(
-            submit_app="test/resources/code/python/py_spark_app_error/py_spark_app_error.py", wait=True, logs=False,
+            submit_app="test/resources/code/python/py_spark_app_error/py_spark_app_error.py",
+            wait=True,
+            logs=False,
         )
     except Exception:
         pass  # this job is expected to fail

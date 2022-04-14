@@ -99,7 +99,8 @@ class Bootstrapper:
             if os.path.isfile(os.path.join(jar_path, jar)):
                 self.logger.info(f"Copying optional jar {jar} from {jar_path} to {self.JAR_DEST}")
                 shutil.copyfile(
-                    os.path.join(jar_path, jar), os.path.join(self.JAR_DEST, jar),
+                    os.path.join(jar_path, jar),
+                    os.path.join(self.JAR_DEST, jar),
                 )
             else:
                 self.logger.info(f"Optional jar {jar} in {jar_path} does not exist")
@@ -112,16 +113,20 @@ class Bootstrapper:
             shutil.copyfile(src, dst)
 
         copy_config(
-            "/opt/hadoop-config/hdfs-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml",
+            "/opt/hadoop-config/hdfs-site.xml",
+            Bootstrapper.HADOOP_PATH + "/etc/hadoop/hdfs-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/core-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml",
+            "/opt/hadoop-config/core-site.xml",
+            Bootstrapper.HADOOP_PATH + "/etc/hadoop/core-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/yarn-site.xml", Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml",
+            "/opt/hadoop-config/yarn-site.xml",
+            Bootstrapper.HADOOP_PATH + "/etc/hadoop/yarn-site.xml",
         )
         copy_config(
-            "/opt/hadoop-config/spark-defaults.conf", Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf",
+            "/opt/hadoop-config/spark-defaults.conf",
+            Bootstrapper.SPARK_PATH + "/conf/spark-defaults.conf",
         )
         copy_config("/opt/hadoop-config/spark-env.sh", Bootstrapper.SPARK_PATH + "/conf/spark-env.sh")
 
@@ -255,7 +260,8 @@ class Bootstrapper:
             )
         else:
             return Configuration(
-                Classification=configuration_dict["Classification"], Properties=configuration_dict["Properties"],
+                Classification=configuration_dict["Classification"],
+                Properties=configuration_dict["Properties"],
             )
 
     def write_user_configuration(self) -> None:
@@ -272,7 +278,8 @@ class Bootstrapper:
                 user_configuration_list_or_dict = json.load(config)
                 logging.info(
                     "User configuration list or dict: {} , type {}".format(
-                        user_configuration_list_or_dict, type(user_configuration_list_or_dict),
+                        user_configuration_list_or_dict,
+                        type(user_configuration_list_or_dict),
                     )
                 )
                 user_confs = self.deserialize_user_configuration(user_configuration_list_or_dict)

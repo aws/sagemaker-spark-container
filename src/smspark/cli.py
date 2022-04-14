@@ -44,10 +44,12 @@ log = logging.getLogger(__name__)
     + " If a directory is provided, each file in the directory and its subdirectories is included.",
 )
 @click.option(
-    "--spark-event-logs-s3-uri", help="Optional, spark events file will be published to this s3 destination",
+    "--spark-event-logs-s3-uri",
+    help="Optional, spark events file will be published to this s3 destination",
 )
 @click.option(
-    "--local-spark-event-logs-dir", help="Optional, spark events will be stored in this local path",
+    "--local-spark-event-logs-dir",
+    help="Optional, spark events will be stored in this local path",
 )
 @click.option("-v", "--verbose", is_flag=True, help="Print additional debug output.")
 @click.argument("app")

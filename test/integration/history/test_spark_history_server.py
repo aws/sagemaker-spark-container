@@ -46,7 +46,9 @@ def test_history_server(tag, role, image_uri, sagemaker_session, region):
     with open("test/resources/data/files/sample_spark_event_logs") as data:
         body = data.read()
         S3Uploader.upload_string_as_file_body(
-            body=body, desired_s3_uri=f"{spark_event_logs_s3_uri}/{file_name}", sagemaker_session=sagemaker_session,
+            body=body,
+            desired_s3_uri=f"{spark_event_logs_s3_uri}/{file_name}",
+            sagemaker_session=sagemaker_session,
         )
 
     _wait_for_file_to_be_uploaded(region, bucket, spark_event_logs_key_prefix, file_name, file_size)
@@ -84,7 +86,11 @@ def test_history_server_with_expected_failure(tag, role, image_uri, sagemaker_se
 def _request_with_retry(url, max_retries=10):
     http = urllib3.PoolManager(
         retries=Retry(
-            max_retries, redirect=max_retries, status=max_retries, status_forcelist=[502, 404], backoff_factor=0.2,
+            max_retries,
+            redirect=max_retries,
+            status=max_retries,
+            status_forcelist=[502, 404],
+            backoff_factor=0.2,
         )
     )
     try:

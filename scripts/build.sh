@@ -25,8 +25,9 @@ parse_std_args "$@"
 aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 137112412989.dkr.ecr.us-west-2.amazonaws.com
 
 echo "building image ${version} ... "
+echo "building image under ${build_context}/docker/${framework_version} ... "
 docker build \
-    -f ${build_context}/docker/Dockerfile.${processor} \
+    -f ${build_context}/docker/${framework_version}/Dockerfile.${processor} \
     -t ${repository}:${version} \
     --build-arg REGION=${REGION} \
     -t sagemaker-spark:latest \
