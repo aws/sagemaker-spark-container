@@ -3,20 +3,25 @@ ARG REGION
 ENV AWS_REGION ${REGION}
 RUN yum clean all
 RUN yum update -y
-RUN yum install -y awscli bigtop-utils curl gcc gzip unzip python3-setuptools python3-pip python-devel python3-devel python-psutil gunzip tar wget liblapack* libblas* libopencv* libopenblas*
+RUN yum install -y awscli bigtop-utils curl gcc gzip zip unzip gunzip tar wget liblapack* libblas* libopencv* libopenblas* python3-setuptools python3-pip python-devel python3-devel python-psutil
+
 
 # Install python 3.9
-RUN yum -y install gcc openssl-devel bzip2-devel libffi-devel
-RUN yum -y install tar xz wget gzip make
-RUN wget https://www.python.org/ftp/python/3.9.9/Python-3.9.9.tgz
-RUN tar xzf Python-3.9.9.tgz
+ARG PYTHON_VERSION="3.9.12"
+RUN yum -y install openssl-devel bzip2-devel libffi-devel xz make
+RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
+RUN tar xzf Python-${PYTHON_VERSION}.tgz
 RUN cd Python-*/ && ./configure --enable-optimizations && make altinstall
 RUN echo 'alias python3=python3.9' >> ~/.bashrc
 
+# clean up python
+RUN rm Python-${PYTHON_VERSION}.tgz
+RUN rm -rf Python-${PYTHON_VERSION}
+RUN yum remove -y make xz bzip2-devel
+
 # install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
 RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y epel-release-latest-7.noarch.rpm
-RUN yum install -y nginx
+RUN yum install -y epel-release-latest-7.noarch.rpm nginx
 
 RUN rm -rf /var/cache/yum
 
@@ -68,7 +73,6 @@ RUN yum install -y aws-hm-client \
     hive-hcatalog-server \
     hive-jdbc \
     hive-server2 \
-    python37-numpy \
     s3-dist-cp \
     spark-core \
     spark-datanucleus \
@@ -91,21 +95,17 @@ ENV HDFS_SECONDARYNAMENODE_USER="root"
 RUN zip -q -d /lib/hive/lib/log4j-core-2.10.0.jar org/apache/logging/log4j/core/lookup/JndiLookup.class
 
 # Set up bootstrapping program and Spark configuration
-RUN pwd
-RUN ls
 COPY *.whl /opt/program/
-RUN /usr/local/bin/python3.9 -m pip install pipenv --upgrade
 COPY hadoop-config /opt/hadoop-config
 COPY nginx-config /opt/nginx-config
 COPY aws-config /opt/aws-config
-COPY Pipfile /opt/program/
-COPY Pipfile.lock /opt/program/
-COPY setup.py /opt/program/
+COPY Pipfile Pipfile.lock setup.py *.whl /opt/program/
 ENV PIPENV_PIPFILE=/opt/program/Pipfile
 # Use --system flag, so it will install all packages into the system python,
 # and not into the virtualenv. Since docker containers do not need to have virtualenvs
-RUN pipenv install --system
-RUN /usr/local/bin/python3.9 -m pip install /opt/program/*.whl
+RUN /usr/local/bin/python3.9 -m pip install pipenv==2022.4.8 \
+    && pipenv install --system \
+    && /usr/local/bin/python3.9 -m pip install /opt/program/*.whl
 
 # Setup container bootstrapper
 COPY container-bootstrap-config /opt/container-bootstrap-config

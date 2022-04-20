@@ -30,19 +30,20 @@ all: build test
 
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
 
-init:
-	pip install pipenv --upgrade
+init: build-container-library
+	python3 -m pip install pipenv==2022.4.8
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
-	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
 	pipenv install
+# 	pipenv run pip install dist/*.whl
 	cp Pipfile ${BUILD_CONTEXT}
 	cp Pipfile.lock ${BUILD_CONTEXT}
 	cp setup.py ${BUILD_CONTEXT}
 
 # Builds and moves container python library into the Docker build context
-build-container-library: init
-	python setup.py bdist_wheel;
+build-container-library: 
+	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
+	python3 setup.py bdist_wheel;
 	cp -- dist/*.whl ${BUILD_CONTEXT}
 
 install-container-library: init
