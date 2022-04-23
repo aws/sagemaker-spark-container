@@ -45,7 +45,8 @@ You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 ```
 export AWS_ACCOUNT_ID=<YOUR_ACCOUNT_ID>
 export REGION=us-west-2
-export SPARK_REPOSITORY=sagemaker-spark
+export SPARK_REPOSITORY=sagemaker-spark-processing
+export SPARK_REPOSITORY_NAME=sagemaker-spark
 export VERSION=latest
 export SAGEMAKER_ROLE=<YOUR_SAGEMAKER_ROLE>
 ```
@@ -112,7 +113,7 @@ aws ecr get-login-password --region us-west-2 | docker login --username AWS --pa
 
 2. Tag the latest Spark image
 ```
-docker tag $SPARK_REPOSITORY_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
+docker tag ${SPARK_REPOSITORY}:latest $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$VERSION
 ```
 
 3. Push the latest Spark image to your ECR repository
