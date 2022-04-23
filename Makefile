@@ -31,7 +31,8 @@ all: build test
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
 
 init:
-	pip install pipenv --upgrade
+	# pipenv > 2022.4.8 fails to build smspark
+	python3 -m pip install pipenv==2022.4.8
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
