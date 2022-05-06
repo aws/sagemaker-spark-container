@@ -18,7 +18,7 @@ RUN yum -y groupinstall 'Development Tools' \
     && cd Python-*/ \
     && ./configure --enable-optimizations \
     && make altinstall \
-    && echo 'alias python3=python3.9\nalias pip3=pip3.9' >> ~/.bashrc \
+    && echo -e 'alias python3=python3.9\nalias pip3=pip3.9' >> ~/.bashrc \
     && ln -s $(which ${PYTHON_WITH_BASE_VERSION}) /usr/local/bin/python3 \
     && ln -s $(which ${PIP_WITH_BASE_VERSION}) /usr/local/bin/pip3 \
     && cd .. \
