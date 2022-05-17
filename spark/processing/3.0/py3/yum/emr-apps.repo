@@ -1,7 +1,17 @@
 [emr-apps]
 name = EMR Application Repository
-gpgkey = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-6.1.0/72a9ec2e-9bf6-4d7d-9244-86a0ab1e50d6/repoPublicKey.txt
+gpgkey = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-6.2.1/e183bea5-a1eb-42d8-97a6-7c7a559af64e/repoPublicKey.txt
 enabled = 1
-baseurl = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-6.1.0/72a9ec2e-9bf6-4d7d-9244-86a0ab1e50d6
+baseurl = https://s3-REGION.amazonaws.com/repo.REGION.emr.amazonaws.com/apps-repository/emr-6.2.1/e183bea5-a1eb-42d8-97a6-7c7a559af64e
 priority = 5
 gpgcheck = 0
+
+[emr-puppet]
+mirrorlist: http://amazonlinux.$awsregion.$awsdomain/$releasever/extras/emr-puppet/latest/$basearch/mirror.list
+enabled: 1
+gpgcheck: 1
+name: Amazon Extras repo for emr-puppet
+gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-amazon-linux-2
+priority: 10
+skip_if_unavailable: 1
+report_instanceid: yes
