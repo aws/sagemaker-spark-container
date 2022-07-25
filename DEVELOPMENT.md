@@ -125,4 +125,10 @@ docker push $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$V
 ```
 make test-sagemaker
 ```
+### Push the code
+
+1. You need to create PR request in order to merge the code. Github lists here: https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
+2. You need to get access to AWS organization listing here: https://w.amazon.com/?Open_Source/GitHub
+3. Get access to permission specific to a team, example is here: https://github.com/orgs/aws/teams/sagemakerwrite/members
+4. Ask a person to review the code and merge it in.
 
