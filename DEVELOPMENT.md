@@ -134,3 +134,37 @@ make test-sagemaker
 5. The code needs to be signed before pushing. More detail about signing is here:https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits.
 Remember in your local, you need to set up: git config --global user.signingkey [key id] and also upload public key into your github account.
 6. The email you specify when you created public key must match github email in github settings.
+
+### FAQ
+
+1. `ERROR: smspark-0.1-py2-none-any.whl is not a supported wheel on this platform.` 
+* This is because you are switching python version, make sure you are using python 3.* so that sage maker will generate right whl file. The right name is smspark-0.1-py3-none-any.whl. If you find the wrong file, then you need to delete it and then compile will succeed.
+
+2. `Error: TypeError: Descriptors cannot not be created directly. If this call came from a _pb2.py file, your generated code is out of date and must be regenerated with protoc >= 3.19.0.`
+* Sometimes the protobuf package might be installed without your involvement. For this, you have two solutions to apply. Try one of the below solutions and it should work. 
+pip install protobuf==3.20.*
+Or export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python, see more detail in this [link](https://stackoverflow.com/questions/72441758/typeerror-descriptors-cannot-not-be-created-directly)
+
+3. Running test code build is time consuming so before start a new job you can do the following things locally 
+
+* make test-unit
+* make install-container-library
+
+4. `Fetching EC2 instance type info to ./spark/processing/3.1/py3/aws-config/ec2-instance-type-info.json ...
+./scripts/fetch-ec2-instance-type-info.sh: line 32: jq: command not found`
+
+* you need to install corresponding packages.
+
+5. 
+```
+| REPORT                                                                       |
+| checked 94 packages, using free DB (updated once a month)                    |
++============================+===========+==========================+==========+
+| package                    | installed | affected                 | ID       |
++============================+===========+==========================+==========+
+| waitress                   | 2.1.1     | >=2.1.0,<2.1.2           | 49257    |
++==============================================================================+
+make: *** [install-container-library] Error 255
+```
+
+* you need to update smsparkbuild/py39/Pipfile corresponding package version.
