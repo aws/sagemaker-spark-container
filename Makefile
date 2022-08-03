@@ -55,7 +55,7 @@ build-static-config:
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
 # Builds docker image.
-build: build-container-library build-static-config
+build: build-container-library
 	./scripts/build.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
 	--processor ${PROCESSOR} --framework-version ${FRAMEWORK_VERSION} --sm-version ${SM_VERSION}
 
