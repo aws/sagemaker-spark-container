@@ -19,7 +19,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import ClassVar, Mapping, Sequence
 
-_ClassificationData = namedtuple("ClassificationData", ["classification", "path", "serializer"])
+_ClassificationData = namedtuple("_ClassificationData", ["classification", "path", "serializer"])
 
 EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
 
@@ -81,7 +81,9 @@ class Configuration:
         _ClassificationData("hive-env", "/usr/lib/hive/conf/hive-env.sh", env_serializer),
         _ClassificationData("hive-log4j", "/usr/lib/hive/conf/hive-log4j2.properties", properties_serializer),
         _ClassificationData(
-            "hive-exec-log4j", "/usr/lib/hive/conf/hive-exec-log4j2.properties", properties_serializer,
+            "hive-exec-log4j",
+            "/usr/lib/hive/conf/hive-exec-log4j2.properties",
+            properties_serializer,
         ),
         _ClassificationData("hive-site", "/usr/lib/hive/conf/hive-site.xml", xml_serializer),
         _ClassificationData("spark-defaults", "/usr/lib/spark/conf/spark-defaults.conf", conf_serializer),

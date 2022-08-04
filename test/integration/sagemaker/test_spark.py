@@ -39,12 +39,18 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
+                    "Properties": {
+                        "HADOOP_DATANODE_HEAPSIZE": "2048",
+                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
+                    },
                     "Configurations": [],
                 }
             ],
         },
-        {"Classification": "core-site", "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"},},
+        {
+            "Classification": "core-site",
+            "Properties": {"spark.executor.memory": "2g", "spark.executor.cores": "1"},
+        },
         {"Classification": "hadoop-log4j", "Properties": {"key": "value"}},
         {
             "Classification": "hive-env",
@@ -52,7 +58,10 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
+                    "Properties": {
+                        "HADOOP_DATANODE_HEAPSIZE": "2048",
+                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
+                    },
                     "Configurations": [],
                 }
             ],
@@ -67,7 +76,10 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
+                    "Properties": {
+                        "HADOOP_DATANODE_HEAPSIZE": "2048",
+                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
+                    },
                     "Configurations": [],
                 }
             ],
@@ -82,7 +94,10 @@ def configuration() -> list:
             "Configurations": [
                 {
                     "Classification": "export",
-                    "Properties": {"HADOOP_DATANODE_HEAPSIZE": "2048", "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",},
+                    "Properties": {
+                        "HADOOP_DATANODE_HEAPSIZE": "2048",
+                        "HADOOP_NAMENODE_OPTS": "-XX:GCTimeRatio=19",
+                    },
                     "Configurations": [],
                 }
             ],
@@ -92,13 +107,15 @@ def configuration() -> list:
 
 
 @pytest.mark.parametrize(
-    "config", [{"instance_count": 1}, {"instance_count": 2}],
+    "config",
+    [{"instance_count": 1, "py_version": "py37"}, {"instance_count": 2, "py_version": "py39"}],
 )
 def test_sagemaker_pyspark_multinode(
     role, image_uri, configuration, sagemaker_session, region, sagemaker_client, config
 ):
     instance_count = config["instance_count"]
-    print(f"Creating job with {instance_count} instance count")
+    python_version = config["py_version"]
+    print(f"Creating job with {instance_count} instance count python version {python_version}")
     """Test that basic multinode case works on 32KB of data"""
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
@@ -122,8 +139,10 @@ def test_sagemaker_pyspark_multinode(
             body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
         )
 
+    script_name = "hello_py_spark_app_py39.py" if python_version == "py39" else "hello_py_spark_app.py"
+    print(f"Running script {script_name}")
     spark.run(
-        submit_app="test/resources/code/python/hello_py_spark/hello_py_spark_app.py",
+        submit_app=f"test/resources/code/python/hello_py_spark/{script_name}",
         submit_py_files=["test/resources/code/python/hello_py_spark/hello_py_spark_udfs.py"],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
@@ -305,10 +324,10 @@ def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker
 
     scala_project_dir = "test/resources/code/scala/hello-scala-spark"
     spark.run(
-        submit_app="{}/target/scala-2.11/hello-scala-spark_2.11-1.0.jar".format(scala_project_dir),
+        submit_app="{}/target/scala-2.12/hello-scala-spark_2.12-1.0.jar".format(scala_project_dir),
         submit_class="com.amazonaws.sagemaker.spark.test.HelloScalaSparkApp",
         submit_jars=[
-            "{}/lib_managed/jars/org.json4s/json4s-native_2.11/json4s-native_2.11-3.6.9.jar".format(scala_project_dir)
+            "{}/lib_managed/jars/org.json4s/json4s-native_2.12/json4s-native_2.12-3.6.9.jar".format(scala_project_dir)
         ],
         arguments=["--input", input_data_uri, "--output", output_data_uri],
         configuration=configuration,
