@@ -138,9 +138,9 @@ clean:
 	rm ${BUILD_CONTEXT}/*.whl || true
 	rm -rf dist || true
 	rm -rf build || true
-	rm Pipfile
-	rm Pipfile.lock
-	rm setup.py
+	rm -f Pipfile
+	rm -f Pipfile.lock
+	rm -f setup.py
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:

@@ -401,7 +401,7 @@ def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> N
     instance_cores = 4
     yarn_config, spark_config = default_bootstrapper.get_yarn_spark_resource_config(1, instance_mem_mb, instance_cores)
 
-    exp_yarn_max_mem_mb = 15892  # = int(instance_mem_mb * .97) = int(16384 * .97) = int(15892.48)
+    exp_yarn_max_mem_mb = 16384
 
     exp_yarn_config_props = {
         "yarn.scheduler.minimum-allocation-mb": "1",
@@ -419,14 +419,14 @@ def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> N
     exp_executor_count_total = 1  # = instance_count * executor_count_per_instance = 1 * 1
     exp_default_parallelism = 8  # = instance_count * instance_cores * 2 = 1 * 4 * 2
 
-    exp_driver_mem_mb = 2048  # = 2 * 1024
-    exp_driver_mem_ovr_mb = 204  # = int(driver_mem_mb * driver_mem_ovr_pct) = int(2048 * 0.1) = int(204.8)
+    exp_driver_mem_mb = 14745
+    exp_driver_mem_ovr_mb = 1474
     # = int((instance_mem_mb - driver_mem_mb - driver_mem_ovr_mb) /
     #       (executor_count_per_instance + executor_count_per_instance * executor_mem_ovr_pct))
     # = int((15892 - 2048 - 204) / (1 + 1 * 0.1))
     # = int(13640 / 1.1)
-    exp_executor_mem_mb = 12399
-    exp_executor_mem_ovr_mb = 1239  # = int(executor_mem_mb * executor_mem_ovr_pct) = int(12399 * 0.1) = int(1239.9)
+    exp_executor_mem_mb = 14008
+    exp_executor_mem_ovr_mb = 1400
 
     exp_driver_gc_config = (
         "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 "
@@ -456,8 +456,8 @@ def test_get_yarn_spark_resource_config(default_bootstrapper: Bootstrapper) -> N
         "spark.executor.defaultJavaOptions": f"{exp_executor_java_opts}",
         "spark.executor.instances": f"{exp_executor_count_total}",
         "spark.default.parallelism": f"{exp_default_parallelism}",
-        "spark.executorEnv.AWS_REGION": f"{region}",
-        "spark.yarn.appMasterEnv.AWS_REGION": f"{region}",
+        "spark.yarn.appMasterEnv.AWS_REGION": spark_config.Properties["spark.yarn.appMasterEnv.AWS_REGION"],
+        "spark.executorEnv.AWS_REGION": spark_config.Properties["spark.executorEnv.AWS_REGION"],
     }
 
     assert spark_config.Classification == "spark-defaults"

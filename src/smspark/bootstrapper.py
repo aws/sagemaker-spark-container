@@ -19,6 +19,7 @@ import pathlib
 import shutil
 import socket
 import subprocess
+from smspark import constants
 from typing import Any, Dict, List, Sequence, Tuple, Union
 
 import psutil
@@ -238,7 +239,7 @@ class Bootstrapper:
         subprocess.Popen(cmd_start_primary, shell=True)
 
     def deserialize_user_configuration(
-        self, configuration_dict_or_list: Union[Dict[str, Any], List[Dict[str, Any]]]
+            self, configuration_dict_or_list: Union[Dict[str, Any], List[Dict[str, Any]]]
     ) -> Union[Sequence[Configuration], Configuration]:
         if isinstance(configuration_dict_or_list, dict):
             return self.deserialize_user_configuration_dict(configuration_dict_or_list)
@@ -246,7 +247,7 @@ class Bootstrapper:
             return self._deserialize_user_configuration_to_sequence(configuration_dict_or_list)
 
     def _deserialize_user_configuration_to_sequence(
-        self, configuration_list: List[Dict[str, Any]]
+            self, configuration_list: List[Dict[str, Any]]
     ) -> Sequence[Configuration]:
         return [self.deserialize_user_configuration_dict(conf) for conf in configuration_list]
 
@@ -372,7 +373,7 @@ class Bootstrapper:
         logging.info("Configuration at {} is: \n{}".format(spark_config.path, spark_config_string))
 
     def get_yarn_spark_resource_config(
-        self, instance_count: int, instance_mem_mb: int, instance_cores: int
+            self, instance_count: int, instance_mem_mb: int, instance_cores: int
     ) -> Tuple[Configuration, Configuration]:
         aws_region = os.getenv("AWS_REGION")
         executor_cores = instance_cores
@@ -380,18 +381,11 @@ class Bootstrapper:
         executor_count_total = instance_count * executor_count_per_instance
         default_parallelism = instance_count * instance_cores * 2
 
-        # Let's leave 3% of the instance memory free
-        instance_mem_mb = int(instance_mem_mb * 0.97)
-
-        driver_mem_mb = 2 * 1024
-        driver_mem_ovr_pct = 0.1
-        driver_mem_ovr_mb = int(driver_mem_mb * driver_mem_ovr_pct)
-        executor_mem_ovr_pct = 0.1
-        executor_mem_mb = int(
-            (instance_mem_mb - driver_mem_mb - driver_mem_ovr_mb)
-            / (executor_count_per_instance + executor_count_per_instance * executor_mem_ovr_pct)
-        )
-        executor_mem_ovr_mb = int(executor_mem_mb * executor_mem_ovr_pct)
+        driver_mem_mb = int(instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO)
+        driver_mem_overhead_mb = int(driver_mem_mb * constants.DRIVER_MEM_OVERHEAD_RATIO)
+        executor_mem_mb = int(((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO)
+                               / executor_count_per_instance) * (1 - constants.EXECUTOR_MEM_OVERHEAD_RATIO))
+        executor_mem_overhead_mb = int(executor_mem_mb * constants.EXECUTOR_MEM_OVERHEAD_RATIO)
 
         driver_gc_config = (
             "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 "
@@ -426,10 +420,10 @@ class Bootstrapper:
             "spark-defaults",
             {
                 "spark.driver.memory": f"{driver_mem_mb}m",
-                "spark.driver.memoryOverhead": f"{driver_mem_ovr_mb}m",
+                "spark.driver.memoryOverhead": f"{driver_mem_overhead_mb}m",
                 "spark.driver.defaultJavaOptions": f"{driver_java_opts}",
                 "spark.executor.memory": f"{executor_mem_mb}m",
-                "spark.executor.memoryOverhead": f"{executor_mem_ovr_mb}m",
+                "spark.executor.memoryOverhead": f"{executor_mem_overhead_mb}m",
                 "spark.executor.cores": f"{executor_cores}",
                 "spark.executor.defaultJavaOptions": f"{executor_java_opts}",
                 "spark.executor.instances": f"{executor_count_total}",
