@@ -194,3 +194,7 @@ you can fix it by running
 black src/smspark/bootstrapper.py
 ```
 see https://www.freecodecamp.org/news/auto-format-your-python-code-with-black/ for detail.
+
+7. Remember to define module at start of python file. Missing docstring error.
+
+see more detail here https://stackoverflow.com/questions/46192576/how-can-i-fix-flake8-d100-missing-docstring-error-in-atom-editor
