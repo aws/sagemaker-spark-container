@@ -26,8 +26,8 @@ RUN yum -y groupinstall 'Development Tools' \
     && rm -rf Python-${PYTHON_VERSION}
 
 # install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
-RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-RUN yum install -y epel-release-latest-7.noarch.rpm
+RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+RUN yum install -y epel-release-latest-9.noarch.rpm
 RUN yum install -y nginx
 
 RUN rm -rf /var/cache/yum
