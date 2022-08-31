@@ -126,14 +126,27 @@ docker push $AWS_ACCOUNT_ID.dkr.ecr.us-west-2.amazonaws.com/$SPARK_REPOSITORY:$V
 make test-sagemaker
 ```
 
+6. please run following command before you raise CR:
+
+```
+make test-unit
+make install-container-library
+```
+
+
 ## Push the code
 1. You need to create PR request in order to merge the code. How to create PR request lists here:https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request
 2. You need to get Github access of AWS organization. please following here:https://w.amazon.com/?Open_Source/GitHub
 3. Get access to permission specific to a team, example is here:https://github.com/orgs/aws/teams/sagemakerwrite/members
 4. Ask a person to review the code and merge it in.This repo needs at least one code reviewer. 
 5. The code needs to be signed before pushing. More detail about signing is here:https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits.
-Remember in your local, you need to set up: git config --global user.signingkey [key id] and also upload public key into your github account.
-6. The email you specify when you created public key must match github email in github settings.
+
+```
+$ git commit -S -m "your commit message"
+```
+
+6.Remember in your local, you need to set up: git config --global user.signingkey [key id] and also upload public key into your github account.
+The email you specify when you created public key must match github email in github settings.
 
 ### FAQ
 
@@ -168,3 +181,20 @@ make: *** [install-container-library] Error 255
 ```
 
 * you need to update smsparkbuild/py39/Pipfile corresponding package version.
+
+6. Code build may fail because of the format, 
+for example
+```
+2 files would be reformatted, 13 files would be left unchanged.
+```
+
+you can fix it by running
+
+```
+black src/smspark/bootstrapper.py
+```
+see https://www.freecodecamp.org/news/auto-format-your-python-code-with-black/ for detail.
+
+7. Remember to define module at start of python file. Missing docstring error.
+
+see more detail here https://stackoverflow.com/questions/46192576/how-can-i-fix-flake8-d100-missing-docstring-error-in-atom-editor

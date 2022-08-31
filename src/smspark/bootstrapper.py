@@ -239,7 +239,7 @@ class Bootstrapper:
         subprocess.Popen(cmd_start_primary, shell=True)
 
     def deserialize_user_configuration(
-            self, configuration_dict_or_list: Union[Dict[str, Any], List[Dict[str, Any]]]
+        self, configuration_dict_or_list: Union[Dict[str, Any], List[Dict[str, Any]]]
     ) -> Union[Sequence[Configuration], Configuration]:
         if isinstance(configuration_dict_or_list, dict):
             return self.deserialize_user_configuration_dict(configuration_dict_or_list)
@@ -247,7 +247,7 @@ class Bootstrapper:
             return self._deserialize_user_configuration_to_sequence(configuration_dict_or_list)
 
     def _deserialize_user_configuration_to_sequence(
-            self, configuration_list: List[Dict[str, Any]]
+        self, configuration_list: List[Dict[str, Any]]
     ) -> Sequence[Configuration]:
         return [self.deserialize_user_configuration_dict(conf) for conf in configuration_list]
 
@@ -373,7 +373,7 @@ class Bootstrapper:
         logging.info("Configuration at {} is: \n{}".format(spark_config.path, spark_config_string))
 
     def get_yarn_spark_resource_config(
-            self, instance_count: int, instance_mem_mb: int, instance_cores: int
+        self, instance_count: int, instance_mem_mb: int, instance_cores: int
     ) -> Tuple[Configuration, Configuration]:
         aws_region = os.getenv("AWS_REGION")
         executor_cores = instance_cores
@@ -383,8 +383,10 @@ class Bootstrapper:
 
         driver_mem_mb = int(instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO)
         driver_mem_overhead_mb = int(driver_mem_mb * constants.DRIVER_MEM_OVERHEAD_RATIO)
-        executor_mem_mb = int(((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO)
-                               / executor_count_per_instance) * (1 - constants.EXECUTOR_MEM_OVERHEAD_RATIO))
+        executor_mem_mb = int(
+            ((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO) / executor_count_per_instance)
+            * (1 - constants.EXECUTOR_MEM_OVERHEAD_RATIO)
+        )
         executor_mem_overhead_mb = int(executor_mem_mb * constants.EXECUTOR_MEM_OVERHEAD_RATIO)
 
         driver_gc_config = (
