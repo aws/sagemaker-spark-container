@@ -26,6 +26,7 @@ from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
 from smspark.status import Status, StatusApp, StatusClient, StatusMessage, StatusServer
 from smspark.waiter import Waiter
+from smspark.platform_utils import get_resouce_config_path
 from tenacity import retry, stop_after_delay
 
 
@@ -45,7 +46,7 @@ class ProcessingJobManager(object):
         self.logger = logging.getLogger("smspark-submit")
 
         try:
-            resource_config_path = "/opt/ml/config/resourceconfig.json"
+            resource_config_path = get_resouce_config_path()
             with open(resource_config_path, "r") as f:
                 self._resource_config = json.load(f)
         except Exception:
@@ -62,7 +63,9 @@ class ProcessingJobManager(object):
                 self._processing_job_config = json.load(f)
         except Exception:
             self.logger.warning(
-                "Could not read resource config file at {}. Using default resourceconfig.".format(resource_config_path)
+                "Could not read processing job config file at {}. Using default processing job config.".format(
+                    processing_job_config_path
+                )
             )
             self._processing_job_config = default_processing_job_config
 

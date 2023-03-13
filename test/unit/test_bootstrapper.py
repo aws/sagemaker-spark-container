@@ -339,7 +339,7 @@ def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrap
 
 @patch("smspark.config.Configuration")
 @patch("smspark.config.Configuration")
-def test_set_yarn_spark_resource_config(
+def test_set_yarn_spark_resource_config_on_processing_job(
     patched_yarn_config, patched_spark_config, default_bootstrapper: Bootstrapper
 ) -> None:
     processing_job_config = {
@@ -357,6 +357,34 @@ def test_set_yarn_spark_resource_config(
     default_bootstrapper.load_processing_job_config.assert_called_once()
     default_bootstrapper.load_instance_type_info.assert_called_once()
     default_bootstrapper.get_yarn_spark_resource_config.assert_called_once_with(123, 456, 789)
+    patched_yarn_config.write_config.assert_called_once()
+    patched_spark_config.write_config.assert_called_once()
+
+
+@patch("smspark.config.Configuration")
+@patch("smspark.config.Configuration")
+@patch("smspark.bootstrapper.is_training_job", return_value=True)
+def test_set_yarn_spark_resource_config_on_training_job(
+    patched_yarn_config, patched_spark_config, patched_is_training_job, default_bootstrapper: Bootstrapper
+) -> None:
+    processing_job_config = {}
+    default_bootstrapper.resource_config = {
+        "current_host": "algo-1",
+        "current_instance_type": "foo.xbar",
+        "hosts": ["algo-1", "algo-2"],
+    }
+    instance_type_info = {"foo.xbar": {"MemoryInfo": {"SizeInMiB": 456}, "VCpuInfo": {"DefaultVCpus": 789}}}
+    default_bootstrapper.load_processing_job_config = MagicMock(return_value=processing_job_config)
+    default_bootstrapper.load_instance_type_info = MagicMock(return_value=instance_type_info)
+    default_bootstrapper.get_yarn_spark_resource_config = MagicMock(
+        return_value=(patched_yarn_config, patched_spark_config)
+    )
+
+    default_bootstrapper.set_yarn_spark_resource_config()
+
+    default_bootstrapper.load_processing_job_config.assert_called_once()
+    default_bootstrapper.load_instance_type_info.assert_called_once()
+    default_bootstrapper.get_yarn_spark_resource_config.assert_called_once_with(2, 456, 789)
     patched_yarn_config.write_config.assert_called_once()
     patched_spark_config.write_config.assert_called_once()
 
