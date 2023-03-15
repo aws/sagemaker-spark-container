@@ -26,7 +26,7 @@ from smspark.spark_event_logs_publisher import SparkEventLogPublisher
 from smspark.spark_executor_logs_watcher import SparkExecutorLogsWatcher
 from smspark.status import Status, StatusApp, StatusClient, StatusMessage, StatusServer
 from smspark.waiter import Waiter
-from smspark.platform_utils import get_resouce_config_path
+from smspark.config_path_utils import get_config_path, ConfigPathTypes
 from tenacity import retry, stop_after_delay
 
 
@@ -46,7 +46,7 @@ class ProcessingJobManager(object):
         self.logger = logging.getLogger("smspark-submit")
 
         try:
-            resource_config_path = get_resouce_config_path()
+            resource_config_path = get_config_path(ConfigPathTypes.RESOURCE_CONFIG)
             with open(resource_config_path, "r") as f:
                 self._resource_config = json.load(f)
         except Exception:

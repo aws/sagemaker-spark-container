@@ -339,7 +339,7 @@ def test_load_instance_type_info(patched_exists, default_bootstrapper: Bootstrap
 
 @patch("smspark.config.Configuration")
 @patch("smspark.config.Configuration")
-def test_set_yarn_spark_resource_config_on_processing_job(
+def test_set_yarn_spark_resource_config_using_processing_job_config(
     patched_yarn_config, patched_spark_config, default_bootstrapper: Bootstrapper
 ) -> None:
     processing_job_config = {
@@ -363,9 +363,8 @@ def test_set_yarn_spark_resource_config_on_processing_job(
 
 @patch("smspark.config.Configuration")
 @patch("smspark.config.Configuration")
-@patch("smspark.bootstrapper.is_training_job", return_value=True)
-def test_set_yarn_spark_resource_config_on_training_job(
-    patched_yarn_config, patched_spark_config, patched_is_training_job, default_bootstrapper: Bootstrapper
+def test_set_yarn_spark_resource_config_using_resource_config(
+    patched_yarn_config, patched_spark_config, default_bootstrapper: Bootstrapper
 ) -> None:
     processing_job_config = {}
     default_bootstrapper.resource_config = {

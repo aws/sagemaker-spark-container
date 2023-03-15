@@ -28,7 +28,7 @@ from smspark.config import Configuration
 from smspark.defaults import default_resource_config
 from smspark.errors import AlgorithmError
 from smspark.waiter import Waiter
-from smspark.platform_utils import get_config_input_path, is_training_job
+from smspark.config_path_utils import get_config_path, ConfigPathTypes
 
 
 class Bootstrapper:
@@ -266,15 +266,15 @@ class Bootstrapper:
             )
 
     def write_user_configuration(self) -> None:
-        config_input_path = get_config_input_path()
-        path = pathlib.Path(config_input_path)
+        config_input_path = get_config_path(ConfigPathTypes.USER_CONFIGURATION_INPUT)
 
         def _write_conf(conf: Configuration) -> None:
             logging.info("Writing user config to {}".format(conf.path))
             conf_string = conf.write_config()
             logging.info("Configuration at {} is: \n{}".format(conf.path, conf_string))
 
-        if path.exists():
+        if config_input_path:
+            path = pathlib.Path(config_input_path)
             logging.info("reading user configuration from {}".format(str(path)))
             with open(str(path), "r") as config:
                 user_configuration_list_or_dict = json.load(config)
@@ -354,7 +354,7 @@ class Bootstrapper:
                 f"Detected instance type for processing: {instance_type} with "
                 f"total memory: {instance_mem_mb}M and total cores: {instance_cores}"
             )
-        elif is_training_job() and instance_type_info:
+        elif all(key in self.resource_config for key in ["current_instance_type", "hosts"]) and instance_type_info:
             # TODO: Support training heterogeneous cluster with instance groups
             instance_type = self.resource_config["current_instance_type"].replace("ml.", "")
             instance_count = len(self.resource_config["hosts"])
