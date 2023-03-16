@@ -297,7 +297,7 @@ class Bootstrapper:
                         )
                     )
         else:
-            logging.info("No file at {} exists, skipping user configuration".format(str(path)))
+            logging.info("No user input configuration file exists, skipping user configuration")
 
     def set_regional_configs(self) -> None:
         regional_configs_list = self.get_regional_configs()
