@@ -23,4 +23,9 @@
          <value>org.apache.hadoop.fs.s3a.S3A</value>
          <description>s3a filesystem implementation</description>
      </property>
+     <property>
+         <name>fs.s3a.connection.maximum</name>
+         <value>100</value>
+         <description>s3a filesystem maximum connection</description>
+     </property>
  </configuration>

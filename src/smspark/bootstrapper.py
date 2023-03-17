@@ -28,6 +28,7 @@ from smspark.config import Configuration
 from smspark.defaults import default_resource_config
 from smspark.errors import AlgorithmError
 from smspark.waiter import Waiter
+from smspark.config_path_utils import get_config_path, ConfigPathTypes
 
 
 class Bootstrapper:
@@ -40,7 +41,6 @@ class Bootstrapper:
     SPARK_PATH = "/usr/lib/spark"
 
     HIVE_PATH = "/usr/lib/hive"
-    PROCESSING_CONF_INPUT_PATH = "/opt/ml/processing/input/conf/configuration.json"
     PROCESSING_JOB_CONFIG_PATH = "/opt/ml/config/processingjobconfig.json"
     INSTANCE_TYPE_INFO_PATH = "/opt/aws-config/ec2-instance-type-info.json"
     EMR_CONFIGURE_APPS_URL = "https://docs.aws.amazon.com/emr/latest/ReleaseGuide/emr-configure-apps.html"
@@ -266,14 +266,15 @@ class Bootstrapper:
             )
 
     def write_user_configuration(self) -> None:
-        path = pathlib.Path(Bootstrapper.PROCESSING_CONF_INPUT_PATH)
+        config_input_path = get_config_path(ConfigPathTypes.USER_CONFIGURATION_INPUT)
 
         def _write_conf(conf: Configuration) -> None:
             logging.info("Writing user config to {}".format(conf.path))
             conf_string = conf.write_config()
             logging.info("Configuration at {} is: \n{}".format(conf.path, conf_string))
 
-        if path.exists():
+        if config_input_path:
+            path = pathlib.Path(config_input_path)
             logging.info("reading user configuration from {}".format(str(path)))
             with open(str(path), "r") as config:
                 user_configuration_list_or_dict = json.load(config)
@@ -296,7 +297,7 @@ class Bootstrapper:
                         )
                     )
         else:
-            logging.info("No file at {} exists, skipping user configuration".format(str(path)))
+            logging.info("No user input configuration file exists, skipping user configuration")
 
     def set_regional_configs(self) -> None:
         regional_configs_list = self.get_regional_configs()
@@ -350,7 +351,18 @@ class Bootstrapper:
             instance_mem_mb = instance_type_info["MemoryInfo"]["SizeInMiB"]
             instance_cores = instance_type_info["VCpuInfo"]["DefaultVCpus"]
             logging.info(
-                f"Detected instance type: {instance_type} with "
+                f"Detected instance type for processing: {instance_type} with "
+                f"total memory: {instance_mem_mb}M and total cores: {instance_cores}"
+            )
+        elif all(key in self.resource_config for key in ["current_instance_type", "hosts"]) and instance_type_info:
+            # TODO: Support training heterogeneous cluster with instance groups
+            instance_type = self.resource_config["current_instance_type"].replace("ml.", "")
+            instance_count = len(self.resource_config["hosts"])
+            instance_type_info = instance_type_info[instance_type]
+            instance_mem_mb = instance_type_info["MemoryInfo"]["SizeInMiB"]
+            instance_cores = instance_type_info["VCpuInfo"]["DefaultVCpus"]
+            logging.info(
+                f"Detected instance type for training: {instance_type} with "
                 f"total memory: {instance_mem_mb}M and total cores: {instance_cores}"
             )
         else:
