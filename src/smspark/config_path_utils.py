@@ -13,9 +13,12 @@
 """Utils to retrieve the file paths for different config types."""
 import os
 from enum import Enum
+from typing import Optional
 
 
 class ConfigPathTypes(Enum):
+    """An enum class which stores all possible values for each of the config type."""
+
     RESOURCE_CONFIG = ["/opt/ml/input/config/resourceconfig.json", "/opt/ml/config/resourceconfig.json"]
     USER_CONFIGURATION_INPUT = [
         "/opt/ml/input/data/conf/configuration.json",
@@ -23,9 +26,8 @@ class ConfigPathTypes(Enum):
     ]
 
 
-def get_config_path(path_types: ConfigPathTypes) -> str:
+def get_config_path(path_types: ConfigPathTypes) -> Optional[str]:
     """Return the config path of corresponding path type."""
-
     for path in path_types.value:
         if os.path.exists(path):
             return path

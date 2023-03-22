@@ -46,7 +46,7 @@ class ProcessingJobManager(object):
         self.logger = logging.getLogger("smspark-submit")
 
         try:
-            resource_config_path = get_config_path(ConfigPathTypes.RESOURCE_CONFIG)
+            resource_config_path = str(get_config_path(ConfigPathTypes.RESOURCE_CONFIG))
             with open(resource_config_path, "r") as f:
                 self._resource_config = json.load(f)
         except Exception:
