@@ -48,6 +48,9 @@ build-container-library: init
 
 install-container-library: init
 	# temporarily bypass urllib3 because circular dependency will be introduced if bumped up urllib3 version
+	# temporarily bypass py=1.1.0 because pytest-parallel has a dependency on it however the module is no longer maitained. 
+	# In the future the pylib will be removed from pytest-parallel dependency and 51457 should only impact the local tests.
+	# For more info, https://github.com/pytest-dev/py/issues/287
 	pipenv run safety check -i 43975 -i 51457 # https://github.com/pyupio/safety
 
 build-static-config:
