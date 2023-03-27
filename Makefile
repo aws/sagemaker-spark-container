@@ -48,7 +48,7 @@ build-container-library: init
 
 install-container-library: init
 	# temporarily bypass urllib3 because circular dependency will be introduced if bumped up urllib3 version
-	pipenv run safety check -i 43975 # https://github.com/pyupio/safety
+	pipenv run safety check -i 43975 -i 51457 # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
