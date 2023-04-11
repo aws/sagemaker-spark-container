@@ -1,0 +1,132 @@
+FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
+ARG REGION
+ENV AWS_REGION ${REGION}
+
+RUN yum clean all \
+    && yum update -y \
+    && yum install -y awscli bigtop-utils curl gcc gzip unzip zip gunzip tar wget liblapack* libblas* libopencv* libopenblas*
+
+# Install python 3.9
+ARG PYTHON_BASE_VERSION=3.9
+ARG PYTHON_WITH_BASE_VERSION=python${PYTHON_BASE_VERSION}
+ARG PIP_WITH_BASE_VERSION=pip${PYTHON_BASE_VERSION}
+ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.12
+RUN yum -y groupinstall 'Development Tools' \
+    && yum -y install openssl-devel bzip2-devel libffi-devel sqlite-devel xz-devel \
+    && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
+    && tar xzf Python-${PYTHON_VERSION}.tgz \
+    && cd Python-*/ \
+    && ./configure --enable-optimizations \
+    && make altinstall \
+    && echo -e 'alias python3=python3.9\nalias pip3=pip3.9' >> ~/.bashrc \
+    && ln -s $(which ${PYTHON_WITH_BASE_VERSION}) /usr/local/bin/python3 \
+    && ln -s $(which ${PIP_WITH_BASE_VERSION}) /usr/local/bin/pip3 \
+    && cd .. \
+    && rm Python-${PYTHON_VERSION}.tgz \
+    && rm -rf Python-${PYTHON_VERSION}
+
+# install nginx amazonlinux:2.0.20200304.0 does not have nginx, so need to install epel-release first
+RUN wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+RUN yum install -y nginx
+
+RUN rm -rf /var/cache/yum
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+# http://blog.stuart.axelbrooke.com/python-3-on-spark-return-of-the-pythonhashseed
+ENV PYTHONHASHSEED 0
+ENV PYTHONIOENCODING UTF-8
+ENV PIP_DISABLE_PIP_VERSION_CHECK 1
+
+# Install EMR Spark/Hadoop
+ENV HADOOP_HOME /usr/lib/hadoop
+ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
+ENV SPARK_HOME /usr/lib/spark
+
+COPY yum/emr-apps.repo /etc/yum.repos.d/emr-apps.repo
+
+# Install hadoop / spark dependencies from EMR's yum repository for Spark optimizations.
+# replace placeholder with region in repository URL
+RUN sed -i "s/REGION/${AWS_REGION}/g" /etc/yum.repos.d/emr-apps.repo
+RUN adduser -N hadoop
+
+# These packages are a subset of what EMR installs in a cluster with the
+# "hadoop", "spark", and "hive" applications.
+# They include EMR-optimized libraries and extras.
+RUN yum install -y aws-hm-client \
+    aws-java-sdk \
+    aws-sagemaker-spark-sdk \
+    emr-goodies \
+    emr-ruby \
+    emr-scripts \
+    emr-s3-select \
+    emrfs \
+    hadoop \
+    hadoop-client \
+    hadoop-hdfs \
+    hadoop-hdfs-datanode \
+    hadoop-hdfs-namenode \
+    hadoop-httpfs \
+    hadoop-kms \
+    hadoop-lzo \
+    hadoop-yarn \
+    hadoop-yarn-nodemanager \
+    hadoop-yarn-proxyserver \
+    hadoop-yarn-resourcemanager \
+    hadoop-yarn-timelineserver \
+    hive \
+    hive-hcatalog \
+    hive-hcatalog-server \
+    hive-jdbc \
+    hive-server2 \
+    s3-dist-cp \
+    spark-core \
+    spark-datanucleus \
+    spark-external \
+    spark-history-server \
+    spark-python
+
+
+# Point Spark at proper python binary
+ENV PYSPARK_PYTHON=/usr/local/bin/python3.9
+
+# Setup Spark/Yarn/HDFS user as root
+ENV PATH="/usr/bin:/opt/program:${PATH}"
+ENV YARN_RESOURCEMANAGER_USER="root"
+ENV YARN_NODEMANAGER_USER="root"
+ENV HDFS_NAMENODE_USER="root"
+ENV HDFS_DATANODE_USER="root"
+ENV HDFS_SECONDARYNAMENODE_USER="root"
+
+
+
+# Set up bootstrapping program and Spark configuration
+COPY hadoop-config /opt/hadoop-config
+COPY nginx-config /opt/nginx-config
+COPY aws-config /opt/aws-config
+COPY Pipfile Pipfile.lock setup.py *.whl /opt/program/
+ENV PIPENV_PIPFILE=/opt/program/Pipfile
+# Use --system flag, so it will install all packages into the system python,
+# and not into the virtualenv. Since docker containers do not need to have virtualenvs
+# pipenv > 2022.4.8 fails to build smspark
+RUN /usr/local/bin/python3.9 -m pip install pipenv==2022.4.8 \
+    && pipenv install --system \
+    && /usr/local/bin/python3.9 -m pip install /opt/program/*.whl
+
+# Setup container bootstrapper
+COPY container-bootstrap-config /opt/container-bootstrap-config
+RUN chmod +x /opt/container-bootstrap-config/bootstrap.sh \
+    && /opt/container-bootstrap-config/bootstrap.sh
+
+# With this config, spark history server will not run as daemon, otherwise there
+# will be no server running and container will terminate immediately
+ENV SPARK_NO_DAEMONIZE TRUE
+
+WORKDIR $SPARK_HOME
+
+# Install the sagemaker feature store spark connector
+# https://docs.aws.amazon.com/sagemaker/latest/dg/batch-ingestion-spark-connector-setup.html
+RUN /usr/local/bin/python3.9 -m pip install sagemaker-feature-store-pyspark-3.2 --no-binary :all:
+
+ENTRYPOINT ["smspark-submit"]
