@@ -37,7 +37,7 @@ object HelloScalaSparkApp {
     println("Got a Spark session with version: " + spark.version)
 
     spark.sparkContext.parallelize(Seq("Hello", "Hola", "Bonjour")).foreach { case greeting: String =>
-      System.err.println(s"I'm an executor, $greeting!")
+      println("I'm an executor, " + greeting)
     }
 
     // Load test data set
