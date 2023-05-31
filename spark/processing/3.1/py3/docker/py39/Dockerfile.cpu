@@ -127,6 +127,6 @@ WORKDIR $SPARK_HOME
 
 # Install the sagemaker feature store spark connector
 # https://docs.aws.amazon.com/sagemaker/latest/dg/batch-ingestion-spark-connector-setup.html
-RUN /usr/local/bin/python3.9 -m pip install sagemaker-feature-store-pyspark-3.1 --no-binary :all:
+RUN /usr/local/bin/python3.9 -m pip install sagemaker-feature-store-pyspark-3.1==1.1.2 --no-binary :all:
 
 ENTRYPOINT ["smspark-submit"]
