@@ -12,7 +12,10 @@
 # language governing permissions and limitations under the License.
 import boto3
 import botocore
+import botocore.exceptions
 import pytest
+import logging
+import time
 from sagemaker.session import Session
 
 
@@ -114,3 +117,23 @@ def sagemaker_client(boto_session, region) -> botocore.client.BaseClient:
 def sagemaker_session(boto_session, sagemaker_client) -> Session:
     """Return a SageMaker session for use in integration tests."""
     return Session(boto_session=boto_session, sagemaker_client=sagemaker_client)
+
+
+@pytest.fixture(scope="session")
+def is_feature_store_available(region) -> bool:
+    """Check if feature store is available in current region."""
+    sagemaker_client = boto3.client('sagemaker')
+    max_attempts = 4
+    retry_num = 0
+    while retry_num < max_attempts:
+        try:
+            sagemaker_client.list_feature_groups()
+            return True
+        except botocore.exceptions.EndpointConnectionError:
+            logging.info("Caught EndpointConnectionError when checking the feature store availability," 
+                         " retried %d times already", retry_num)
+            retry_num += 1
+            time.sleep(5)
+    
+    logging.info("Feature store is not available in %s.", region)
+    return False

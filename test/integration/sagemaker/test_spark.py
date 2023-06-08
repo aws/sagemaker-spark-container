@@ -345,6 +345,44 @@ def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker
     assert len(output_contents) != 0
 
 
+def test_sagemaker_feature_store_ingestion_multinode(
+    sagemaker_session, sagemaker_client, spark_version, framework_version, image_uri, role, is_feature_store_available
+):
+    """Test FeatureStore use cases by ingesting data to feature group."""
+
+    if not is_feature_store_available:
+        pytest.skip("Skipping test due to feature store is not available in current region.")
+        
+    script_name = "py_spark_feature_store_ingestion.py"
+    spark = PySparkProcessor(
+        base_job_name="sm-spark-feature-store",
+        image_uri=image_uri,
+        role=role,
+        instance_count=2,
+        instance_type="ml.c5.xlarge",
+        max_runtime_in_seconds=1200,
+        sagemaker_session=sagemaker_session,
+    )
+    spark.run(
+        submit_app=f"test/resources/code/python/feature_store_py_spark/{script_name}",
+        wait=False,
+    )
+
+    processing_job = spark.latest_job
+    waiter = sagemaker_client.get_waiter("processing_job_completed_or_stopped")
+
+    waiter.wait(
+        ProcessingJobName=processing_job.job_name,
+        # poll every 15 seconds. timeout after 15 minutes.
+        WaiterConfig={"Delay": 15, "MaxAttempts": 60},
+    )
+
+    response = sagemaker_client.describe_processing_job(ProcessingJobName=processing_job.job_name)
+
+    if response["ProcessingJobStatus"] == "Stopped":
+        raise RuntimeError("Feature store Spark job stopped unexpectedly")
+
+
 def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
     """Test SparkJarProcessor using Java application jar"""
     spark = SparkJarProcessor(
