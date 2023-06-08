@@ -352,7 +352,7 @@ def test_sagemaker_feature_store_ingestion_multinode(
 
     if not is_feature_store_available:
         pytest.skip("Skipping test due to feature store is not available in current region.")
-        
+
     script_name = "py_spark_feature_store_ingestion.py"
     spark = PySparkProcessor(
         base_job_name="sm-spark-feature-store",
