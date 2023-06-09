@@ -122,21 +122,30 @@ def sagemaker_session(boto_session, sagemaker_client) -> Session:
 @pytest.fixture(scope="session")
 def is_feature_store_available(region) -> bool:
     """Check if feature store is available in current region."""
-    sagemaker_client = boto3.client("sagemaker")
-    max_attempts = 4
-    retry_num = 0
-    while retry_num < max_attempts:
-        try:
-            sagemaker_client.list_feature_groups()
-            return True
-        except botocore.exceptions.EndpointConnectionError:
-            logging.info(
-                "Caught EndpointConnectionError when checking the feature store availability,"
-                " retried %d times already",
-                retry_num,
-            )
-            retry_num += 1
-            time.sleep(5)
+    feature_store_released_regions = [
+        "us-east-1",
+        "us-west-2",
+        "us-east-2",
+        "us-west-1",
+        "ap-northeast-1",
+        "ap-northeast-2",
+        "ap-northeast-3",
+        "ap-east-1",
+        "ap-south-1",
+        "ap-southeast-1",
+        "ap-southeast-2",
+        "me-south-1",
+        "sa-east-1",
+        "ca-central-1",
+        "eu-central-1",
+        "eu-north-1",
+        "eu-west-1",
+        "eu-west-2",
+        "eu-west-3",
+        "af-south-1",
+        "eu-south-1",
+        "cn-northwest-1",
+        "cn-north-1",
+    ]
 
-    logging.info("Feature store is not available in %s.", region)
-    return False
+    return region in feature_store_released_regions
