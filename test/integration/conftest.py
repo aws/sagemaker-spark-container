@@ -129,10 +129,9 @@ def is_feature_store_available(region) -> bool:
         try:
             sagemaker_client.list_feature_groups()
             return True
-        except botocore.exceptions.EndpointConnectionError:
-            logging.info(
-                "Caught EndpointConnectionError when checking the feature store availability,"
-                " retried %d times already",
+        except Exception:
+            logging.warn(
+                "Caught Exception when checking the feature store availability, retried %d times already",
                 retry_num,
             )
             retry_num += 1
