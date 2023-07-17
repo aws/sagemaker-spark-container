@@ -36,8 +36,6 @@ pytest-parallel = "==0.1.1"
 pytest-rerunfailures = "10.0"
 numpy = "==1.22.2"
 py = "==1.11.0"
-botocore = "==1.29.10"
-PyYAML = "==5.3"
 
 [requires]
 python_version = "3.9"
