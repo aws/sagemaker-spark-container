@@ -388,18 +388,49 @@ class Bootstrapper:
         self, instance_count: int, instance_mem_mb: int, instance_cores: int
     ) -> Tuple[Configuration, Configuration]:
         aws_region = os.getenv("AWS_REGION")
-        executor_cores = instance_cores
-        executor_count_per_instance = int(instance_cores / executor_cores)
-        executor_count_total = instance_count * executor_count_per_instance
-        default_parallelism = instance_count * instance_cores * 2
+        spark_config_mode = int(os.getenv("AWS_SPARK_CONFIG_MODE", str(constants.AWS_SPARK_CONFIG_MODE_STANDARD)))
 
-        driver_mem_mb = int(instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO)
-        driver_mem_overhead_mb = int(driver_mem_mb * constants.DRIVER_MEM_OVERHEAD_RATIO)
-        executor_mem_mb = int(
-            ((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO) / executor_count_per_instance)
-            * (1 - constants.EXECUTOR_MEM_OVERHEAD_RATIO)
-        )
-        executor_mem_overhead_mb = int(executor_mem_mb * constants.EXECUTOR_MEM_OVERHEAD_RATIO)
+        if spark_config_mode == constants.AWS_SPARK_CONFIG_MODE_STANDARD:
+            executor_cores = instance_cores
+            executor_count_per_instance = int(instance_cores / executor_cores)
+            executor_count_total = instance_count * executor_count_per_instance
+            default_parallelism = instance_count * instance_cores * 2
+
+            driver_mem_mb = int(instance_mem_mb * constants.DRIVER_MEM_INSTANCE_MEM_RATIO)
+            driver_mem_overhead_mb = int(driver_mem_mb * constants.DRIVER_MEM_OVERHEAD_RATIO)
+            executor_mem_mb = int(
+                ((instance_mem_mb * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO) / executor_count_per_instance)
+                * (1 - constants.EXECUTOR_MEM_OVERHEAD_RATIO)
+            )
+            executor_mem_overhead_mb = int(executor_mem_mb * constants.EXECUTOR_MEM_OVERHEAD_RATIO)
+        elif spark_config_mode == constants.AWS_SPARK_CONFIG_MODE_ADVANCED:
+            # memory reduction (safer choice)
+            reduced_instance_mem_mb = int(instance_mem_mb * constants.SAFE_MEMORY_REDUCTION_RATIO)
+            # executor cores (set to 5 as constant)
+            executor_cores = constants.EXECUTOR_CORES
+            if executor_cores >= instance_cores:
+                executor_cores = instance_cores - 1
+            # executor count per instance, subtract 1 core from the instance cores to save for the Hadoop daemons
+            executor_count_per_instance = int((instance_cores - 1) / executor_cores)
+            # executor instances, leave 1 slot for the driver
+            executor_count_total = (instance_count * executor_count_per_instance) - 1
+            # default parallelism
+            default_parallelism = executor_count_total * executor_cores * 2
+            # total memory for one executor on the instance, leave 1GB for the Hadoop daemons
+            total_executor_memory = int((reduced_instance_mem_mb - constants.HADOOP_DAEMONS_MEM_MB) / executor_count_per_instance)
+            # executor memory MB (90% of the total executor mem)
+            executor_mem_mb = int(total_executor_memory * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO_ADV)
+            # executor memory overhead MB (10% of the total executor mem)
+            executor_mem_overhead_mb = int(total_executor_memory * constants.EXECUTOR_MEM_OVERHEAD_RATIO)
+            # setting driver memory as the executor memory
+            driver_mem_mb = executor_mem_mb
+            driver_mem_overhead_mb = executor_mem_overhead_mb
+        else:
+            raise ValueError(
+                "Could not determine Spark configuration mode: {}.".format(
+                    spark_config_mode
+                )
+            )
 
         driver_gc_config = (
             "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 "
