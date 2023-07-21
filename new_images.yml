@@ -4,4 +4,4 @@ new_images:
     use-case: "processing"
     processors: ["cpu"]
     python: ["py39"]
-    sm_version: "1.2"
+    sm_version: "1.1"
