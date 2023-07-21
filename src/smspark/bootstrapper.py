@@ -417,9 +417,7 @@ class Bootstrapper:
             # default parallelism
             default_parallelism = executor_count_total * executor_cores * 2
             # total memory for one executor on the instance, leave 1GB for the Hadoop daemons
-            total_executor_memory = int(
-                (reduced_instance_mem_mb - constants.HADOOP_DAEMONS_MEM_MB) / executor_count_per_instance
-            )
+            total_executor_memory = int((reduced_instance_mem_mb - constants.HADOOP_DAEMONS_MEM_MB) / executor_count_per_instance)
             # executor memory MB (90% of the total executor mem)
             executor_mem_mb = int(total_executor_memory * constants.EXECUTOR_MEM_INSTANCE_MEM_RATIO_ADV)
             # executor memory overhead MB (10% of the total executor mem)
@@ -428,7 +426,11 @@ class Bootstrapper:
             driver_mem_mb = executor_mem_mb
             driver_mem_overhead_mb = executor_mem_overhead_mb
         else:
-            raise ValueError("Could not determine Spark configuration mode: {}.".format(spark_config_mode))
+            raise ValueError(
+                "Could not determine Spark configuration mode: {}.".format(
+                    spark_config_mode
+                )
+            )
 
         driver_gc_config = (
             "-XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=70 -XX:MaxHeapFreeRatio=70 "
