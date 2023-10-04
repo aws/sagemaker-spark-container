@@ -8,10 +8,10 @@ RUN yum clean all \
     && yum update -y \
     && yum install -y awscli bigtop-utils curl gcc gzip unzip zip gunzip tar wget liblapack* libblas* libopencv* libopenblas*
 
+# Taken from EMR https://tiny.amazon.com/1dp4p55nm/codeamazpackAwsCblob8b00src
 RUN amazon-linux-extras enable corretto8 nginx1 \
 && yum install -y java-1.8.0-amazon-corretto-devel nginx python-virtualenv \
 && yum remove -y java-1.8.0-openjdk-headless
-# && rm -rf /usr/share/aws/iceberg/lib/iceberg-flink-runtime*.jar
 
 # Install python 3.9
 ARG PYTHON_BASE_VERSION=3.9
