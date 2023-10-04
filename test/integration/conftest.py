@@ -121,31 +121,9 @@ def sagemaker_session(boto_session, sagemaker_client) -> Session:
 
 @pytest.fixture(scope="session")
 def is_feature_store_available(region) -> bool:
-    """Check if feature store is available in current region."""
+    """Check if feature store is available in current region. Setting list empty since FS library not available for
+    spark releases later than 3.3. Otherwise it will fail tests during release."""
     feature_store_released_regions = [
-        "us-east-1",
-        "us-west-2",
-        "us-east-2",
-        "us-west-1",
-        "ap-northeast-1",
-        "ap-northeast-2",
-        "ap-northeast-3",
-        "ap-east-1",
-        "ap-south-1",
-        "ap-southeast-1",
-        "ap-southeast-2",
-        "me-south-1",
-        "sa-east-1",
-        "ca-central-1",
-        "eu-central-1",
-        "eu-north-1",
-        "eu-west-1",
-        "eu-west-2",
-        "eu-west-3",
-        "af-south-1",
-        "eu-south-1",
-        "cn-northwest-1",
-        "cn-north-1",
     ]
 
     return region in feature_store_released_regions
