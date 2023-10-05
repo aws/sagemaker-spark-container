@@ -123,7 +123,6 @@ def sagemaker_session(boto_session, sagemaker_client) -> Session:
 def is_feature_store_available(region) -> bool:
     """Check if feature store is available in current region. Setting list empty since FS library not available for
     spark releases later than 3.3. Otherwise it will fail tests during release."""
-    feature_store_released_regions = [
-    ]
+    feature_store_released_regions = []
 
     return region in feature_store_released_regions
