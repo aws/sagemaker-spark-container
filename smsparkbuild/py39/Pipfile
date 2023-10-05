@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-pyyaml = "==5.3.1"
+pyyaml = "==5.4"
 tenacity = "==8.2.3"
 psutil = "==5.9.5"
 click = "==8.1.7"
