@@ -7,7 +7,7 @@ SHELL          := /bin/sh
 
 # Set variables if testing locally
 ifeq ($(IS_RELEASE_BUILD),)
-    SPARK_VERSION := 3.4
+    SPARK_VERSION := 3.5
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py39
     SM_VERSION := 1.0
@@ -32,6 +32,8 @@ all: build test
 
 init:
 	# pipenv > 2022.4.8 fails to build smspark
+	python --version
+    pip install --upgrade pip
 	python3 -m pip install pipenv==2022.4.8
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
