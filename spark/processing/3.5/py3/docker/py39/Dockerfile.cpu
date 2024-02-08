@@ -1,4 +1,3 @@
-# FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG REGION
 ENV AWS_REGION ${REGION}
@@ -16,7 +15,7 @@ RUN dnf clean all \
 ARG PYTHON_BASE_VERSION=3.9
 ARG PYTHON_WITH_BASE_VERSION=python${PYTHON_BASE_VERSION}
 ARG PIP_WITH_BASE_VERSION=pip${PYTHON_BASE_VERSION}
-ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.12
+ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.18
 RUN yum -y groupinstall 'Development Tools' \
     && yum -y install openssl-devel bzip2-devel libffi-devel sqlite-devel xz-devel \
     && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
