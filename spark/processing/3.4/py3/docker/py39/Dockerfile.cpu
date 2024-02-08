@@ -1,4 +1,5 @@
-FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
+# FROM 137112412989.dkr.ecr.us-west-2.amazonaws.com/amazonlinux:2
+FROM public.ecr.aws/amazonlinux/amazonlinux:2
 ARG REGION
 ENV AWS_REGION ${REGION}
 
@@ -6,7 +7,9 @@ ENV JAVA_HOME /etc/alternatives/jre
 
 RUN yum clean all \
     && yum update -y \
-    && yum install -y awscli bigtop-utils curl gcc gzip unzip zip gunzip tar wget liblapack* libblas* libopencv* libopenblas*
+     && yum update -y kernel kernel-headers kernel-devel \
+     && yum install -y awscli bigtop-utils curl gcc gzip unzip zip gunzip tar wget liblapack* libblas* libopencv* libopenblas* \
+     && yum update -y libcurl curl tar vim-data vim-minimal ncurses-libs ncurses ncurses-base ncurses-compat-libs binutils nss-softokn-freebl avahi-libs avahi dbus dbus-libs python python-libs python-devel gstreamer-plugins-base python-pillow
 
 # Taken from EMR https://tiny.amazon.com/1dp4p55nm/codeamazpackAwsCblob8b00src
 RUN amazon-linux-extras enable corretto8 nginx1 \
@@ -17,7 +20,7 @@ RUN amazon-linux-extras enable corretto8 nginx1 \
 ARG PYTHON_BASE_VERSION=3.9
 ARG PYTHON_WITH_BASE_VERSION=python${PYTHON_BASE_VERSION}
 ARG PIP_WITH_BASE_VERSION=pip${PYTHON_BASE_VERSION}
-ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.12
+ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.18
 RUN yum -y groupinstall 'Development Tools' \
     && yum -y install openssl-devel bzip2-devel libffi-devel sqlite-devel xz-devel \
     && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
@@ -114,6 +117,10 @@ ENV PIPENV_PIPFILE=/opt/program/Pipfile
 # Use --system flag, so it will install all packages into the system python,
 # and not into the virtualenv. Since docker containers do not need to have virtualenvs
 # pipenv > 2022.4.8 fails to build smspark
+RUN /usr/local/bin/python3.9 -m pip --version
+RUN /usr/local/bin/python3.9 -m pip install --upgrade pip
+RUN /usr/local/bin/python3.9 -m pip install --upgrade pip setuptools wheel
+
 RUN /usr/local/bin/python3.9 -m pip install pipenv==2022.4.8 \
     && pipenv install --system \
     && /usr/local/bin/python3.9 -m pip install /opt/program/*.whl
