@@ -10,7 +10,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.5
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py39
-    SM_VERSION := 1.1
+    SM_VERSION := 1.0
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
 
@@ -33,7 +33,7 @@ init:
 	python --version
 	pip install --upgrade pip
 	# pipenv > 2022.4.8 fails to build smspark
-	python -m pip install pipenv==2022.4.8
+	python3 -m pip install pipenv==2022.4.8
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
