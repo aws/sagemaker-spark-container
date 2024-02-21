@@ -146,6 +146,7 @@ clean:
 	rm -f Pipfile
 	rm -f Pipfile.lock
 	rm -f setup.py
+	rm -f pyproject.toml
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
