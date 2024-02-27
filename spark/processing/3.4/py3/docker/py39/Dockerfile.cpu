@@ -113,13 +113,13 @@ COPY nginx-config /opt/nginx-config
 COPY aws-config /opt/aws-config
 COPY Pipfile Pipfile.lock setup.py *.whl /opt/program/
 ENV PIPENV_PIPFILE=/opt/program/Pipfile
-# Use --system flag, so it will install all packages into the system python,
-# and not into the virtualenv. Since docker containers do not need to have virtualenvs
-# pipenv > 2022.4.8 fails to build smspark
 RUN /usr/local/bin/python3.9 -m pip --version
 RUN /usr/local/bin/python3.9 -m pip install --upgrade pip
 RUN /usr/local/bin/python3.9 -m pip install --upgrade pip setuptools wheel
 
+# Use --system flag, so it will install all packages into the system python,
+# and not into the virtualenv. Since docker containers do not need to have virtualenvs
+# pipenv > 2022.4.8 fails to build smspark
 RUN /usr/local/bin/python3.9 -m pip install pipenv==2022.4.8 \
     && pipenv install --system \
     && /usr/local/bin/python3.9 -m pip install /opt/program/*.whl

@@ -75,6 +75,10 @@ class Bootstrapper:
         self.logger.info("copying aws jars")
         for f in glob.glob("/usr/share/aws/aws-java-sdk/*.jar"):
             shutil.copyfile(f, os.path.join(self.JAR_DEST, os.path.basename(f)))
+
+        self.logger.info("copying aws-java-sdk-v2 jars")
+        for f in glob.glob("/usr/share/aws/aws-java-sdk-v2/*.jar"):
+            shutil.copyfile(f, os.path.join(self.JAR_DEST, os.path.basename(f)))
         hadoop_aws_jar = self._get_hadoop_jar()
         shutil.copyfile(
             os.path.join(Bootstrapper.HADOOP_PATH, hadoop_aws_jar), os.path.join(self.JAR_DEST, hadoop_aws_jar)

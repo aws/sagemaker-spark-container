@@ -108,13 +108,14 @@ def test_env_classification(default_bootstrapper):
 
 @patch("os.listdir", return_value=["hadoop-aws-2.8.5-amzn-5.jar"])
 @patch("os.path.isfile", return_value=True)
-@patch("glob.glob", side_effect=[["/aws-sdk.jar"], ["/hmclient/lib/client.jar"]])
+@patch("glob.glob", side_effect=[["/aws-sdk.jar"], ["/aws-sdk-v2.jar"], ["/hmclient/lib/client.jar"]])
 @patch("shutil.copyfile", side_effect=None)
 def test_copy_aws_jars(patched_copyfile, patched_glob, patched_isfile, patched_listdir, default_bootstrapper) -> None:
     default_bootstrapper.copy_aws_jars()
 
     expected = [
         call("/aws-sdk.jar", "/usr/lib/spark/jars/aws-sdk.jar"),
+        call("/aws-sdk-v2.jar", "/usr/lib/spark/jars/aws-sdk-v2.jar"),
         call(
             "/usr/lib/hadoop/hadoop-aws-2.8.5-amzn-5.jar",
             "/usr/lib/spark/jars/hadoop-aws-2.8.5-amzn-5.jar",
