@@ -10,7 +10,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.4
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py39
-    SM_VERSION := 1.0
+    SM_VERSION := 1.1
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
     AWS_PARTITION := aws
@@ -31,8 +31,10 @@ all: build test
 # Downloads EMR packages. Skips if the tar file containing EMR packages has been made.
 
 init:
+	python --version
+	pip install --upgrade pip
 	# pipenv > 2022.4.8 fails to build smspark
-	python3 -m pip install pipenv==2022.4.8
+	python -m pip install pipenv==2022.4.8
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
@@ -51,7 +53,7 @@ install-container-library: init
 	# temporarily bypass py=1.1.0 because pytest-parallel has a dependency on it however the module is no longer maitained. 
 	# In the future the pylib will be removed from pytest-parallel dependency and 51457 should only impact the local tests.
 	# For more info, https://github.com/pytest-dev/py/issues/287
-	pipenv run safety check -i 43975 -i 51457 -i 39611 # https://github.com/pyupio/safety
+	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
@@ -130,6 +132,7 @@ install-sdk:
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
+	pip install --upgrade pip
 	pip install --upgrade sagemaker>=2.9.0
 
 # Makes sure docker containers are cleaned
@@ -144,6 +147,7 @@ clean:
 	rm -f Pipfile
 	rm -f Pipfile.lock
 	rm -f setup.py
+	rm -f pyproject.toml
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
