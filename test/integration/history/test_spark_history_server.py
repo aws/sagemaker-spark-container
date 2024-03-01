@@ -30,9 +30,12 @@ def test_history_server(tag, framework_version, role, image_uri, sagemaker_sessi
         f"PySparkProcessor args: tag={tag}, framework_version={framework_version}, "
         f"role={role}, image_uri={image_uri}, region={region}"
     )
+
+    region = sagemaker_session.boto_region_name
+    print(f"sagemaker_session region is: {region}")
     spark = PySparkProcessor(
         base_job_name="sm-spark",
-        framework_version=tag,
+        framework_version=framework_version,
         image_uri=image_uri,
         role=role,
         instance_count=1,
@@ -41,6 +44,7 @@ def test_history_server(tag, framework_version, role, image_uri, sagemaker_sessi
         sagemaker_session=sagemaker_session,
     )
     bucket = sagemaker_session.default_bucket()
+    print(f"session bucket is: {bucket}")
     spark_event_logs_key_prefix = "spark/spark-history-fs"
     spark_event_logs_s3_uri = "s3://{}/{}".format(bucket, spark_event_logs_key_prefix)
     spark_event_log_local_path = "test/resources/data/files/sample_spark_event_logs"
@@ -68,10 +72,10 @@ def test_history_server(tag, framework_version, role, image_uri, sagemaker_sessi
         spark.terminate_history_server()
 
 
-def test_history_server_with_expected_failure(tag, role, image_uri, sagemaker_session, caplog):
+def test_history_server_with_expected_failure(tag, framework_version, role, image_uri, sagemaker_session, caplog):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
-        framework_version=tag,
+        framework_version=framework_version,
         image_uri=image_uri,
         role=role,
         instance_count=1,
@@ -98,8 +102,15 @@ def _request_with_retry(url, max_retries=10):
         )
     )
     try:
-        return http.request("GET", url)
-    except Exception:  # pylint: disable=W0703
+        print(f"request_with_retry GET : {url}")
+        resp = http.request("GET", url)
+        print(f"request_with_retry response : {resp}")
+        if resp is not None:
+            print(f"request_with_retry response status : {resp.status}")
+            print(f"request_with_retry response data : {resp.data}")
+        return resp
+    except Exception as e:  # pylint: disable=W0703
+        print(f"Exception during request_with_retry: {str(e)}")
         return None
 
 

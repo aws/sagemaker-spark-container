@@ -313,6 +313,8 @@ class Bootstrapper:
 
     def get_regional_configs(self) -> List[Configuration]:
         aws_region = os.getenv("AWS_REGION")
+        logging.info("default/current AWS_REGION is {}".format(aws_region))
+
         if aws_region is None:
             logging.warning("Unable to detect AWS region from environment variable AWS_REGION")
             return []
@@ -323,10 +325,14 @@ class Bootstrapper:
             aws_domain = "amazonaws.com"
             s3_endpoint = f"s3.{aws_region}.{aws_domain}"
         else:
-            # no special regional configs needed
-            return []
+            # to make Hadoop 3.3.6 work with aws-java-sdk-v2
+            aws_domain = "amazonaws.com"
+            s3_endpoint = f"s3.{aws_region}.{aws_domain}"
 
-        return [Configuration(Classification="core-site", Properties={"fs.s3a.endpoint": s3_endpoint})]
+        logging.info("fs.s3a.endpoint config is {}".format(s3_endpoint))
+
+        return [Configuration(Classification="core-site",
+                              Properties={"fs.s3a.endpoint": s3_endpoint, "fs.s3a.endpoint.region": aws_region})]
 
     def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):
