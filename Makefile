@@ -13,13 +13,12 @@ ifeq ($(IS_RELEASE_BUILD),)
     SM_VERSION := 1.1
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
-    AWS_PARTITION := aws
-    AWS_DOMAIN := amazonaws.com
+
     export SPARK_ACCOUNT_ID=$(AWS_ACCOUNT_ID)
-    export INTEG_TEST_ACCOUNT=$(AWS_ACCOUNT_ID)
+    export INTEG_TEST_ACCOUNT=$(INTEG_TEST_ACCOUNT_ID)
     export INTEG_TEST_ROLE=$(SAGEMAKER_ROLE)
     export DEST_REPO=$(SPARK_REPOSITORY)
-    export REGION=us-west-2
+
 endif
 
 ROLE := arn:${AWS_PARTITION}:iam::$(INTEG_TEST_ACCOUNT):role/$(INTEG_TEST_ROLE)
@@ -102,6 +101,30 @@ test-sagemaker: build-tests
 	--image_uri $(IMAGE_URI) \
 	--region ${REGION} \
 	--domain ${AWS_DOMAIN}
+	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
+	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pipenv run pytest --workers auto --reruns 3 -s -vv test/integration/sagemaker \
+	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--spark-version=$(SPARK_VERSION) \
+	--framework-version=$(FRAMEWORK_VERSION) \
+	--role $(ROLE) \
+	--account-id ${INTEG_TEST_ACCOUNT} \
+	--image_uri $(IMAGE_URI) \
+	--region ${REGION} \
+	--domain ${AWS_DOMAIN}
+
+
+test-sagemaker-history-server: build-tests
+	pipenv run pytest --reruns 3 -s -vv test/integration/history \
+	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \
+	--spark-version=$(SPARK_VERSION) \
+	--framework-version=$(FRAMEWORK_VERSION) \
+	--role $(ROLE) \
+	--image_uri $(IMAGE_URI) \
+	--region ${REGION} \
+	--domain ${AWS_DOMAIN}
+
+
+test-sagemaker-processing: build-tests
 	# OBJC_DISABLE_INITIALIZE_FORK_SAFETY: https://github.com/ansible/ansible/issues/32499#issuecomment-341578864
 	OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES pipenv run pytest --workers auto --reruns 3 -s -vv test/integration/sagemaker \
 	--repo=$(DEST_REPO) --tag=$(VERSION) --durations=0 \

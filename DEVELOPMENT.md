@@ -17,10 +17,11 @@ This repository uses GNU `make` to run build targets specified in `Makefile`. Co
 ### Setting Up The Development Environment
 
 1. To set up your python environment, we recommend creating and activating a virtual environment
-using `venv`, which is part of the Python standard library for python3+:
+using `venv`, which is part of the Python standard library for python 3+:
+
 
 ```bash
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 ```
 You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
@@ -43,12 +44,29 @@ You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 
 6. Setup required environment variables for the container build:
 ```
-export AWS_ACCOUNT_ID=<YOUR_ACCOUNT_ID>
+# The AWS account id where the spark image is hosted in ECR
+export AWS_ACCOUNT_ID=<YOUR_AWS_ACCOUNT_ID>
+
+# AWS region 
 export REGION=us-west-2
+
+# The AWS account id which will be used as in integration test acount, can be the same as AWS_ACCOUNT_ID above               
+export INTEG_TEST_ACCOUNT_ID=<YOUR_INTEGT_TEST_AWS_ACCOUNT_ID>
+
+# Name of the ECR repository where spark image will be hosted 
 export SPARK_REPOSITORY=sagemaker-spark-processing
-export SPARK_REPOSITORY_NAME=sagemaker-spark
+
+# TAG of the spark image
 export VERSION=latest
-export SAGEMAKER_ROLE=<YOUR_SAGEMAKER_ROLE>
+
+# AWS IAM Role to be used for running the integration tests
+export SAGEMAKER_ROLE=<YOUR_INTEG_TEST_SAGEMAKER_ROLE>
+
+# Domain for AWS, for CN regions it is `amazonaws.com.cn` for other regions it is `amazonaws.com` 
+export AWS_DOMAIN=amazonaws.com
+
+# Partition for AWS, for CN regions it is `aws-cn` for other regions it is `aws`
+export AWS_PARTITION=aws
 ```
 
 ### Building Scala Test Dependencies
