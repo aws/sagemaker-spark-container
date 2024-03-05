@@ -331,8 +331,12 @@ class Bootstrapper:
 
         logging.info("fs.s3a.endpoint config is {}".format(s3_endpoint))
 
-        return [Configuration(Classification="core-site",
-                              Properties={"fs.s3a.endpoint": s3_endpoint, "fs.s3a.endpoint.region": aws_region})]
+        return [
+            Configuration(
+                Classification="core-site",
+                Properties={"fs.s3a.endpoint": s3_endpoint, "fs.s3a.endpoint.region": aws_region},
+            )
+        ]
 
     def load_processing_job_config(self) -> Dict[str, Any]:
         if not os.path.exists(self.PROCESSING_JOB_CONFIG_PATH):

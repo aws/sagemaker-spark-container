@@ -264,8 +264,8 @@ def test_get_regional_configs_cn(patched_getenv, default_bootstrapper: Bootstrap
         Classification="core-site",
         Properties={
             "fs.s3a.endpoint": "s3.cn-northwest-1.amazonaws.com.cn",
-            "fs.s3a.endpoint.region": "cn-northwest-1"
-        }
+            "fs.s3a.endpoint.region": "cn-northwest-1",
+        },
     )
     patched_getenv.assert_called_once_with("AWS_REGION")
 
@@ -276,10 +276,8 @@ def test_get_regional_configs_gov(patched_getenv, default_bootstrapper: Bootstra
     regional_configs_list = default_bootstrapper.get_regional_configs()
     assert len(regional_configs_list) == 1
     assert regional_configs_list[0] == Configuration(
-        Classification="core-site", Properties={
-            "fs.s3a.endpoint": "s3.us-gov-west-1.amazonaws.com",
-            "fs.s3a.endpoint.region": "us-gov-west-1"
-         }
+        Classification="core-site",
+        Properties={"fs.s3a.endpoint": "s3.us-gov-west-1.amazonaws.com", "fs.s3a.endpoint.region": "us-gov-west-1"},
     )
     patched_getenv.assert_called_once_with("AWS_REGION")
 
