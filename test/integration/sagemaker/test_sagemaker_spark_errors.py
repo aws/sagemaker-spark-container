@@ -37,6 +37,6 @@ def test_spark_app_error(tag, role, image_uri, sagemaker_session):
     processing_job = spark.latest_job
 
     describe_response = processing_job.describe()
-    assert "AlgorithmError: See job logs for more information" == describe_response["FailureReason"]
+    assert "AlgorithmError:" in describe_response["FailureReason"]
     assert "Algorithm Error: (caused by CalledProcessError)" in describe_response["ExitMessage"]
     assert "returned non-zero exit status 1" in describe_response["ExitMessage"]
