@@ -8,7 +8,7 @@ RUN yum clean all \
     && yum update -y \
     && yum update -y kernel kernel-headers kernel-devel \
     && yum install -y awscli bigtop-utils curl gcc gzip unzip zip gunzip tar wget liblapack* libblas* libopencv* libopenblas* \
-    && yum update -y libcurl curl tar vim-data vim-minimal ncurses-libs ncurses ncurses-base ncurses-compat-libs binutils nss-softokn-freebl avahi-libs avahi dbus dbus-libs python python-libs python-devel gstreamer-plugins-base python-pillow
+    && yum update -y cpio glib2 libcurl curl tar vim-data vim-minimal ncurses-libs ncurses ncurses-base ncurses-compat-libs binutils nss-softokn-freebl avahi-libs avahi dbus dbus-libs python python-libs python-devel gstreamer-plugins-base python-pillow
 
 # Taken from EMR https://tiny.amazon.com/1dp4p55nm/codeamazpackAwsCblob8b00src
 RUN amazon-linux-extras enable corretto8 nginx1 \
