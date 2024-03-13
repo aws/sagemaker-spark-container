@@ -2,22 +2,24 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 ARG REGION
 ENV AWS_REGION ${REGION}
 
-# ENV JAVA_HOME /etc/alternatives/jre
+RUN rpm -q system-release --qf '%{VERSION}'
 
 RUN dnf clean all \
     && dnf update -y \
-    && dnf install -y awscli gcc zlib-devel zlib-devel vim openssl gdbm-devel tcl-devel tk-devel readline-devel gzip unzip zip tar wget liblapack* libblas* libopenblas* \
-    && dnf update -y tar ncurses-libs ncurses ncurses-base binutils python python-libs python-devel python-pillow
-
-
+    && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* \
+    && dnf install -y openssl openssl-devel \
+    && dnf install -y kernel kernel-headers kernel-devel \
+    && dnf install -y bzip2-devel libffi-devel sqlite-devel xz-devel \
+    && dnf install -y ncurses ncurses-compat-libs binutils \
+    && dnf install -y nss-softokn-freebl avahi-libs avahi dbus dbus-libs \
+    && dnf install -y python-pillow
 
 # Install python 3.9
 ARG PYTHON_BASE_VERSION=3.9
 ARG PYTHON_WITH_BASE_VERSION=python${PYTHON_BASE_VERSION}
 ARG PIP_WITH_BASE_VERSION=pip${PYTHON_BASE_VERSION}
 ARG PYTHON_VERSION=${PYTHON_BASE_VERSION}.18
-RUN yum -y groupinstall 'Development Tools' \
-    && yum -y install openssl-devel bzip2-devel libffi-devel sqlite-devel xz-devel \
+RUN dnf groupinstall -y 'Development Tools' \
     && wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz \
     && tar xzf Python-${PYTHON_VERSION}.tgz \
     && cd Python-*/ \
@@ -34,8 +36,6 @@ RUN yum -y groupinstall 'Development Tools' \
 
 # Copied from EMR: https://tiny.amazon.com/kycbidpc/codeamazpackAwsCblob51c8src
 RUN dnf install -y java-1.8.0-amazon-corretto-devel nginx python3-virtualenv
-# RUN dnf install python3.11 python3.11-pip
-
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -50,7 +50,6 @@ ENV HADOOP_CONF_DIR /usr/lib/hadoop/etc/hadoop
 ENV SPARK_HOME /usr/lib/spark
 
 COPY yum/emr-apps.repo /etc/yum.repos.d/emr-apps.repo
-
 
 # Install hadoop / spark dependencies from EMR's yum repository for Spark optimizations.
 # replace placeholder with region in repository URL
@@ -94,7 +93,7 @@ RUN dnf install -y aws-hm-client \
     spark-python
 
 RUN dnf -y clean all \
-&& rm -rf /var/cache/dnf /var/lib/dnf/* /etc/yum.repos.d/emr-* \
+    && rm -rf /var/cache/dnf /var/lib/dnf/* /etc/yum.repos.d/emr-*
 
 # Point Spark at proper python binary
 ENV PYSPARK_PYTHON=/usr/local/bin/python3.9
@@ -118,7 +117,7 @@ ENV PIPENV_PIPFILE=/opt/program/Pipfile
 # pipenv > 2022.4.8 fails to build smspark
 RUN /usr/local/bin/python3.9 -m pip --version
 RUN /usr/local/bin/python3.9 -m pip install --upgrade pip
-RUN /usr/local/bin/python3.9 -m pip install setuptools wheel
+RUN /usr/local/bin/python3.9 -m pip install --upgrade pip setuptools wheel
 
 RUN /usr/local/bin/python3.9 -m pip install pipenv==2022.4.8 \
     && pipenv install --system \
