@@ -35,7 +35,8 @@ RUN dnf groupinstall -y 'Development Tools' \
 #Amazon Linux 2023 uses dnf instead of yum as pacakge management tool: https://docs.aws.amazon.com/linux/al2023/ug/package-management.html
 
 # Copied from EMR: https://tiny.amazon.com/kycbidpc/codeamazpackAwsCblob51c8src
-RUN dnf install -y java-1.8.0-amazon-corretto-devel nginx python3-virtualenv
+RUN dnf install -y java-1.8.0-amazon-corretto-devel nginx python3-virtualenv \
+    && dnf -y clean all && rm -rf /var/cache/dnf
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -90,9 +91,8 @@ RUN dnf install -y aws-hm-client \
     spark-core \
     spark-datanucleus \
     spark-history-server \
-    spark-python
-
-RUN dnf -y clean all \
+    spark-python \
+    && dnf -y clean all \
     && rm -rf /var/cache/dnf /var/lib/dnf/* /etc/yum.repos.d/emr-*
 
 # Point Spark at proper python binary
