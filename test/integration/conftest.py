@@ -58,6 +58,7 @@ def partition(region) -> str:
     """Return partition, such as aws, aws-cn, for use in tests."""
     region_partition_amp = {
         "us-gov-west-1": "aws-us-gov",
+        "us-gov-east-1": "aws-us-gov",
         "cn-north-1": "aws-cn",
         "cn-northwest-1": "aws-cn",
     }
