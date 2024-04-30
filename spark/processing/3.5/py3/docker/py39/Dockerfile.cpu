@@ -6,7 +6,8 @@ RUN rpm -q system-release --qf '%{VERSION}'
 
 RUN dnf clean all \
     && dnf update -y \
-    && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* \
+    && dnf update expat \
+    && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* emacs \
     && dnf install -y openssl openssl-devel \
     && dnf install -y kernel kernel-headers kernel-devel \
     && dnf install -y bzip2-devel libffi-devel sqlite-devel xz-devel \
