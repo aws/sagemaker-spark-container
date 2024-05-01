@@ -52,7 +52,7 @@ install-container-library: init
 	# temporarily bypass py=1.1.0 because pytest-parallel has a dependency on it however the module is no longer maitained. 
 	# In the future the pylib will be removed from pytest-parallel dependency and 51457 should only impact the local tests.
 	# For more info, https://github.com/pytest-dev/py/issues/287
-	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 # https://github.com/pyupio/safety
+	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
