@@ -89,6 +89,7 @@ class Configuration:
         _ClassificationData("spark-defaults", "/usr/lib/spark/conf/spark-defaults.conf", conf_serializer),
         _ClassificationData("spark-env", "/usr/lib/spark/conf/spark-env.sh", env_serializer),
         _ClassificationData("spark-log4j", "/usr/lib/spark/conf/log4j.properties", properties_serializer),
+        _ClassificationData("spark-log4j2", "/usr/lib/spark/conf/log4j2.properties", properties_serializer),
         _ClassificationData("spark-hive-site", "/usr/lib/spark/conf/hive-site.xml", xml_serializer),
         _ClassificationData("spark-metrics", "/usr/lib/spark/conf/metrics.properties", properties_serializer),
         _ClassificationData("yarn-env", "/usr/lib/hadoop/etc/hadoop/yarn-env.sh", env_serializer),
