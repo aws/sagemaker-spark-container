@@ -36,7 +36,7 @@ def test_pyspark_multinode(input_data: str, output_data: str, verbose_opt: str) 
     py_files_arg = "--py-files /opt/ml/processing/input/code/python/hello_py_spark/hello_py_spark_udfs.py"
     app_py = "/opt/ml/processing/input/code/python/hello_py_spark/hello_py_spark_app.py"
     docker_compose_cmd = (
-        f"CMD='{py_files_arg} {verbose_opt} {app_py} {input} {output}' docker-compose up --force-recreate"
+        f"CMD='{py_files_arg} {verbose_opt} {app_py} {input} {output}' docker compose up --force-recreate"
     )
 
     print(docker_compose_cmd)
@@ -70,10 +70,10 @@ def test_pyspark_multinode(input_data: str, output_data: str, verbose_opt: str) 
     # TODO: assert output contents
 
     try:
-        print("\nRunning docker-compose down ...")
-        subprocess.run(["docker-compose", "down"])
+        print("\nRunning docker compose down ...")
+        subprocess.run(["docker", "compose", "down"])
     except subprocess.CalledProcessError:
-        print("docker-compose down command failed !!!")
+        print("docker compose down command failed !!!")
 
 
 def test_scala_spark_multinode(input_data: str, output_data: str, verbose_opt: str) -> None:
@@ -88,7 +88,7 @@ def test_scala_spark_multinode(input_data: str, output_data: str, verbose_opt: s
     docker_compose_cmd = (
         f"JARS_MOUNT={jars_mount} "
         f"CMD='{jars_arg} {class_arg} {verbose_opt} {app_jar} {input} {output}' "
-        "docker-compose up --force-recreate"  # noqa
+        "docker compose up --force-recreate"  # noqa
     )
 
     print(docker_compose_cmd)
@@ -126,10 +126,10 @@ def test_scala_spark_multinode(input_data: str, output_data: str, verbose_opt: s
     # TODO: assert output contents
 
     try:
-        print("\nRunning docker-compose down ...")
-        subprocess.run(["docker-compose", "down"])
+        print("\nRunning docker compose down ...")
+        subprocess.run(["docker", "compose", "down"])
     except subprocess.CalledProcessError:
-        print("docker-compose down command failed !!!")
+        print("docker compose down command failed !!!")
 
 
 def test_java_spark_multinode(input_data: str, output_data: str, verbose_opt: str) -> None:
@@ -138,7 +138,7 @@ def test_java_spark_multinode(input_data: str, output_data: str, verbose_opt: st
     class_arg = "--class com.amazonaws.sagemaker.spark.test.HelloJavaSparkApp"
     app_jar = "/opt/ml/processing/input/code/java/hello-java-spark/target/hello-java-spark-1.0-SNAPSHOT.jar"
     docker_compose_cmd = (
-        f"CMD='{class_arg} {verbose_opt} {app_jar} {input} {output}' docker-compose up --force-recreate"
+        f"CMD='{class_arg} {verbose_opt} {app_jar} {input} {output}' docker compose up --force-recreate"
     )
 
     print(docker_compose_cmd)
@@ -172,7 +172,7 @@ def test_java_spark_multinode(input_data: str, output_data: str, verbose_opt: st
     # TODO: assert output contents
 
     try:
-        print("\nRunning docker-compose down ...")
-        subprocess.run(["docker-compose", "down"])
+        print("\nRunning docker compose down ...")
+        subprocess.run(["docker", "compose", "down"])
     except subprocess.CalledProcessError:
-        print("docker-compose down command failed !!!")
+        print("docker compose down command failed !!!")

@@ -258,7 +258,9 @@ class Bootstrapper:
 
     def deserialize_user_configuration_dict(self, configuration_dict: Dict[str, Any]) -> Configuration:
         if configuration_dict.get("Configurations"):
-            configurations_inner = configuration_dict["Configurations"] if configuration_dict["Configurations"] else ()
+            configurations_inner = (
+                configuration_dict["Configurations"] if configuration_dict["Configurations"] else [{}]
+            )
             return Configuration(
                 Classification=configuration_dict["Classification"],
                 Properties=configuration_dict["Properties"],

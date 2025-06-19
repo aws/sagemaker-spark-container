@@ -1,6 +1,6 @@
 name := "hello-scala-spark"
 version := "1.0"
-scalaVersion := "2.12.12"
+scalaVersion := "2.12.20"
 useCoursier := false
 retrieveManaged := true
 libraryDependencies += "org.apache.spark" %% "spark-sql" % "3.1.1"

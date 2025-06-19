@@ -9,7 +9,7 @@ SHELL          := /bin/sh
 ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.5
     PROCESSOR := cpu
-    FRAMEWORK_VERSION := py39
+    FRAMEWORK_VERSION := py312
     SM_VERSION := 1.0
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
@@ -31,9 +31,9 @@ all: build test
 
 init:
 	python --version
-	pip install --upgrade pip
-	# pipenv > 2022.4.8 fails to build smspark
-	python -m pip install pipenv==2022.4.8
+	python -m ensurepip --upgrade
+	python -m pip install --upgrade setuptools
+	python -m pip install pipenv
 	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/pyproject.toml .
 	cp smsparkbuild/${FRAMEWORK_VERSION}/setup.py .
@@ -41,6 +41,7 @@ init:
 	cp Pipfile ${BUILD_CONTEXT}
 	cp Pipfile.lock ${BUILD_CONTEXT}
 	cp setup.py ${BUILD_CONTEXT}
+	cp VERSION ${BUILD_CONTEXT}
 
 # Builds and moves container python library into the Docker build context
 build-container-library: init
@@ -160,7 +161,7 @@ install-sdk:
 
 # Makes sure docker containers are cleaned
 clean:
-	docker-compose down || true
+	docker compose down || true
 	docker kill $$(docker ps -q) || true
 	docker rm $$(docker ps -a -q) || true
 	docker network rm $$(docker network ls -q) || true
