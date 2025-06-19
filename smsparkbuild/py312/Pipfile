@@ -1,0 +1,42 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+black = "==25.1.0"
+boto3 = "==1.38.38"
+click = "==8.1.8"
+cryptography = "==45.0.4"
+docker = "==7.1.0"
+flake8 = "==7.2.0"
+flake8-docstrings = "==1.7.0"
+importlib-metadata = "==6.11.0"
+mypy = "==1.16.1"
+numpy = "==1.26.4"
+psutil = "==6.1.1"
+py = "==1.11.0"
+pyasn1 = "==0.6.1"
+pytest = "==8.4.0"
+pytest-cov = "==6.2.1"
+pytest-parallel = "==0.1.1"
+pytest-rerunfailures = "==15.1"
+pytest-xdist = "==3.7.0"
+pyyaml = "==6.0.2"
+regex = "==2024.11.6"
+requests = "==2.32.4"
+rsa = "==4.9.1"
+safety = "==3.5.2"
+sagemaker = "==2.247.0"
+smspark = {editable = true, path = "."}
+tenacity = "==9.1.2"
+types-requests = "==2.32.4.20250611"
+types-waitress = "==3.0.1.20241117"
+typing-extensions = "==4.14.0"
+waitress = "==3.0.2"
+watchdog = "==6.0.0"
+
+[requires]
+python_version = "3.12"

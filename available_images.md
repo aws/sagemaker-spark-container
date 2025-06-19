@@ -36,7 +36,7 @@ name and version tag into the repository URL. For example:
 
 
 
-     173754725891.dkr.ecr.<region>.amazonaws.com/sagemaker-spark-processing:2.4-cpu-py37-v1.0
+     173754725891.dkr.ecr.<region>.amazonaws.com/sagemaker-spark-processing:3.5-cpu-py310-v1.0
 
 **Important**
 

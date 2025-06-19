@@ -2,7 +2,7 @@
 This document describes how to set up a development environment for developing, building, and testing the SageMaker Spark Container image.
 
 ## Development Environment Setup
-You’ll need to have python, pytest, docker, and docker-compose installed on your machine
+You’ll need to have python, pytest, and docker installed on your machine
 and on your $PATH.
 
 This repository uses GNU `make` to run build targets specified in `Makefile`. Consult the `Makefile` for the full list of build targets.
@@ -40,7 +40,7 @@ You may want to activate the Python environment in your `.bashrc` or `.zshrc`.
 -- [AmazonS3FullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonS3FullAccess) <br>
 -- [AmazonEC2ContainerRegistryFullAccess](https://console.aws.amazon.com/iam/home#policies/arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess) <br>
 
-5. [Create](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html) an ECR repository with the name "sagemaker-spark" in the us-west-2 region
+5. [Create](https://docs.aws.amazon.com/cli/latest/reference/ecr/create-repository.html) an ECR repository with the name "sagemaker-spark-processing" in the us-west-2 region
 
 6. Setup required environment variables for the container build:
 ```
@@ -100,16 +100,16 @@ make build
 
 Upon successful build, you will see two tags applied to the image. For example:
 ```
-Successfully tagged sagemaker-spark:2.4-cpu-py37-v0.1
-Successfully tagged sagemaker-spark:latest
+Successfully tagged sagemaker-spark-processing:2.4-cpu-py37-v0.1
+Successfully tagged sagemaker-spark-processing:latest
 ```
 
 2. To verify that the image is available in your local docker repository, run `docker images`. You should see an image with two tags. For example:
 ```
 ✗ docker images
 REPOSITORY                                                                             TAG                   IMAGE ID            CREATED             SIZE
-sagemaker-spark                                                                        2.4-cpu-py37-v0.1     a748a6e042d2        5 minutes ago        3.06GB
-sagemaker-spark                                                                        latest                a748a6e042d2        5 minutes ago        3.06GB
+sagemaker-spark-processing                                                             2.4-cpu-py37-v0.1     a748a6e042d2        5 minutes ago        3.06GB
+sagemaker-spark-processing                                                             latest                a748a6e042d2        5 minutes ago        3.06GB
 ```
 
 ### Running Local Tests
