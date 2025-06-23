@@ -25,7 +25,7 @@ HISTORY_SERVER_ENDPOINT = "http://0.0.0.0/proxy/15050"
 SPARK_APPLICATION_URL_SUFFIX = "/history/application_1594922484246_0001/1/jobs/"
 
 
-def test_history_server(tag, framework_version, role, image_uri, sagemaker_session, region):
+def test_history_server(tag, framework_version, role, image_uri, sagemaker_session, region, instance_type):
     print(
         f"PySparkProcessor args: tag={tag}, framework_version={framework_version}, "
         f"role={role}, image_uri={image_uri}, region={region}"
@@ -39,7 +39,7 @@ def test_history_server(tag, framework_version, role, image_uri, sagemaker_sessi
         image_uri=image_uri,
         role=role,
         instance_count=1,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -72,14 +72,16 @@ def test_history_server(tag, framework_version, role, image_uri, sagemaker_sessi
         spark.terminate_history_server()
 
 
-def test_history_server_with_expected_failure(tag, framework_version, role, image_uri, sagemaker_session, caplog):
+def test_history_server_with_expected_failure(
+    tag, framework_version, role, image_uri, sagemaker_session, caplog, instance_type
+):
     spark = PySparkProcessor(
         base_job_name="sm-spark",
         framework_version=framework_version,
         image_uri=image_uri,
         role=role,
         instance_count=1,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
