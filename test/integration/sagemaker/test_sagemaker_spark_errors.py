@@ -13,7 +13,7 @@
 from sagemaker.spark.processing import PySparkProcessor
 
 
-def test_spark_app_error(tag, role, image_uri, sagemaker_session):
+def test_spark_app_error(tag, role, image_uri, sagemaker_session, instance_type):
     """Submits a PySpark app which is scripted to exit with error code 1"""
     spark = PySparkProcessor(
         base_job_name="sm-spark-app-error",
@@ -21,7 +21,7 @@ def test_spark_app_error(tag, role, image_uri, sagemaker_session):
         image_uri=image_uri,
         role=role,
         instance_count=1,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )

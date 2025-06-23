@@ -111,7 +111,7 @@ def configuration() -> list:
     [{"instance_count": 1, "py_version": "py37"}, {"instance_count": 2, "py_version": "py39"}],
 )
 def test_sagemaker_pyspark_multinode(
-    role, image_uri, configuration, sagemaker_session, region, sagemaker_client, config
+    role, image_uri, configuration, sagemaker_session, region, sagemaker_client, config, instance_type
 ):
     instance_count = config["instance_count"]
     python_version = config["py_version"]
@@ -122,7 +122,7 @@ def test_sagemaker_pyspark_multinode(
         image_uri=image_uri,
         role=role,
         instance_count=instance_count,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -193,14 +193,14 @@ def test_sagemaker_pyspark_multinode(
 # TODO: similar integ test case for SSE-KMS. This would require test infrastructure bootstrapping a KMS key.
 # Currently, Spark jobs can read data encrypted with SSE-KMS (assuming the execution role has permission),
 # however our Hadoop version (2.8.5) does not support writing data with SSE-KMS (enabled in version 3.0.0).
-def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sagemaker_client):
+def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sagemaker_client, instance_type):
     """Test that Spark container can read and write S3 data encrypted with SSE-S3 (default AES256 encryption)"""
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         image_uri=image_uri,
         role=role,
         instance_count=2,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -237,14 +237,14 @@ def test_sagemaker_pyspark_sse_s3(role, image_uri, sagemaker_session, region, sa
 
 
 def test_sagemaker_pyspark_sse_kms_s3(
-    role, image_uri, sagemaker_session, region, sagemaker_client, account_id, partition
+    role, image_uri, sagemaker_session, region, sagemaker_client, account_id, partition, instance_type
 ):
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         image_uri=image_uri,
         role=role,
         instance_count=2,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -301,14 +301,16 @@ def test_sagemaker_pyspark_sse_kms_s3(
         assert object_metadata["SSEKMSKeyId"] == f"arn:{partition}:kms:{region}:{account_id}:key/{kms_key_id}"
 
 
-def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker_session, sagemaker_client):
+def test_sagemaker_scala_jar_multinode(
+    role, image_uri, configuration, sagemaker_session, sagemaker_client, instance_type
+):
     """Test SparkJarProcessor using Scala application jar with external runtime dependency jars staged by SDK"""
     spark = SparkJarProcessor(
         base_job_name="sm-spark-scala",
         image_uri=image_uri,
         role=role,
         instance_count=2,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -346,7 +348,14 @@ def test_sagemaker_scala_jar_multinode(role, image_uri, configuration, sagemaker
 
 
 def test_sagemaker_feature_store_ingestion_multinode(
-    sagemaker_session, sagemaker_client, spark_version, framework_version, image_uri, role, is_feature_store_available
+    sagemaker_session,
+    sagemaker_client,
+    spark_version,
+    framework_version,
+    image_uri,
+    role,
+    is_feature_store_available,
+    instance_type,
 ):
     """Test FeatureStore use cases by ingesting data to feature group."""
 
@@ -359,7 +368,7 @@ def test_sagemaker_feature_store_ingestion_multinode(
         image_uri=image_uri,
         role=role,
         instance_count=2,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )
@@ -383,7 +392,9 @@ def test_sagemaker_feature_store_ingestion_multinode(
         raise RuntimeError("Feature store Spark job stopped unexpectedly")
 
 
-def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagemaker_session, sagemaker_client):
+def test_sagemaker_java_jar_multinode(
+    tag, role, image_uri, configuration, sagemaker_session, sagemaker_client, instance_type
+):
     """Test SparkJarProcessor using Java application jar"""
     spark = SparkJarProcessor(
         base_job_name="sm-spark-java",
@@ -391,7 +402,7 @@ def test_sagemaker_java_jar_multinode(tag, role, image_uri, configuration, sagem
         image_uri=image_uri,
         role=role,
         instance_count=2,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )

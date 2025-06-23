@@ -16,14 +16,14 @@ from sagemaker.s3 import S3Downloader, S3Uploader
 from sagemaker.spark.processing import PySparkProcessor
 
 
-def test_sagemaker_spark_processor_default_tag(spark_version, role, sagemaker_session, sagemaker_client):
+def test_sagemaker_spark_processor_default_tag(spark_version, role, sagemaker_session, sagemaker_client, instance_type):
     """Test that spark processor works with default tag"""
     spark = PySparkProcessor(
         base_job_name="sm-spark-py",
         framework_version=spark_version,
         role=role,
         instance_count=1,
-        instance_type="ml.c5.xlarge",
+        instance_type=instance_type,
         max_runtime_in_seconds=1200,
         sagemaker_session=sagemaker_session,
     )

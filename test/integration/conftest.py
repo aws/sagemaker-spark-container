@@ -29,6 +29,7 @@ def pytest_addoption(parser) -> str:
     parser.addoption("--spark-version")
     parser.addoption("--framework-version")
     parser.addoption("--domain", default="amazonaws.com")
+    parser.addoption("--instance-type", default="ml.c5.xlarge")
 
 
 @pytest.fixture(scope="session")
@@ -100,6 +101,12 @@ def domain(request) -> str:
 def role(request) -> str:
     """Return the job execution role to use in a test"""
     return request.config.getoption("--role")
+
+
+@pytest.fixture(scope="session")
+def instance_type(request) -> str:
+    """Return the SageMaker Procesing instance type to use in tests."""
+    return request.config.getoption("--instance-type")
 
 
 @pytest.fixture(scope="session")
