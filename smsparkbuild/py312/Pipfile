@@ -8,7 +8,7 @@ verify_ssl = true
 [packages]
 black = "==25.1.0"
 boto3 = "==1.38.38"
-pip = "==25.3"
+pip = "==26.0"
 click = "==8.1.8"
 cryptography = "==45.0.4"
 docker = "==7.1.0"
