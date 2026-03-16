@@ -20,7 +20,6 @@ from pyspark.sql import SparkSession, SQLContext
 from pyspark.sql.functions import udf
 from pyspark.sql.types import IntegerType
 import numpy
-import sagemaker
 import boto3
 
 if __name__ == "__main__":
@@ -29,7 +28,6 @@ if __name__ == "__main__":
     d2 = {"k2": "k2 from d2", "k3": "k3 from d2"}
     print(d1 | d2)
     print(f"numpy version {numpy.__version__}")
-    print(f"sagemaker version {sagemaker.__version__}")
     print(f"boto3 version {boto3.__version__}")
 
     parser = argparse.ArgumentParser(description="inputs and outputs")

@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Thread to offload Spark events to S3 for the history server."""
+
 import logging
 import os
 import re
