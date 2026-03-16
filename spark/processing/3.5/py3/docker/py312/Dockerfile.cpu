@@ -9,7 +9,7 @@ RUN dnf clean all \
     && dnf update expat \
     && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* emacs \
     && dnf install -y openssl openssl-devel \
-    && dnf install -y kernel6.12-modules-extra kernel6.12-headers kernel6.12-devel \
+    && dnf install -y kernel6.18-modules-extra kernel6.18-headers kernel6.18-devel \
     && dnf install -y bzip2-devel libffi-devel sqlite-devel xz-devel \
     && dnf install -y ncurses ncurses-compat-libs binutils \
     && dnf install -y nss-softokn-freebl avahi-libs avahi dbus dbus-libs \
@@ -26,7 +26,9 @@ RUN echo "Python version:" && python3 --version \
     && echo "Pip version:" && pip3 --version \
     && echo "Pip location:" && which pip3.12
 
-COPY Pipfile Pipfile.lock setup.py *.whl VERSION /opt/program/
+COPY Pipfile.runtime /opt/program/Pipfile
+COPY Pipfile.runtime.lock /opt/program/Pipfile.lock
+COPY setup.py *.whl VERSION /opt/program/
 ENV PIPENV_PIPFILE=/opt/program/Pipfile
 
 RUN /usr/local/bin/python3 -m pip --version

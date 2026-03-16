@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Tail Spark executor logs and write them to stdout to publish them to CloudWatch."""
+
 import os.path
 import time
 from subprocess import PIPE, Popen

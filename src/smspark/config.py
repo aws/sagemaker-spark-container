@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Contains configuration classes and serializers for configuration."""
+
 # https://docs.python.org/3/whatsnew/3.7.html#pep-563-postponed-evaluation-of-annotations
 from __future__ import annotations
 

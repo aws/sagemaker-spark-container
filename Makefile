@@ -10,7 +10,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.5
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py312
-    SM_VERSION := 1.1
+    SM_VERSION := 1.2
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
 
@@ -42,6 +42,9 @@ init:
 	cp Pipfile.lock ${BUILD_CONTEXT}
 	cp setup.py ${BUILD_CONTEXT}
 	cp VERSION ${BUILD_CONTEXT}
+	# Copy runtime-only Pipfile and pre-generated lockfile for the container image
+	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile.runtime ${BUILD_CONTEXT}
+	cp smsparkbuild/${FRAMEWORK_VERSION}/Pipfile.runtime.lock ${BUILD_CONTEXT}
 
 # Builds and moves container python library into the Docker build context
 build-container-library: init

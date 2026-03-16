@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 """Utils to retrieve the file paths for different config types."""
+
 import os
 from enum import Enum
 from typing import Optional
