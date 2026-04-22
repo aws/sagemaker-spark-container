@@ -108,7 +108,11 @@ def configuration() -> list:
 
 @pytest.mark.parametrize(
     "config",
-    [{"instance_count": 1, "py_version": "py37"}, {"instance_count": 2, "py_version": "py39"}],
+    [
+        {"instance_count": 1, "py_version": "py37"},
+        {"instance_count": 2, "py_version": "py39"},
+        {"instance_count": 1, "py_version": "py312"},
+    ],
 )
 def test_sagemaker_pyspark_multinode(
     role, image_uri, configuration, sagemaker_session, region, sagemaker_client, config, instance_type
@@ -139,7 +143,11 @@ def test_sagemaker_pyspark_multinode(
             body=body, desired_s3_uri=input_data_uri, sagemaker_session=sagemaker_session
         )
 
-    script_name = "hello_py_spark_app_py39.py" if python_version == "py39" else "hello_py_spark_app.py"
+    py_version_script_map = {
+        "py39": "hello_py_spark_app_py39.py",
+        "py312": "hello_py_spark_app_py312.py",
+    }
+    script_name = py_version_script_map.get(python_version, "hello_py_spark_app.py")
     print(f"Running script {script_name}")
     spark.run(
         submit_app=f"test/resources/code/python/hello_py_spark/{script_name}",
