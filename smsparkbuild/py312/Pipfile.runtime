@@ -6,11 +6,13 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+authlib = "==1.7.1"
 boto3 = "==1.42.38"
-pip = "==26.0"
+pip = "==26.1.2"
 click = "==8.1.8"
 cryptography = "==46.0.7"
 docker = "==7.1.0"
+idna = "==3.15"
 importlib-metadata = "==6.11.0"
 numpy = "==1.26.4"
 pandas = ">=2.0.0"
@@ -24,6 +26,7 @@ safety = "==3.7.0"
 smspark = {editable = true, path = "."}
 tenacity = "==9.1.2"
 typing-extensions = "==4.14.0"
+urllib3 = "==2.7.0"
 waitress = "==3.0.2"
 watchdog = "==6.0.0"
 
