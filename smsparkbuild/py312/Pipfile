@@ -31,7 +31,7 @@ regex = "==2025.11.3"
 requests = "==2.33.0"
 rsa = "==4.9.1"
 safety = "==3.7.0"
-sagemaker = "==2.257.1"
+sagemaker = "==2.257.5"
 setuptools = "==83.0.0"
 smspark = {editable = true, path = "."}
 tenacity = "==9.1.2"
