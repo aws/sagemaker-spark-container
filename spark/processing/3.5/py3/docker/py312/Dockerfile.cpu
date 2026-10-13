@@ -4,10 +4,9 @@ ENV AWS_REGION=${REGION}
 
 RUN rpm -q system-release --qf '%{VERSION}'
 
-# Upgrade to the latest AL2023 release rather than the release locked by the
-# base image tag, so OS packages pick up all available security fixes.
 RUN dnf clean all \
-    && dnf upgrade -y --releasever=latest \
+    && dnf update -y \
+    && dnf update expat \
     && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* emacs \
     && dnf install -y openssl openssl-devel \
     && dnf install -y bzip2-devel libffi-devel sqlite-devel xz-devel \
