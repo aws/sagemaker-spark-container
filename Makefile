@@ -10,7 +10,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.5
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py312
-    SM_VERSION := 1.3
+    SM_VERSION := 1.6
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
 
@@ -58,7 +58,8 @@ install-container-library: init
 	# For more info, https://github.com/pytest-dev/py/issues/287
 	# temporarily bypass pytest CVE-2025-71176 (SFTY-20260122-20373) - test-only dep, fixed in 9.0.3
 	# temporarily bypass sagemaker SFTY-20260305-71051 - test-only dep, only fixed in sagemaker 3.x
-	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 -i SFTY-20260122-20373 -i SFTY-20260305-71051 # https://github.com/pyupio/safety
+	# temporarily bypass nltk SFTY-20260902-58666 - test-only dep (via safety), no fixed version; nltk is not in the runtime image
+	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 -i SFTY-20260122-20373 -i SFTY-20260305-71051 -i SFTY-20260902-58666 # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \

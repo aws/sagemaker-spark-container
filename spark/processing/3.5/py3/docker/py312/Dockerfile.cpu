@@ -9,7 +9,6 @@ RUN dnf clean all \
     && dnf update expat \
     && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* emacs \
     && dnf install -y openssl openssl-devel \
-    && dnf install -y kernel6.18-modules-extra kernel6.18-headers kernel6.18-devel \
     && dnf install -y bzip2-devel libffi-devel sqlite-devel xz-devel \
     && dnf install -y ncurses ncurses-compat-libs binutils \
     && dnf install -y nss-softokn-freebl avahi-libs avahi dbus dbus-libs \
@@ -36,7 +35,7 @@ RUN /usr/local/bin/python3 -m pip install --upgrade pip
 RUN /usr/local/bin/python3 -m pip install --upgrade pip setuptools wheel
 # Use --system flag, so it will install all packages into the system python,
 # and not into the virtualenv. Since docker containers do not need to have virtualenvs
-RUN /usr/local/bin/python3 -m pip install pipenv \
+RUN /usr/local/bin/python3 -m pip install pipenv "virtualenv>=21.7.13" \
     && pipenv install --system \
     && /usr/local/bin/python3 -m pip install /opt/program/*.whl
 
