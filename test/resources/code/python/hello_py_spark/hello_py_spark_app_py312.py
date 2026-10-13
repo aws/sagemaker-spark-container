@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import argparse
+import subprocess
 import sys
 import time
 
@@ -52,6 +53,23 @@ if __name__ == "__main__":
     args = parser.parse_args()
     spark = SparkSession.builder.appName("SparkContainerTestApp").getOrCreate()
     print("Created spark context")
+
+    # Validate executors also run Python 3.12: both the PySpark worker and a bare
+    # `python3` subprocess. YARN does not whitelist PATH for containers, so the
+    # subprocess check covers python3 resolution outside the image's ENV PATH.
+    def executor_python_versions(_):
+        cmd = ["python3", "-c", "import sys; print('%d.%d' % sys.version_info[:2])"]
+        sub = subprocess.run(cmd, capture_output=True, text=True).stdout.strip()
+        return [(f"{sys.version_info.major}.{sys.version_info.minor}", sub)]
+
+    rdd = spark.sparkContext.parallelize(range(4), 4)
+    executor_versions = set(rdd.mapPartitions(executor_python_versions).collect())
+    print(f"Executor python versions (worker, python3 subprocess): {executor_versions}")
+    assert executor_versions == {("3.12", "3.12")}, (
+        f"Expected executors to use Python 3.12 but got {executor_versions}. "
+        "The executor environment may be resolving to the wrong python3 binary."
+    )
+
     sqlContext = SQLContext(spark.sparkContext)
     print("Created sql context")
 
