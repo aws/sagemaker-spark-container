@@ -5,7 +5,7 @@ ENV AWS_REGION=${REGION}
 RUN rpm -q system-release --qf '%{VERSION}'
 
 RUN dnf clean all \
-    && dnf update -y --releasever latest \
+    && dnf update -y \
     && dnf update expat \
     && dnf install -y awscli vim gcc gzip unzip zip tar wget liblapack* libblas* libopenblas* emacs \
     && dnf install -y openssl openssl-devel \
