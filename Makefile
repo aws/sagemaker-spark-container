@@ -10,7 +10,7 @@ ifeq ($(IS_RELEASE_BUILD),)
     SPARK_VERSION := 3.5
     PROCESSOR := cpu
     FRAMEWORK_VERSION := py312
-    SM_VERSION := 1.6
+    SM_VERSION := 1.7
     USE_CASE := processing
     BUILD_CONTEXT := ./spark/${USE_CASE}/${SPARK_VERSION}/py3
 
