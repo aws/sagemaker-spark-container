@@ -58,9 +58,12 @@ install-container-library: init
 	# For more info, https://github.com/pytest-dev/py/issues/287
 	# temporarily bypass pytest CVE-2025-71176 (SFTY-20260122-20373) - test-only dep, fixed in 9.0.3
 	# temporarily bypass sagemaker SFTY-20260305-71051 - test-only dep, only fixed in sagemaker 3.x
-	# temporarily bypass nltk SFTY-20260902-58666 - test-only dep (via safety), no fixed version; nltk is not in the runtime image
-	# temporarily bypass filelock SFTY-20261017-72390 (CVE-2026-112910), SFTY-20261017-54654 (CVE-2026-112908) and SFTY-20261017-57659 (CVE-2026-112938) - test-only dep (via safety, which requires filelock<4.0), fixed only in filelock 4.2.1+; the runtime image ships filelock 4.2.10
-	pipenv run safety check -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 -i SFTY-20260122-20373 -i SFTY-20260305-71051 -i SFTY-20260902-58666 -i SFTY-20261017-72390 -i SFTY-20261017-54654 -i SFTY-20261017-57659 # https://github.com/pyupio/safety
+	python -m venv .safety-venv
+	.safety-venv/bin/python -m pip install "safety==3.7.0"
+	pipenv run pip freeze --all --exclude-editable > .safety-venv/requirements.txt
+	.safety-venv/bin/safety check -r .safety-venv/requirements.txt -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 -i SFTY-20260122-20373 -i SFTY-20260305-71051 # https://github.com/pyupio/safety
+	PIPENV_PIPFILE=smsparkbuild/${FRAMEWORK_VERSION}/Pipfile.runtime pipenv requirements > .safety-venv/runtime-requirements.txt
+	.safety-venv/bin/safety check -r .safety-venv/runtime-requirements.txt # https://github.com/pyupio/safety
 
 build-static-config:
 	./scripts/fetch-ec2-instance-type-info.sh --region ${REGION} --use-case ${USE_CASE} --spark-version ${SPARK_VERSION} \
