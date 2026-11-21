@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c221c55c65ef7818c3eafafd6ba20da0a993659199217c475b94ac60b843d6c6"
+            "sha256": "d81e807192bc8f7260d49da88d9f0350358f6b5a5d4675f260e49688517113ed"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,6 +16,15 @@
         ]
     },
     "default": {
+        "authlib": {
+            "hashes": [
+                "sha256:0199649865fefb4304fc57683eaebb15614523073e41e09d98c72f3268ce5cbc",
+                "sha256:cca3dffa51c8d80d6df19aee2279e47219dc996f5a527c06ac2e39d0757c99ef"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.10'",
+            "version": "==1.9.9"
+        },
         "boto3": {
             "hashes": [
                 "sha256:af2e5c08972d35fa4b4bc457031794343a6ddb1df5692db43302d5b5feaac23e",
@@ -422,6 +431,15 @@
             "markers": "python_version >= '3.9'",
             "version": "==1.1.0"
         },
+        "joserfc": {
+            "hashes": [
+                "sha256:06979cfbab78bc802f14c0358f32969826cc26720e13cb38926ffdc86bc0cb2c",
+                "sha256:471d0fd12a5a0d1c0942de280f39efe6f597878315033270b504d4d006d25510"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.10'",
+            "version": "==1.7.7"
+        },
         "numpy": {
             "hashes": [
                 "sha256:03a8c78d01d9781b28a6989f6fa1bb2c4f2d51201cf99d3dd875df6fbd96b23b",
@@ -574,11 +592,11 @@
         },
         "pycparser": {
             "hashes": [
-                "sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80",
-                "sha256:d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc"
+                "sha256:a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e",
+                "sha256:f03387877eab82ce01bbdfd0ba7252ee55a90b1c708d5129e2ce915475cf1db6"
             ],
-            "markers": "python_version >= '3.10'",
-            "version": "==3.11"
+            "markers": "python_version >= '3.11'",
+            "version": "==3.12"
         },
         "python-dateutil": {
             "hashes": [
