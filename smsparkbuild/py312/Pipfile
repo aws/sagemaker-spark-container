@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-black = "==26.3.1"
+black = "==26.10.1"
 boto3 = "==1.42.38"
 pip = "==26.2.2"
 click = "==8.3.3"
@@ -19,7 +19,7 @@ mypy = "==1.16.1"
 numpy = "==1.26.4"
 psutil = "==6.1.1"
 py = "==1.11.0"
-pyasn1 = "==0.6.4"
+pyasn1 = "==0.6.5"
 pytest = "==8.4.0"
 pytest-cov = "==6.2.1"
 pytest-parallel = "==0.1.1"
@@ -30,7 +30,7 @@ regex = "==2025.11.3"
 requests = "==2.33.0"
 rsa = "==4.9.1"
 sagemaker = "==2.257.5"
-setuptools = "==83.0.0"
+setuptools = "==84.2.1"
 smspark = {editable = true, path = "."}
 tenacity = "==9.1.2"
 types-requests = "==2.32.4.20250611"

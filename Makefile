@@ -60,9 +60,14 @@ install-container-library: init
 	# temporarily bypass sagemaker SFTY-20260305-71051 - test-only dep, only fixed in sagemaker 3.x
 	python -m venv .safety-venv
 	.safety-venv/bin/python -m pip install "safety==3.7.0"
+	# safety exits 0 when a list is empty, so each list must contain pinned packages before it is scanned
 	pipenv run pip freeze --all --exclude-editable > .safety-venv/requirements.txt
+	grep -q '==' .safety-venv/requirements.txt
 	.safety-venv/bin/safety check -r .safety-venv/requirements.txt -i 43975 -i 51457 -i 39611 -i 62044 -i 65647 -i 66742 -i SFTY-20260122-20373 -i SFTY-20260305-71051 # https://github.com/pyupio/safety
+	# the image installs from Pipfile.runtime.lock, so fail if it is out of date with Pipfile.runtime
+	PIPENV_PIPFILE=smsparkbuild/${FRAMEWORK_VERSION}/Pipfile.runtime pipenv verify
 	PIPENV_PIPFILE=smsparkbuild/${FRAMEWORK_VERSION}/Pipfile.runtime pipenv requirements > .safety-venv/runtime-requirements.txt
+	grep -q '==' .safety-venv/runtime-requirements.txt
 	.safety-venv/bin/safety check -r .safety-venv/runtime-requirements.txt # https://github.com/pyupio/safety
 
 build-static-config:
@@ -182,6 +187,7 @@ clean:
 	rm -f Pipfile.lock
 	rm -f setup.py
 	rm -f pyproject.toml
+	rm -rf .safety-venv
 
 # Removes compiled Scala SBT artifacts
 clean-test-scala:
