@@ -198,7 +198,9 @@ Or export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python, see more detail in this
 make: *** [install-container-library] Error 255
 ```
 
-* you need to update smsparkbuild/py39/Pipfile corresponding package version.
+* `make install-container-library` runs safety from its own virtualenv (`.safety-venv`) twice: once on the packages installed from `smsparkbuild/py312/Pipfile`, and once on `smsparkbuild/py312/Pipfile.runtime.lock`, which is what the image installs.
+* If the first scan fails, you need to update the corresponding package version in `smsparkbuild/py312/Pipfile`.
+* If the second scan fails, you need to update the corresponding package version in `smsparkbuild/py312/Pipfile.runtime` and regenerate `smsparkbuild/py312/Pipfile.runtime.lock`. The target also fails if that lock file is out of date with `Pipfile.runtime`.
 
 6. Code build may fail because of the format, 
 for example
